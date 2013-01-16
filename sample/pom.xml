@@ -21,41 +21,41 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>sample-twowayview</artifactId>
-	<name>TwoWayView Sample</name>
-	<packaging>apk</packaging>
+    <artifactId>sample-twowayview</artifactId>
+    <name>TwoWayView Sample</name>
+    <packaging>apk</packaging>
 
-	<parent>
-		<groupId>org.lucasr.twowayview</groupId>
-		<artifactId>parent</artifactId>
-		<version>0.1</version>
+    <parent>
+        <groupId>org.lucasr.twowayview</groupId>
+        <artifactId>parent</artifactId>
+        <version>0.1</version>
         <relativePath>../pom.xml</relativePath>
-	</parent>
+    </parent>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.google.android</groupId>
-			<artifactId>android</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.google.android</groupId>
-			<artifactId>support-v4</artifactId>
-			<version>r7</version>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>library</artifactId>
-			<type>jar</type>
-			<version>${project.version}</version>
-		</dependency>
-	</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>com.google.android</groupId>
+            <artifactId>android</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.android</groupId>
+            <artifactId>support-v4</artifactId>
+            <version>r7</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>library</artifactId>
+            <type>jar</type>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>com.jayway.maven.plugins.android.generation2</groupId>
-				<artifactId>android-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                <artifactId>android-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>

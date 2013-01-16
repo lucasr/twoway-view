@@ -21,26 +21,27 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.lucasr.twowayview</groupId>
-	<artifactId>library</artifactId>
-	<packaging>jar</packaging>
-	<name>TwoWayView Library</name>
+    <groupId>org.lucasr.twowayview</groupId>
+    <artifactId>library</artifactId>
+    <packaging>jar</packaging>
+    <name>TwoWayView Library</name>
 
-	<parent>
-		<groupId>org.lucasr.twowayview</groupId>
-		<artifactId>parent</artifactId>
-		<version>0.1</version>
-	</parent>
+    <parent>
+        <groupId>org.lucasr.twowayview</groupId>
+        <artifactId>parent</artifactId>
+        <version>0.1</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.google.android</groupId>
-			<artifactId>android</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.google.android</groupId>
-			<artifactId>support-v4</artifactId>
-			<version>r7</version>
-		</dependency>
-	</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>com.google.android</groupId>
+            <artifactId>android</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.android</groupId>
+            <artifactId>support-v4</artifactId>
+            <version>r7</version>
+        </dependency>
+    </dependencies>
 </project>
