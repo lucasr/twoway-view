@@ -295,6 +295,8 @@ public class TwoWayView extends ViewGroup {
             Log.d(LOGTAG, "Touch event");
         }
 
+        boolean needsInvalidate = false;
+
         mVelocityTracker.addMovement(ev);
 
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
@@ -379,6 +381,10 @@ public class TwoWayView extends ViewGroup {
                 }
 
                 mTouchMode = TOUCH_MODE_IDLE;
+
+                needsInvalidate =
+                        mStartEdge.onRelease() | mEndEdge.onRelease();
+
                 break;
 
             case MotionEvent.ACTION_UP: {
@@ -413,14 +419,20 @@ public class TwoWayView extends ViewGroup {
                     }
 
                     mLastTouchPos = 0;
-
-                    ViewCompat.postInvalidateOnAnimation(this);
+                    needsInvalidate = true;
                 } else {
                     mTouchMode = TOUCH_MODE_IDLE;
                 }
 
+                needsInvalidate |=
+                        mStartEdge.onRelease() | mEndEdge.onRelease();
+
                 break;
             }
+        }
+
+        if (needsInvalidate) {
+            ViewCompat.postInvalidateOnAnimation(this);
         }
 
         return true;
@@ -491,9 +503,15 @@ public class TwoWayView extends ViewGroup {
                     (overScrollMode == ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS && !contentFits)) {
 
                 if (overScrolledBy > 0) {
-                    EdgeEffectCompat edge = delta > 0 ? mStartEdge : mEndEdge;
-                    edge.onPull((float) Math.abs(delta) / getHeight());
-                    ViewCompat.postInvalidateOnAnimation(this);
+                    final EdgeEffectCompat edge = delta > 0 ? mStartEdge : mEndEdge;
+                    final int size = (mIsVertical ? getHeight() : getWidth());
+
+                    boolean needsInvalidate =
+                            edge.onPull((float) Math.abs(delta) / size);
+
+                    if (needsInvalidate) {
+                        ViewCompat.postInvalidateOnAnimation(this);
+                    }
                 }
             }
         }
@@ -708,8 +726,12 @@ public class TwoWayView extends ViewGroup {
                         final EdgeEffectCompat edge =
                                 (diff > 0 ? mStartEdge : mEndEdge);
 
-                        edge.onAbsorb(Math.abs((int) getCurrVelocity()));
-                        ViewCompat.postInvalidateOnAnimation(this);
+                        boolean needsInvalidate =
+                                edge.onAbsorb(Math.abs((int) getCurrVelocity()));
+
+                        if (needsInvalidate) {
+                            ViewCompat.postInvalidateOnAnimation(this);
+                        }
                     }
 
                     mScroller.abortAnimation();
@@ -720,33 +742,64 @@ public class TwoWayView extends ViewGroup {
         }
     }
 
+    private boolean drawStartEdge(Canvas canvas) {
+        if (mStartEdge.isFinished()) {
+            return false;
+        }
+
+        if (mIsVertical) {
+            return mStartEdge.draw(canvas);
+        }
+
+        final int restoreCount = canvas.save();
+        final int height = getHeight() - getPaddingTop() - getPaddingBottom();
+
+        canvas.translate(0, height);
+        canvas.rotate(270);
+
+        final boolean needsInvalidate = mStartEdge.draw(canvas);
+        canvas.restoreToCount(restoreCount);
+        return needsInvalidate;
+    }
+
+    private boolean drawEndEdge(Canvas canvas) {
+        if (mEndEdge.isFinished()) {
+            return false;
+        }
+
+        final int restoreCount = canvas.save();
+        final int width = getWidth() - getPaddingLeft() - getPaddingRight();
+        final int height = getHeight() - getPaddingTop() - getPaddingBottom();
+
+        if (mIsVertical) {
+            canvas.translate(-width, height);
+            canvas.rotate(180, width, 0);
+        } else {
+            canvas.translate(width, 0);
+            canvas.rotate(90);
+        }
+
+        final boolean needsInvalidate = mEndEdge.draw(canvas);
+        canvas.restoreToCount(restoreCount);
+        return needsInvalidate;
+    }
+
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
+        boolean needsInvalidate = false;
+
         if (mStartEdge != null) {
-            boolean needsInvalidate = false;
-            if (!mStartEdge.isFinished()) {
-                mStartEdge.draw(canvas);
-                needsInvalidate = true;
-            }
+            needsInvalidate |= drawStartEdge(canvas);
+        }
 
-            // FIXME: handle horizontal mode here
-            if (!mEndEdge.isFinished()) {
-                final int restoreCount = canvas.save();
-                final int width = getWidth();
+        if (mEndEdge != null) {
+            needsInvalidate |= drawEndEdge(canvas);
+        }
 
-                canvas.translate(-width, getHeight());
-                canvas.rotate(180, width, 0);
-                mEndEdge.draw(canvas);
-                canvas.restoreToCount(restoreCount);
-
-                needsInvalidate = true;
-            }
-
-            if (needsInvalidate) {
-                ViewCompat.postInvalidateOnAnimation(this);
-            }
+        if (needsInvalidate) {
+            ViewCompat.postInvalidateOnAnimation(this);
         }
     }
 
@@ -785,10 +838,16 @@ public class TwoWayView extends ViewGroup {
         populate();
         mInLayout = false;
 
-        final int width = r - l;
-        final int height = b - t;
-        mStartEdge.setSize(width, height);
-        mEndEdge.setSize(width, height);
+        final int width = r - l - getPaddingLeft() - getPaddingRight();
+        final int height = b - t - getPaddingTop() - getPaddingBottom();
+
+        if (mIsVertical) {
+            mStartEdge.setSize(width, height);
+            mEndEdge.setSize(width, height);
+        } else {
+            mStartEdge.setSize(height, width);
+            mEndEdge.setSize(height, width);
+        }
     }
 
     private void populate() {
