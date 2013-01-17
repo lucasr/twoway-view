@@ -53,6 +53,10 @@ public class TwoWayView extends ViewGroup {
         HORIZONTAL;
     };
 
+    private static final int TOUCH_MODE_IDLE = 0;
+    private static final int TOUCH_MODE_DRAGGING = 1;
+    private static final int TOUCH_MODE_FLINGING = 2;
+
     private ListAdapter mAdapter;
 
     private boolean mIsVertical;
@@ -81,10 +85,6 @@ public class TwoWayView extends ViewGroup {
     private float mLastTouchPos;
     private float mTouchRemainderPos;
     private int mActivePointerId;
-
-    private static final int TOUCH_MODE_IDLE = 0;
-    private static final int TOUCH_MODE_DRAGGING = 1;
-    private static final int TOUCH_MODE_FLINGING = 2;
 
     private int mTouchMode;
     private final VelocityTracker mVelocityTracker = VelocityTracker.obtain();
