@@ -41,10 +41,11 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
 
-public class TwoWayView extends ViewGroup {
+public class TwoWayView extends AdapterView<ListAdapter> {
     private static final String LOGTAG = "TwoWayListView";
     private static final boolean DEBUG = true;
 
@@ -152,10 +153,12 @@ public class TwoWayView extends ViewGroup {
         return mItemMargin;
     }
 
+    @Override
     public ListAdapter getAdapter() {
         return mAdapter;
     }
 
+    @Override
     public void setAdapter(ListAdapter adapter) {
         if (DEBUG) {
             Log.d(LOGTAG, "Setting adapter");
@@ -580,11 +583,7 @@ public class TwoWayView extends ViewGroup {
             mRecycler.addScrap(getChildAt(i));
         }
 
-        if (mInLayout) {
-            removeAllViewsInLayout();
-        } else {
-            removeAllViews();
-        }
+        detachAllViewsFromParent();
     }
 
     private void recycleOffscreenViews() {
@@ -609,11 +608,7 @@ public class TwoWayView extends ViewGroup {
                 break;
             }
 
-            if (mInLayout) {
-                removeViewsInLayout(i, 1);
-            } else {
-                removeViewAt(i);
-            }
+            detachViewFromParent(i);
 
             if (DEBUG) {
                 Log.d(LOGTAG, "Moving view at position" + i + " to scrap");
@@ -634,11 +629,7 @@ public class TwoWayView extends ViewGroup {
                 break;
             }
 
-            if (mInLayout) {
-                removeViewsInLayout(0, 1);
-            } else {
-                removeViewAt(0);
-            }
+            detachViewFromParent(0);
 
             if (DEBUG) {
                 Log.d(LOGTAG, "Moving view at position" + 0 + " to scrap");
@@ -791,6 +782,17 @@ public class TwoWayView extends ViewGroup {
     }
 
     @Override
+    public View getSelectedView() {
+        // TODO Do nothing for now
+        return null;
+    }
+
+    @Override
+    public void setSelection(int position) {
+        // TODO Do nothing for now
+    }
+
+    @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
@@ -854,12 +856,7 @@ public class TwoWayView extends ViewGroup {
                 Log.d(LOGTAG, "Removing all views to populate");
             }
 
-            if (mInLayout) {
-                removeAllViewsInLayout();
-            } else {
-                removeAllViews();
-            }
-
+            removeAllViewsInternal();
             mRestoreOffset = 0;
         }
 
@@ -955,8 +952,10 @@ public class TwoWayView extends ViewGroup {
                         Log.d(LOGTAG, "Adapter returned new view, replacing");
                     }
 
-                    removeViewAt(i);
-                    addView(newView, i);
+                    detachViewFromParent(i);
+                    removeDetachedView(child, false);
+
+                    addViewInternal(newView, i);
                     child = newView;
                 }
 
@@ -1031,9 +1030,9 @@ public class TwoWayView extends ViewGroup {
                 }
 
                 if (mInLayout) {
-                    addViewInLayout(child, 0, lp);
+                    addViewInternal(child, 0, lp);
                 } else {
-                    addView(child, 0);
+                    addViewInternal(child, 0);
                 }
             }
 
@@ -1116,9 +1115,9 @@ public class TwoWayView extends ViewGroup {
                 }
 
                 if (mInLayout) {
-                    addViewInLayout(child, -1, lp);
+                    addViewInternal(child, -1, lp);
                 } else {
-                    addView(child);
+                    addViewInternal(child);
                 }
             } else {
                 if (DEBUG) {
@@ -1208,13 +1207,44 @@ public class TwoWayView extends ViewGroup {
         return view;
     }
 
+    private void addViewInternal(View child) {
+        addViewInternal(child, -1);
+    }
+
+    private void addViewInternal(View child, int position) {
+        LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        if (lp == null) {
+            lp= generateDefaultLayoutParams();
+        }
+
+        addViewInternal(child, position, lp);
+    }
+
+    private void addViewInternal(View child, int position, LayoutParams lp) {
+        if (!mInLayout) {
+            requestLayout();
+            invalidate();
+        }
+
+        addViewInLayout(child, position, lp);
+    }
+
+    private void removeAllViewsInternal() {
+        removeAllViewsInLayout();
+
+        if (!mInLayout) {
+            requestLayout();
+            invalidate();
+        }
+    }
+
     private void clearAllState() {
         if (DEBUG) {
             Log.d(LOGTAG, "Clearning all state");
         }
 
         // Clear all layout records and views
-        removeAllViews();
+        removeAllViewsInternal();
 
         // Reset to the top of the grid
         resetStateForListStart();
@@ -1239,7 +1269,7 @@ public class TwoWayView extends ViewGroup {
     public void setSelectionToTop() {
         // Clear out the views (but don't clear out the layout records
         // or recycler because the data has not changed)
-        removeAllViews();
+        removeAllViewsInternal();
 
         // Reset to top of grid
         resetStateForListStart();
@@ -1387,8 +1417,16 @@ public class TwoWayView extends ViewGroup {
 
         public void clear() {
             final int typeCount = mViewTypeCount;
+
             for (int i = 0; i < typeCount; i++) {
-                mScrapViews[i].clear();
+                final ArrayList<View> scraps = mScrapViews[i];
+
+                final int scrapCount = scraps.size();
+                for (int j = 0; j < scrapCount; j++) {
+                    removeDetachedView(scraps.get(j), false);
+                }
+
+                scraps.clear();
             }
 
             if (mTransientStateViews != null) {
