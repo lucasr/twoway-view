@@ -198,12 +198,6 @@ public class TwoWayView extends ViewGroup {
         populate();
     }
 
-    /**
-     * Return the first adapter position with a view currently attached as
-     * a child view of this grid.
-     *
-     * @return the adapter position represented by the view at getChildAt(0).
-     */
     public int getFirstPosition() {
         return mFirstPosition;
     }
@@ -438,11 +432,6 @@ public class TwoWayView extends ViewGroup {
         return true;
     }
 
-    /**
-    *
-    * @param delta Pixels that content should move by
-    * @return true if the movement completed, false if it was stopped prematurely.
-    */
     private boolean trackMotionScroll(int delta, boolean allowOverScroll) {
         if (DEBUG) {
             Log.d(LOGTAG, "Tracking motion scroll");
@@ -598,11 +587,6 @@ public class TwoWayView extends ViewGroup {
         }
     }
 
-    /**
-     * Important: this method will leave offscreen views attached if they
-     * are required to maintain the invariant that child view with index i
-     * is always the view corresponding to position mFirstPosition + i.
-     */
     private void recycleOffscreenViews() {
         final int size = (mIsVertical ? getHeight() : getWidth());
         final int clearBefore = -mItemMargin;
@@ -622,8 +606,6 @@ public class TwoWayView extends ViewGroup {
             }
 
             if (childStart <= clearAfter)  {
-                // There may be other offscreen views, but we need to maintain
-                // the invariant documented above.
                 break;
             }
 
@@ -649,8 +631,6 @@ public class TwoWayView extends ViewGroup {
             }
 
             if (childEnd >= clearBefore) {
-                // There may be other offscreen views, but we need to maintain
-                // the invariant documented above.
                 break;
             }
 
@@ -937,11 +917,6 @@ public class TwoWayView extends ViewGroup {
         child.measure(widthSpec, heightSpec);
     }
 
-    /**
-     * Measure and layout all currently visible children.
-     *
-     * @param queryAdapter true to requery the adapter for view data
-     */
     final void layoutChildren(boolean queryAdapter) {
         if (DEBUG) {
             Log.d(LOGTAG, "Laying out children");
@@ -1030,13 +1005,6 @@ public class TwoWayView extends ViewGroup {
         }
     }
 
-    /**
-     * Should be called with mPopulating set to true
-     *
-     * @param fromPosition Position to start filling from
-     * @param overhang the number of extra pixels to fill beyond the current top edge
-     * @return the max overhang beyond the beginning of the view of any added items at the top
-     */
     final int fillBefore(int fromPosition, int overhang) {
         if (DEBUG) {
             Log.d(LOGTAG, "Filling before " + fromPosition + " with overhang " + overhang);
@@ -1116,13 +1084,6 @@ public class TwoWayView extends ViewGroup {
         return start - mItemsStart;
     }
 
-    /**
-     * Should be called with mPopulating set to true
-     *
-     * @param fromPosition Position to start filling from
-     * @param overhang the number of extra pixels to fill beyond the current bottom edge
-     * @return the max overhang beyond the end of the view of any added items at the bottom
-     */
     final int fillAfter(int fromPosition, int overhang) {
         if (DEBUG) {
             Log.d(LOGTAG, "Filling after " + fromPosition + " with overhang " + overhang);
@@ -1209,14 +1170,6 @@ public class TwoWayView extends ViewGroup {
         return mItemsEnd - end;
     }
 
-    /**
-     * Obtain a populated view from the adapter. If optScrap is non-null and is not
-     * reused it will be placed in the recycle bin.
-     *
-     * @param position position to get view for
-     * @param optScrap Optional scrap view; will be reused if possible
-     * @return A new view, a recycled view from mRecycler, or optScrap
-     */
     final View obtainView(int position, View optScrap) {
         View view = mRecycler.getTransientStateView(position);
         if (view != null) {
@@ -1255,9 +1208,6 @@ public class TwoWayView extends ViewGroup {
         return view;
     }
 
-    /**
-     * Clear all state because the grid will be used for a completely different set of data.
-     */
     private void clearAllState() {
         if (DEBUG) {
             Log.d(LOGTAG, "Clearning all state");
@@ -1277,9 +1227,6 @@ public class TwoWayView extends ViewGroup {
         }
     }
 
-    /**
-     * Reset all internal state to be at the top of the grid.
-     */
     private void resetStateForListStart() {
         final int padding = (mIsVertical ? getPaddingTop() : getPaddingLeft());
         mItemsStart = padding;
@@ -1289,9 +1236,6 @@ public class TwoWayView extends ViewGroup {
         mRestoreOffset = 0;
     }
 
-    /**
-     * Scroll the list so the first visible position in the grid is the first item in the adapter.
-     */
     public void setSelectionToTop() {
         // Clear out the views (but don't clear out the layout records
         // or recycler because the data has not changed)
