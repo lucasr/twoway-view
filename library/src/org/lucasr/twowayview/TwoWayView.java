@@ -1438,14 +1438,14 @@ public class TwoWayView extends ViewGroup {
         }
 
         public View getScrapView(int type) {
-            ArrayList<View> scrap = mScrapViews[type];
-            if (scrap.isEmpty()) {
+            ArrayList<View> scraps = mScrapViews[type];
+            if (scraps.isEmpty()) {
                 return null;
             }
 
-            final int index = scrap.size() - 1;
-            final View result = scrap.get(index);
-            scrap.remove(index);
+            final int index = scraps.size() - 1;
+            final View result = scraps.get(index);
+            scraps.remove(index);
 
             return result;
         }
