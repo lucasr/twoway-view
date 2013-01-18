@@ -12,7 +12,8 @@ Features
 
 * View recycling while scrolling, just like ListView/GridView.
 * Vertical and horizontal scrolling support.
-* A lot more to come.
+
+A lot more to come, stay tuned.
 
 How do I use it?
 ================
