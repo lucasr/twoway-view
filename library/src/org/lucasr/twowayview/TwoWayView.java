@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2013 Lucas Rocha
  *
- * This code was originally based on bits and pieces of Android's
- * AbsListView, Listview, and StaggeredGridView.
+ * This code is based on bits and pieces of Android's AbsListView,
+ * Listview, and StaggeredGridView.
  *
  * Copyright (C) 2012 The Android Open Source Project
  *
