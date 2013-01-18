@@ -315,93 +315,93 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
         switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                if (DEBUG) {
-                    Log.d(LOGTAG, "Touch event: ACTION_DOWN");
-                }
-
-                mVelocityTracker.clear();
-                mScroller.abortAnimation();
-
-                final float x = ev.getX();
-                final float y = ev.getY();
-
-                mLastTouchPos = (mIsVertical ? y : x);
-                final int motionPosition = pointToPosition((int) x, (int) y);
-
-                if (DEBUG) {
-                    Log.d(LOGTAG, "new last touched position: " + mLastTouchPos);
-                }
-
-                mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
-                mTouchRemainderPos = 0;
-
-                if (mTouchMode == TOUCH_MODE_FLINGING) {
-                    return true;
-                } else if (motionPosition >= 0) {
-                    mMotionPosition = motionPosition;
-                    mTouchMode = TOUCH_MODE_DOWN;
-                }
-
-                break;
-
-            case MotionEvent.ACTION_MOVE: {
-                if (DEBUG) {
-                    Log.d(LOGTAG, "Touch event: ACTION_MOVE");
-                }
-
-                if (mTouchMode != TOUCH_MODE_DOWN) {
-                    break;
-                }
-
-                final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
-                if (index < 0) {
-                    Log.e(LOGTAG, "onInterceptTouchEvent could not find pointer with id " +
-                            mActivePointerId + " - did TwoWayView receive an inconsistent " +
-                            "event stream?");
-                    return false;
-                }
-
-                final float pos;
-                if (mIsVertical) {
-                    pos = MotionEventCompat.getY(ev, index);
-                } else {
-                    pos = MotionEventCompat.getX(ev, index);
-                }
-
-                if (DEBUG) {
-                    Log.d(LOGTAG, "Touch event position is: " + pos);
-                }
-
-                final float diff = pos - mLastTouchPos + mTouchRemainderPos;
-                final int delta = (int) diff;
-                mTouchRemainderPos = diff - delta;
-
-                if (DEBUG) {
-                    Log.d(LOGTAG, "Is dragging? diff=" + diff + " slop=" + mTouchSlop);
-                }
-
-                if (Math.abs(diff) > mTouchSlop) {
-                    mTouchMode = TOUCH_MODE_DRAGGING;
-
-                    setPressed(false);
-                    View motionView = getChildAt(mMotionPosition - mFirstPosition);
-                    if (motionView != null) {
-                        motionView.setPressed(false);
-                    }
-
-                    if (DEBUG) {
-                        Log.d(LOGTAG, "Touch slop crossed, now dragging");
-                    }
-
-                    return true;
-                }
+        case MotionEvent.ACTION_DOWN:
+            if (DEBUG) {
+                Log.d(LOGTAG, "Touch event: ACTION_DOWN");
             }
 
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_UP:
-                mTouchMode = TOUCH_MODE_REST;
+            mVelocityTracker.clear();
+            mScroller.abortAnimation();
+
+            final float x = ev.getX();
+            final float y = ev.getY();
+
+            mLastTouchPos = (mIsVertical ? y : x);
+            final int motionPosition = pointToPosition((int) x, (int) y);
+
+            if (DEBUG) {
+                Log.d(LOGTAG, "new last touched position: " + mLastTouchPos);
+            }
+
+            mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
+            mTouchRemainderPos = 0;
+
+            if (mTouchMode == TOUCH_MODE_FLINGING) {
+                return true;
+            } else if (motionPosition >= 0) {
+                mMotionPosition = motionPosition;
+                mTouchMode = TOUCH_MODE_DOWN;
+            }
+
+            break;
+
+        case MotionEvent.ACTION_MOVE: {
+            if (DEBUG) {
+                Log.d(LOGTAG, "Touch event: ACTION_MOVE");
+            }
+
+            if (mTouchMode != TOUCH_MODE_DOWN) {
                 break;
+            }
+
+            final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
+            if (index < 0) {
+                Log.e(LOGTAG, "onInterceptTouchEvent could not find pointer with id " +
+                        mActivePointerId + " - did TwoWayView receive an inconsistent " +
+                        "event stream?");
+                return false;
+            }
+
+            final float pos;
+            if (mIsVertical) {
+                pos = MotionEventCompat.getY(ev, index);
+            } else {
+                pos = MotionEventCompat.getX(ev, index);
+            }
+
+            if (DEBUG) {
+                Log.d(LOGTAG, "Touch event position is: " + pos);
+            }
+
+            final float diff = pos - mLastTouchPos + mTouchRemainderPos;
+            final int delta = (int) diff;
+            mTouchRemainderPos = diff - delta;
+
+            if (DEBUG) {
+                Log.d(LOGTAG, "Is dragging? diff=" + diff + " slop=" + mTouchSlop);
+            }
+
+            if (Math.abs(diff) > mTouchSlop) {
+                mTouchMode = TOUCH_MODE_DRAGGING;
+
+                setPressed(false);
+                View motionView = getChildAt(mMotionPosition - mFirstPosition);
+                if (motionView != null) {
+                    motionView.setPressed(false);
+                }
+
+                if (DEBUG) {
+                    Log.d(LOGTAG, "Touch slop crossed, now dragging");
+                }
+
+                return true;
+            }
+        }
+
+        case MotionEvent.ACTION_CANCEL:
+        case MotionEvent.ACTION_UP:
+            mTouchMode = TOUCH_MODE_REST;
+            break;
         }
 
         return false;
@@ -423,246 +423,246 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
         switch (action) {
-            case MotionEvent.ACTION_DOWN: {
+        case MotionEvent.ACTION_DOWN: {
+            if (DEBUG) {
+                Log.d(LOGTAG, "Touch event: ACTION_DOWN");
+            }
+
+            if (mDataChanged) {
+                break;
+            }
+
+            mVelocityTracker.clear();
+            mScroller.abortAnimation();
+
+            final float x = ev.getX();
+            final float y = ev.getY();
+
+            mLastTouchPos = (mIsVertical ? y : x);
+            mMotionPosition = pointToPosition((int) x, (int) y);
+
+            if (DEBUG) {
+                Log.d(LOGTAG, "new last touched position: " + mLastTouchPos);
+            }
+
+            mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
+            mTouchRemainderPos = 0;
+
+            if (mTouchMode == TOUCH_MODE_FLINGING) {
+                mTouchMode = TOUCH_MODE_DRAGGING;
+                return true;
+            } else if (mMotionPosition >= 0 && mAdapter.isEnabled(mMotionPosition)) {
+                mTouchMode = TOUCH_MODE_DOWN;
+                triggerCheckForTap();
+            }
+
+            break;
+        }
+
+        case MotionEvent.ACTION_MOVE: {
+            if (DEBUG) {
+                Log.d(LOGTAG, "Touch event: ACTION_MOVE");
+            }
+
+            final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
+            if (index < 0) {
+                Log.e(LOGTAG, "onInterceptTouchEvent could not find pointer with id " +
+                        mActivePointerId + " - did StaggeredGridView receive an inconsistent " +
+                        "event stream?");
+                return false;
+            }
+
+            final float pos;
+            if (mIsVertical) {
+                pos = MotionEventCompat.getY(ev, index);
+            } else {
+                pos = MotionEventCompat.getX(ev, index);
+            }
+
+            if (DEBUG) {
+                Log.d(LOGTAG, "Touch event position is: " + pos);
+            }
+
+            final float diff = pos - mLastTouchPos + mTouchRemainderPos;
+            final int delta = (int) diff;
+            mTouchRemainderPos = diff - delta;
+
+            if (DEBUG) {
+                Log.d(LOGTAG, "Is dragging? diff=" + diff + " slop=" + mTouchSlop);
+            }
+
+            boolean canStartDragging =
+                    (mTouchMode == TOUCH_MODE_DOWN ||
+                     mTouchMode == TOUCH_MODE_TAP ||
+                     mTouchMode == TOUCH_MODE_DONE_WAITING);
+
+            if (canStartDragging && Math.abs(diff) > mTouchSlop) {
+                mTouchMode = TOUCH_MODE_DRAGGING;
+
                 if (DEBUG) {
-                    Log.d(LOGTAG, "Touch event: ACTION_DOWN");
+                    Log.d(LOGTAG, "Touch slop crossed, now dragging");
+                }
+            }
+
+            if (mTouchMode == TOUCH_MODE_DRAGGING) {
+                mLastTouchPos = pos;
+
+                if (DEBUG) {
+                    Log.d(LOGTAG, "In dragging mode, tracking motion");
                 }
 
-                if (mDataChanged) {
-                    break;
+                if (!trackMotionScroll(delta, true)) {
+                    // Break fling velocity if we impacted an edge
+                    mVelocityTracker.clear();
                 }
+            }
 
-                mVelocityTracker.clear();
-                mScroller.abortAnimation();
+            break;
+        }
+
+        case MotionEvent.ACTION_CANCEL:
+            if (DEBUG) {
+                Log.d(LOGTAG, "Touch event: ACTION_CANCEL");
+            }
+
+            cancelCheckForTap();
+            mTouchMode = TOUCH_MODE_REST;
+
+            setPressed(false);
+            View motionView = this.getChildAt(mMotionPosition - mFirstPosition);
+            if (motionView != null) {
+                motionView.setPressed(false);
+            }
+
+            needsInvalidate =
+                    mStartEdge.onRelease() | mEndEdge.onRelease();
+
+            break;
+
+        case MotionEvent.ACTION_UP: {
+            if (DEBUG) {
+                Log.d(LOGTAG, "Touch event: ACTION_UP");
+            }
+
+            switch (mTouchMode) {
+            case TOUCH_MODE_DOWN:
+            case TOUCH_MODE_TAP:
+            case TOUCH_MODE_DONE_WAITING: {
+                final int motionPosition = mMotionPosition;
+                final View child = getChildAt(motionPosition - mFirstPosition);
 
                 final float x = ev.getX();
                 final float y = ev.getY();
 
-                mLastTouchPos = (mIsVertical ? y : x);
-                mMotionPosition = pointToPosition((int) x, (int) y);
-
-                if (DEBUG) {
-                    Log.d(LOGTAG, "new last touched position: " + mLastTouchPos);
-                }
-
-                mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
-                mTouchRemainderPos = 0;
-
-                if (mTouchMode == TOUCH_MODE_FLINGING) {
-                    mTouchMode = TOUCH_MODE_DRAGGING;
-                    return true;
-                } else if (mMotionPosition >= 0 && mAdapter.isEnabled(mMotionPosition)) {
-                    mTouchMode = TOUCH_MODE_DOWN;
-                    triggerCheckForTap();
-                }
-
-                break;
-            }
-
-            case MotionEvent.ACTION_MOVE: {
-                if (DEBUG) {
-                    Log.d(LOGTAG, "Touch event: ACTION_MOVE");
-                }
-
-                final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
-                if (index < 0) {
-                    Log.e(LOGTAG, "onInterceptTouchEvent could not find pointer with id " +
-                            mActivePointerId + " - did StaggeredGridView receive an inconsistent " +
-                            "event stream?");
-                    return false;
-                }
-
-                final float pos;
+                boolean inList = false;
                 if (mIsVertical) {
-                    pos = MotionEventCompat.getY(ev, index);
+                    inList = x > getPaddingLeft() && x < getWidth() - getPaddingRight();
                 } else {
-                    pos = MotionEventCompat.getX(ev, index);
+                    inList = y > getPaddingTop() && y < getHeight() - getPaddingBottom();
                 }
 
-                if (DEBUG) {
-                    Log.d(LOGTAG, "Touch event position is: " + pos);
-                }
-
-                final float diff = pos - mLastTouchPos + mTouchRemainderPos;
-                final int delta = (int) diff;
-                mTouchRemainderPos = diff - delta;
-
-                if (DEBUG) {
-                    Log.d(LOGTAG, "Is dragging? diff=" + diff + " slop=" + mTouchSlop);
-                }
-
-                boolean canStartDragging =
-                        (mTouchMode == TOUCH_MODE_DOWN ||
-                         mTouchMode == TOUCH_MODE_TAP ||
-                         mTouchMode == TOUCH_MODE_DONE_WAITING);
-
-                if (canStartDragging && Math.abs(diff) > mTouchSlop) {
-                    mTouchMode = TOUCH_MODE_DRAGGING;
-
-                    if (DEBUG) {
-                        Log.d(LOGTAG, "Touch slop crossed, now dragging");
-                    }
-                }
-
-                if (mTouchMode == TOUCH_MODE_DRAGGING) {
-                    mLastTouchPos = pos;
-
-                    if (DEBUG) {
-                        Log.d(LOGTAG, "In dragging mode, tracking motion");
+                if (child != null && !child.hasFocusable() && inList) {
+                    if (mTouchMode != TOUCH_MODE_DOWN) {
+                        child.setPressed(false);
                     }
 
-                    if (!trackMotionScroll(delta, true)) {
-                        // Break fling velocity if we impacted an edge
-                        mVelocityTracker.clear();
+                    if (mPerformClick == null) {
+                        mPerformClick = new PerformClick();
                     }
-                }
 
-                break;
-            }
+                    final PerformClick performClick = mPerformClick;
+                    performClick.mClickMotionPosition = motionPosition;
+                    performClick.rememberWindowAttachCount();
 
-            case MotionEvent.ACTION_CANCEL:
-                if (DEBUG) {
-                    Log.d(LOGTAG, "Touch event: ACTION_CANCEL");
-                }
-
-                cancelCheckForTap();
-                mTouchMode = TOUCH_MODE_REST;
-
-                setPressed(false);
-                View motionView = this.getChildAt(mMotionPosition - mFirstPosition);
-                if (motionView != null) {
-                    motionView.setPressed(false);
-                }
-
-                needsInvalidate =
-                        mStartEdge.onRelease() | mEndEdge.onRelease();
-
-                break;
-
-            case MotionEvent.ACTION_UP: {
-                if (DEBUG) {
-                    Log.d(LOGTAG, "Touch event: ACTION_UP");
-                }
-
-                switch (mTouchMode) {
-                    case TOUCH_MODE_DOWN:
-                    case TOUCH_MODE_TAP:
-                    case TOUCH_MODE_DONE_WAITING: {
-                        final int motionPosition = mMotionPosition;
-                        final View child = getChildAt(motionPosition - mFirstPosition);
-
-                        final float x = ev.getX();
-                        final float y = ev.getY();
-
-                        boolean inList = false;
-                        if (mIsVertical) {
-                            inList = x > getPaddingLeft() && x < getWidth() - getPaddingRight();
+                    if (mTouchMode == TOUCH_MODE_DOWN || mTouchMode == TOUCH_MODE_TAP) {
+                        if (mTouchMode == TOUCH_MODE_DOWN) {
+                            cancelCheckForTap();
                         } else {
-                            inList = y > getPaddingTop() && y < getHeight() - getPaddingBottom();
+                            cancelCheckForLongPress();
                         }
 
-                        if (child != null && !child.hasFocusable() && inList) {
-                            if (mTouchMode != TOUCH_MODE_DOWN) {
-                                child.setPressed(false);
+                        if (!mDataChanged && mAdapter.isEnabled(motionPosition)) {
+                            mTouchMode = TOUCH_MODE_TAP;
+
+                            setPressed(true);
+                            child.setPressed(true);
+
+                            if (mTouchModeReset != null) {
+                                removeCallbacks(mTouchModeReset);
                             }
 
-                            if (mPerformClick == null) {
-                                mPerformClick = new PerformClick();
-                            }
+                            mTouchModeReset = new Runnable() {
+                                @Override
+                                public void run() {
+                                    mTouchMode = TOUCH_MODE_REST;
 
-                            final PerformClick performClick = mPerformClick;
-                            performClick.mClickMotionPosition = motionPosition;
-                            performClick.rememberWindowAttachCount();
+                                    setPressed(false);
+                                    child.setPressed(false);
 
-                            if (mTouchMode == TOUCH_MODE_DOWN || mTouchMode == TOUCH_MODE_TAP) {
-                                if (mTouchMode == TOUCH_MODE_DOWN) {
-                                    cancelCheckForTap();
-                                } else {
-                                    cancelCheckForLongPress();
-                                }
-
-                                if (!mDataChanged && mAdapter.isEnabled(motionPosition)) {
-                                    mTouchMode = TOUCH_MODE_TAP;
-
-                                    setPressed(true);
-                                    child.setPressed(true);
-
-                                    if (mTouchModeReset != null) {
-                                        removeCallbacks(mTouchModeReset);
+                                    if (!mDataChanged) {
+                                        performClick.run();
                                     }
 
-                                    mTouchModeReset = new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            mTouchMode = TOUCH_MODE_REST;
-
-                                            setPressed(false);
-                                            child.setPressed(false);
-
-                                            if (!mDataChanged) {
-                                                performClick.run();
-                                            }
-
-                                            mTouchModeReset = null;
-                                        }
-                                    };
-
-                                    postDelayed(mTouchModeReset,
-                                            ViewConfiguration.getPressedStateDuration());
-                                } else {
-                                    mTouchMode = TOUCH_MODE_REST;
+                                    mTouchModeReset = null;
                                 }
-                            }
-                        }
+                            };
 
-                        mTouchMode = TOUCH_MODE_REST;
-                        break;
-                    }
-
-                    case TOUCH_MODE_DRAGGING:
-                        mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-
-                        final float velocity;
-                        if (mIsVertical) {
-                            velocity = VelocityTrackerCompat.getYVelocity(mVelocityTracker,
-                                    mActivePointerId);
-                        } else {
-                            velocity = VelocityTrackerCompat.getXVelocity(mVelocityTracker,
-                                    mActivePointerId);
-                        }
-
-                        if (Math.abs(velocity) >= mFlingVelocity) { // TODO
-                            mTouchMode = TOUCH_MODE_FLINGING;
-
-                            mScroller.fling(0, 0,
-                                            (int) (mIsVertical ? 0 : velocity),
-                                            (int) (mIsVertical ? velocity : 0),
-                                            (mIsVertical ? 0 : Integer.MIN_VALUE),
-                                            (mIsVertical ? 0 : Integer.MAX_VALUE),
-                                            (mIsVertical ? Integer.MIN_VALUE : 0),
-                                            (mIsVertical ? Integer.MAX_VALUE : 0));
-
-                            if (DEBUG) {
-                                Log.d(LOGTAG, "Fling detected");
-                            }
-
-                            mLastTouchPos = 0;
-                            needsInvalidate = true;
+                            postDelayed(mTouchModeReset,
+                                    ViewConfiguration.getPressedStateDuration());
                         } else {
                             mTouchMode = TOUCH_MODE_REST;
                         }
-
-                        break;
+                    }
                 }
 
-                cancelCheckForTap();
-                setPressed(false);
+                mTouchMode = TOUCH_MODE_REST;
+                break;
+            }
 
-                needsInvalidate |=
-                        mStartEdge.onRelease() | mEndEdge.onRelease();
+            case TOUCH_MODE_DRAGGING:
+                mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+
+                final float velocity;
+                if (mIsVertical) {
+                    velocity = VelocityTrackerCompat.getYVelocity(mVelocityTracker,
+                            mActivePointerId);
+                } else {
+                    velocity = VelocityTrackerCompat.getXVelocity(mVelocityTracker,
+                            mActivePointerId);
+                }
+
+                if (Math.abs(velocity) >= mFlingVelocity) { // TODO
+                    mTouchMode = TOUCH_MODE_FLINGING;
+
+                    mScroller.fling(0, 0,
+                                    (int) (mIsVertical ? 0 : velocity),
+                                    (int) (mIsVertical ? velocity : 0),
+                                    (mIsVertical ? 0 : Integer.MIN_VALUE),
+                                    (mIsVertical ? 0 : Integer.MAX_VALUE),
+                                    (mIsVertical ? Integer.MIN_VALUE : 0),
+                                    (mIsVertical ? Integer.MAX_VALUE : 0));
+
+                    if (DEBUG) {
+                        Log.d(LOGTAG, "Fling detected");
+                    }
+
+                    mLastTouchPos = 0;
+                    needsInvalidate = true;
+                } else {
+                    mTouchMode = TOUCH_MODE_REST;
+                }
 
                 break;
             }
+
+            cancelCheckForTap();
+            setPressed(false);
+
+            needsInvalidate |=
+                    mStartEdge.onRelease() | mEndEdge.onRelease();
+
+            break;
+        }
         }
 
         if (needsInvalidate) {
