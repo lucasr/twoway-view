@@ -1574,7 +1574,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
     }
 
-    private static class SavedState extends BaseSavedState {
+    static class SavedState extends BaseSavedState {
         int position;
         int offset;
 
