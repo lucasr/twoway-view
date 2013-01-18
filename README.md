@@ -5,7 +5,7 @@ patches are very welcome!
 What is it?
 ===========
 
-ListView-like Android view with support for vertical and horizontal scrolling.
+An AdapterView with support for vertical and horizontal scrolling.
 
 Features
 ========
