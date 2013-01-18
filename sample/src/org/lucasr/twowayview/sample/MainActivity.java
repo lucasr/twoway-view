@@ -27,6 +27,9 @@ import android.app.Activity;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
     private TwoWayView mListView;
@@ -38,6 +41,25 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         mListView = (TwoWayView) findViewById(R.id.list);
         mListView.setItemMargin(10);
+        mListView.setLongClickable(true);
+
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View child, int position,
+                    long id) {
+                Toast.makeText(MainActivity.this, "Item clicked: " + position, Toast.LENGTH_SHORT).show();
+            }
+
+        });
+
+        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View child,
+                    int position, long id) {
+                Toast.makeText(MainActivity.this, "Item long pressed: " + position, Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
 
         updateForOrientation();
 
