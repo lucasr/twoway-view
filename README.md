@@ -1,17 +1,18 @@
-NOTE: TwoWayView's API is not final yet. Although the library is fairly
-funcional, this is still beta-quality code. Do not rely on it for production
-code just yet. Feedback is very welcome!
+NOTE: TwoWayView's API is not final yet and code is under heavy development
+at the moment. Do not rely on it for production code just yet. Feedback and
+patches are very welcome!
 
 What is it?
 ===========
 
-ListView-like widget with support for vertical and horizontal scrolling.
+ListView-like view with support for vertical and horizontal scrolling.
 
 Features
 ========
 
-* Proper view recycling while scrolling, just like ListView/GridView.
+* View recycling while scrolling, just like ListView/GridView.
 * Vertical and horizontal scrolling support.
+* A lot more to come.
 
 How do I use it?
 ================
@@ -28,12 +29,23 @@ Want to help?
 =============
 
 File new issues to discuss specific aspects of the API and to propose new
-features.
+features. Here's a few (definitely not all!) of the upcoming features:
+
+* Accessibility support
+* Keyboard events and navigation
+* Focus handling
+* List selector
+* AdapterView selection
 
 License
 =======
 
-    Copyright 2012 Lucas Rocha
+    Copyright (C) 2013 Lucas Rocha
+
+    TwoWayView's code is based on bits and pieces of Android's
+    AbsListView, Listview, and StaggeredGridView.
+
+    Copyright (C) 2012 The Android Open Source Project
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
