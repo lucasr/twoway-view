@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2013 Lucas Rocha
  *
- * This code was initially based on Android's StaggeredGridView.
+ * This code was originally based on bits and pieces of Android's
+ * AbsListView, Listview, and StaggeredGridView.
  *
  * Copyright (C) 2012 The Android Open Source Project
  *
@@ -26,6 +27,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -36,6 +38,8 @@ import android.support.v4.widget.EdgeEffectCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -46,19 +50,22 @@ import android.widget.ListAdapter;
 import android.widget.Scroller;
 
 public class TwoWayView extends AdapterView<ListAdapter> {
-    private static final String LOGTAG = "TwoWayListView";
+    private static final String LOGTAG = "TwoWayView";
     private static final boolean DEBUG = true;
+
+    private static final int TOUCH_MODE_REST = -1;
+    private static final int TOUCH_MODE_DOWN = 0;
+    private static final int TOUCH_MODE_TAP = 1;
+    private static final int TOUCH_MODE_DONE_WAITING = 2;
+    private static final int TOUCH_MODE_DRAGGING = 3;
+    private static final int TOUCH_MODE_FLINGING = 4;
+
+    private ListAdapter mAdapter;
 
     public static enum ScrollDirection {
         VERTICAL,
         HORIZONTAL;
     };
-
-    private static final int TOUCH_MODE_IDLE = 0;
-    private static final int TOUCH_MODE_DRAGGING = 1;
-    private static final int TOUCH_MODE_FLINGING = 2;
-
-    private ListAdapter mAdapter;
 
     private boolean mIsVertical;
 
@@ -87,6 +94,15 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     private float mTouchRemainderPos;
     private int mActivePointerId;
 
+    private Rect mTouchFrame;
+    private int mMotionPosition;
+    private CheckForTap mPendingCheckForTap;
+    private CheckForLongPress mPendingCheckForLongPress;
+    private PerformClick mPerformClick;
+    private Runnable mTouchModeReset;
+
+    private ContextMenuInfo mContextMenuInfo;
+
     private int mTouchMode;
     private final VelocityTracker mVelocityTracker = VelocityTracker.obtain();
     private final Scroller mScroller;
@@ -104,6 +120,10 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
     public TwoWayView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        mTouchMode = TOUCH_MODE_REST;
+
+        mContextMenuInfo = null;
 
         mItemsStart = null;
         mItemsEnd = null;
@@ -201,8 +221,88 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         populate();
     }
 
-    public int getFirstPosition() {
+    @Override
+    public int getFirstVisiblePosition() {
         return mFirstPosition;
+    }
+
+    @Override
+    public int getLastVisiblePosition() {
+        return mFirstPosition + getChildCount() - 1;
+    }
+
+    @Override
+    public int getPositionForView(View view) {
+        View child = view;
+        try {
+            View v;
+            while (!(v = (View) child.getParent()).equals(this)) {
+                child = v;
+            }
+        } catch (ClassCastException e) {
+            // We made it up to the window without find this list view
+            return INVALID_POSITION;
+        }
+
+        // Search the children for the list item
+        final int childCount = getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            if (getChildAt(i).equals(child)) {
+                return mFirstPosition + i;
+            }
+        }
+
+        // Child not found!
+        return INVALID_POSITION;
+    }
+
+    public int pointToPosition(int x, int y) {
+        Rect frame = mTouchFrame;
+        if (frame == null) {
+            mTouchFrame = new Rect();
+            frame = mTouchFrame;
+        }
+
+        final int count = getChildCount();
+        for (int i = count - 1; i >= 0; i--) {
+            final View child = getChildAt(i);
+
+            if (child.getVisibility() == View.VISIBLE) {
+                child.getHitRect(frame);
+
+                if (frame.contains(x, y)) {
+                    return mFirstPosition + i;
+                }
+            }
+        }
+        return INVALID_POSITION;
+    }
+
+    @Override
+    public boolean showContextMenuForChild(View originalView) {
+        final int longPressPosition = getPositionForView(originalView);
+        if (longPressPosition >= 0) {
+            final long longPressId = mAdapter.getItemId(longPressPosition);
+            boolean handled = false;
+
+            OnItemLongClickListener listener = getOnItemLongClickListener();
+            if (listener != null) {
+                handled = listener.onItemLongClick(TwoWayView.this, originalView,
+                        longPressPosition, longPressId);
+            }
+
+            if (!handled) {
+                mContextMenuInfo = createContextMenuInfo(
+                        getChildAt(longPressPosition - mFirstPosition),
+                        longPressPosition, longPressId);
+
+                handled = super.showContextMenuForChild(originalView);
+            }
+
+            return handled;
+        }
+
+        return false;
     }
 
     @Override
@@ -223,7 +323,11 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 mVelocityTracker.clear();
                 mScroller.abortAnimation();
 
-                mLastTouchPos = (mIsVertical ? ev.getY() : ev.getX());
+                final float x = ev.getX();
+                final float y = ev.getY();
+
+                mLastTouchPos = (mIsVertical ? y : x);
+                final int motionPosition = pointToPosition((int) x, (int) y);
 
                 if (DEBUG) {
                     Log.d(LOGTAG, "new last touched position: " + mLastTouchPos);
@@ -233,8 +337,10 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 mTouchRemainderPos = 0;
 
                 if (mTouchMode == TOUCH_MODE_FLINGING) {
-                    mTouchMode = TOUCH_MODE_DRAGGING;
                     return true;
+                } else if (motionPosition >= 0) {
+                    mMotionPosition = motionPosition;
+                    mTouchMode = TOUCH_MODE_DOWN;
                 }
 
                 break;
@@ -242,6 +348,10 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             case MotionEvent.ACTION_MOVE: {
                 if (DEBUG) {
                     Log.d(LOGTAG, "Touch event: ACTION_MOVE");
+                }
+
+                if (mTouchMode != TOUCH_MODE_DOWN) {
+                    break;
                 }
 
                 final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
@@ -274,6 +384,12 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 if (Math.abs(diff) > mTouchSlop) {
                     mTouchMode = TOUCH_MODE_DRAGGING;
 
+                    setPressed(false);
+                    View motionView = getChildAt(mMotionPosition - mFirstPosition);
+                    if (motionView != null) {
+                        motionView.setPressed(false);
+                    }
+
                     if (DEBUG) {
                         Log.d(LOGTAG, "Touch slop crossed, now dragging");
                     }
@@ -281,6 +397,11 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                     return true;
                 }
             }
+
+            case MotionEvent.ACTION_CANCEL:
+            case MotionEvent.ACTION_UP:
+                mTouchMode = TOUCH_MODE_REST;
+                break;
         }
 
         return false;
@@ -292,21 +413,33 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             Log.d(LOGTAG, "Touch event");
         }
 
+        if (!isEnabled()) {
+            return isClickable() || isLongClickable();
+        }
+
         boolean needsInvalidate = false;
 
         mVelocityTracker.addMovement(ev);
 
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
         switch (action) {
-            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_DOWN: {
                 if (DEBUG) {
                     Log.d(LOGTAG, "Touch event: ACTION_DOWN");
+                }
+
+                if (mDataChanged) {
+                    break;
                 }
 
                 mVelocityTracker.clear();
                 mScroller.abortAnimation();
 
-                mLastTouchPos = (mIsVertical ? ev.getY() : ev.getX());
+                final float x = ev.getX();
+                final float y = ev.getY();
+
+                mLastTouchPos = (mIsVertical ? y : x);
+                mMotionPosition = pointToPosition((int) x, (int) y);
 
                 if (DEBUG) {
                     Log.d(LOGTAG, "new last touched position: " + mLastTouchPos);
@@ -314,7 +447,17 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
                 mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
                 mTouchRemainderPos = 0;
+
+                if (mTouchMode == TOUCH_MODE_FLINGING) {
+                    mTouchMode = TOUCH_MODE_DRAGGING;
+                    return true;
+                } else if (mMotionPosition >= 0 && mAdapter.isEnabled(mMotionPosition)) {
+                    mTouchMode = TOUCH_MODE_DOWN;
+                    triggerCheckForTap();
+                }
+
                 break;
+            }
 
             case MotionEvent.ACTION_MOVE: {
                 if (DEBUG) {
@@ -348,7 +491,12 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                     Log.d(LOGTAG, "Is dragging? diff=" + diff + " slop=" + mTouchSlop);
                 }
 
-                if (Math.abs(diff) > mTouchSlop) {
+                boolean canStartDragging =
+                        (mTouchMode == TOUCH_MODE_DOWN ||
+                         mTouchMode == TOUCH_MODE_TAP ||
+                         mTouchMode == TOUCH_MODE_DONE_WAITING);
+
+                if (canStartDragging && Math.abs(diff) > mTouchSlop) {
                     mTouchMode = TOUCH_MODE_DRAGGING;
 
                     if (DEBUG) {
@@ -377,7 +525,14 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                     Log.d(LOGTAG, "Touch event: ACTION_CANCEL");
                 }
 
-                mTouchMode = TOUCH_MODE_IDLE;
+                cancelCheckForTap();
+                mTouchMode = TOUCH_MODE_REST;
+
+                setPressed(false);
+                View motionView = this.getChildAt(mMotionPosition - mFirstPosition);
+                if (motionView != null) {
+                    motionView.setPressed(false);
+                }
 
                 needsInvalidate =
                         mStartEdge.onRelease() | mEndEdge.onRelease();
@@ -389,37 +544,119 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                     Log.d(LOGTAG, "Touch event: ACTION_UP");
                 }
 
-                mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+                switch (mTouchMode) {
+                    case TOUCH_MODE_DOWN:
+                    case TOUCH_MODE_TAP:
+                    case TOUCH_MODE_DONE_WAITING: {
+                        final int motionPosition = mMotionPosition;
+                        final View child = getChildAt(motionPosition - mFirstPosition);
 
-                final float velocity;
-                if (mIsVertical) {
-                    velocity = VelocityTrackerCompat.getYVelocity(mVelocityTracker,
-                            mActivePointerId);
-                } else {
-                    velocity = VelocityTrackerCompat.getXVelocity(mVelocityTracker,
-                            mActivePointerId);
-                }
+                        final float x = ev.getX();
+                        final float y = ev.getY();
 
-                if (Math.abs(velocity) >= mFlingVelocity) { // TODO
-                    mTouchMode = TOUCH_MODE_FLINGING;
+                        boolean inList = false;
+                        if (mIsVertical) {
+                            inList = x > getPaddingLeft() && x < getWidth() - getPaddingRight();
+                        } else {
+                            inList = y > getPaddingTop() && y < getHeight() - getPaddingBottom();
+                        }
 
-                    mScroller.fling(0, 0,
-                                    (int) (mIsVertical ? 0 : velocity),
-                                    (int) (mIsVertical ? velocity : 0),
-                                    (mIsVertical ? 0 : Integer.MIN_VALUE),
-                                    (mIsVertical ? 0 : Integer.MAX_VALUE),
-                                    (mIsVertical ? Integer.MIN_VALUE : 0),
-                                    (mIsVertical ? Integer.MAX_VALUE : 0));
+                        if (child != null && !child.hasFocusable() && inList) {
+                            if (mTouchMode != TOUCH_MODE_DOWN) {
+                                child.setPressed(false);
+                            }
 
-                    if (DEBUG) {
-                        Log.d(LOGTAG, "Fling detected");
+                            if (mPerformClick == null) {
+                                mPerformClick = new PerformClick();
+                            }
+
+                            final PerformClick performClick = mPerformClick;
+                            performClick.mClickMotionPosition = motionPosition;
+                            performClick.rememberWindowAttachCount();
+
+                            if (mTouchMode == TOUCH_MODE_DOWN || mTouchMode == TOUCH_MODE_TAP) {
+                                if (mTouchMode == TOUCH_MODE_DOWN) {
+                                    cancelCheckForTap();
+                                } else {
+                                    cancelCheckForLongPress();
+                                }
+
+                                if (!mDataChanged && mAdapter.isEnabled(motionPosition)) {
+                                    mTouchMode = TOUCH_MODE_TAP;
+
+                                    setPressed(true);
+                                    child.setPressed(true);
+
+                                    if (mTouchModeReset != null) {
+                                        removeCallbacks(mTouchModeReset);
+                                    }
+
+                                    mTouchModeReset = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mTouchMode = TOUCH_MODE_REST;
+
+                                            setPressed(false);
+                                            child.setPressed(false);
+
+                                            if (!mDataChanged) {
+                                                performClick.run();
+                                            }
+
+                                            mTouchModeReset = null;
+                                        }
+                                    };
+
+                                    postDelayed(mTouchModeReset,
+                                            ViewConfiguration.getPressedStateDuration());
+                                } else {
+                                    mTouchMode = TOUCH_MODE_REST;
+                                }
+                            }
+                        }
+
+                        mTouchMode = TOUCH_MODE_REST;
+                        break;
                     }
 
-                    mLastTouchPos = 0;
-                    needsInvalidate = true;
-                } else {
-                    mTouchMode = TOUCH_MODE_IDLE;
+                    case TOUCH_MODE_DRAGGING:
+                        mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+
+                        final float velocity;
+                        if (mIsVertical) {
+                            velocity = VelocityTrackerCompat.getYVelocity(mVelocityTracker,
+                                    mActivePointerId);
+                        } else {
+                            velocity = VelocityTrackerCompat.getXVelocity(mVelocityTracker,
+                                    mActivePointerId);
+                        }
+
+                        if (Math.abs(velocity) >= mFlingVelocity) { // TODO
+                            mTouchMode = TOUCH_MODE_FLINGING;
+
+                            mScroller.fling(0, 0,
+                                            (int) (mIsVertical ? 0 : velocity),
+                                            (int) (mIsVertical ? velocity : 0),
+                                            (mIsVertical ? 0 : Integer.MIN_VALUE),
+                                            (mIsVertical ? 0 : Integer.MAX_VALUE),
+                                            (mIsVertical ? Integer.MIN_VALUE : 0),
+                                            (mIsVertical ? Integer.MAX_VALUE : 0));
+
+                            if (DEBUG) {
+                                Log.d(LOGTAG, "Fling detected");
+                            }
+
+                            mLastTouchPos = 0;
+                            needsInvalidate = true;
+                        } else {
+                            mTouchMode = TOUCH_MODE_REST;
+                        }
+
+                        break;
                 }
+
+                cancelCheckForTap();
+                setPressed(false);
 
                 needsInvalidate |=
                         mStartEdge.onRelease() | mEndEdge.onRelease();
@@ -433,6 +670,41 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
 
         return true;
+    }
+
+    private void triggerCheckForTap() {
+        if (mPendingCheckForTap == null) {
+            mPendingCheckForTap = new CheckForTap();
+        }
+
+        postDelayed(mPendingCheckForTap, ViewConfiguration.getTapTimeout());
+    }
+
+    private void cancelCheckForTap() {
+        if (mPendingCheckForTap == null) {
+            return;
+        }
+
+        removeCallbacks(mPendingCheckForTap);
+    }
+
+    private void triggerCheckForLongPress() {
+        if (mPendingCheckForLongPress == null) {
+            mPendingCheckForLongPress = new CheckForLongPress();
+        }
+
+        mPendingCheckForLongPress.rememberWindowAttachCount();
+
+        postDelayed(mPendingCheckForLongPress,
+                ViewConfiguration.getLongPressTimeout());
+    }
+
+    private void cancelCheckForLongPress() {
+        if (mPendingCheckForLongPress == null) {
+            return;
+        }
+
+        removeCallbacks(mPendingCheckForLongPress);
     }
 
     private boolean trackMotionScroll(int delta, boolean allowOverScroll) {
@@ -480,6 +752,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             }
 
             recycleOffscreenViews();
+
             mPopulating = false;
 
             overScrolledBy = allowOverhang - overhang;
@@ -708,7 +981,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                     mScroller.abortAnimation();
                 }
 
-                mTouchMode = TOUCH_MODE_IDLE;
+                mTouchMode = TOUCH_MODE_REST;
             }
         }
     }
@@ -790,6 +1063,12 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     @Override
     public void setSelection(int position) {
         // TODO Do nothing for now
+    }
+
+    @Override
+    protected void dispatchSetPressed(boolean pressed) {
+        // Don't dispatch setPressed to our children. We call setPressed on ourselves to
+        // get the selector in the right state, but we don't want to press each child.
     }
 
     @Override
@@ -1266,6 +1545,33 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         mRestoreOffset = 0;
     }
 
+    private ContextMenuInfo createContextMenuInfo(View view, int position, long id) {
+        return new AdapterContextMenuInfo(view, position, id);
+    }
+
+    private boolean performLongPress(final View child,
+            final int longPressPosition, final long longPressId) {
+        // CHOICE_MODE_MULTIPLE_MODAL takes over long press.
+        boolean handled = false;
+
+        OnItemLongClickListener listener = getOnItemLongClickListener();
+        if (listener != null) {
+            handled = listener.onItemLongClick(TwoWayView.this, child,
+                    longPressPosition, longPressId);
+        }
+
+        if (!handled) {
+            mContextMenuInfo = createContextMenuInfo(child, longPressPosition, longPressId);
+            handled = super.showContextMenuForChild(TwoWayView.this);
+        }
+
+        if (handled) {
+            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        }
+
+        return handled;
+    }
+
     public void setSelectionToTop() {
         // Clear out the views (but don't clear out the layout records
         // or recycler because the data has not changed)
@@ -1296,6 +1602,11 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     @Override
     public ViewGroup.LayoutParams generateLayoutParams(AttributeSet attrs) {
         return new LayoutParams(getContext(), attrs);
+    }
+
+    @Override
+    protected ContextMenuInfo getContextMenuInfo() {
+        return mContextMenuInfo;
     }
 
     @Override
@@ -1536,7 +1847,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
     }
 
-    static class SavedState extends BaseSavedState {
+    private static class SavedState extends BaseSavedState {
         int position;
         int offset;
 
@@ -1576,5 +1887,108 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 return new SavedState[size];
             }
         };
+    }
+
+    private class WindowRunnnable {
+        private int mOriginalAttachCount;
+
+        public void rememberWindowAttachCount() {
+            mOriginalAttachCount = getWindowAttachCount();
+        }
+
+        public boolean sameWindow() {
+            return hasWindowFocus() && getWindowAttachCount() == mOriginalAttachCount;
+        }
+    }
+
+    private class PerformClick extends WindowRunnnable implements Runnable {
+        int mClickMotionPosition;
+
+        @Override
+        public void run() {
+            if (mDataChanged) {
+                return;
+            }
+
+            final ListAdapter adapter = mAdapter;
+            final int motionPosition = mClickMotionPosition;
+
+            if (adapter != null && mItemCount > 0 &&
+                motionPosition != INVALID_POSITION &&
+                motionPosition < adapter.getCount() && sameWindow()) {
+
+                final View child = getChildAt(motionPosition - mFirstPosition);
+                if (child != null) {
+                    if (DEBUG) {
+                        Log.d(LOGTAG, "Item clicked: " + motionPosition);
+                    }
+
+                    performItemClick(child, motionPosition, adapter.getItemId(motionPosition));
+                }
+            }
+        }
+    }
+
+    private final class CheckForTap implements Runnable {
+        @Override
+        public void run() {
+            if (mTouchMode != TOUCH_MODE_DOWN) {
+                return;
+            }
+
+            mTouchMode = TOUCH_MODE_TAP;
+
+            final View child = getChildAt(mMotionPosition - mFirstPosition);
+            if (child != null && !child.hasFocusable()) {
+                if (!mDataChanged) {
+                    setPressed(true);
+                    child.setPressed(true);
+
+                    layoutChildren(false);
+                    refreshDrawableState();
+
+                    if (DEBUG) {
+                        Log.d(LOGTAG, "Is long clickable: " + isLongClickable());
+                    }
+
+                    if (isLongClickable()) {
+                        triggerCheckForLongPress();
+                    } else {
+                        mTouchMode = TOUCH_MODE_DONE_WAITING;
+                    }
+                } else {
+                    mTouchMode = TOUCH_MODE_DONE_WAITING;
+                }
+            }
+        }
+    }
+
+    private class CheckForLongPress extends WindowRunnnable implements Runnable {
+        @Override
+        public void run() {
+            final int motionPosition = mMotionPosition;
+            final View child = getChildAt(motionPosition - mFirstPosition);
+
+            if (child != null) {
+                final long longPressId = mAdapter.getItemId(mMotionPosition);
+
+                boolean handled = false;
+                if (sameWindow() && !mDataChanged) {
+                    if (DEBUG) {
+                        Log.d(LOGTAG, "Item long pressed: " + motionPosition);
+                    }
+
+                    handled = performLongPress(child, motionPosition, longPressId);
+                }
+
+                if (handled) {
+                    mTouchMode = TOUCH_MODE_REST;
+                    setPressed(false);
+                    child.setPressed(false);
+                } else {
+                    mTouchMode = TOUCH_MODE_DONE_WAITING;
+                }
+            }
+        }
     }
 }
