@@ -1394,9 +1394,17 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         public LayoutParams(int width, int height) {
             super(width, height);
 
+            if (this.width == MATCH_PARENT) {
+                Log.w(LOGTAG, "Constructing LayoutParams with width FILL_PARENT " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
+                this.width = WRAP_CONTENT;
+            }
+
             if (this.height == MATCH_PARENT) {
-                Log.w(LOGTAG, "Constructing LayoutParams with height FILL_PARENT - " +
-                        "impossible! Falling back to WRAP_CONTENT");
+                Log.w(LOGTAG, "Constructing LayoutParams with height FILL_PARENT " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
                 this.height = WRAP_CONTENT;
             }
         }
@@ -1404,15 +1412,17 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
 
-            if (this.width != MATCH_PARENT) {
-                Log.w(LOGTAG, "Inflation setting LayoutParams width to " + this.width +
-                        " - must be MATCH_PARENT");
+            if (this.width == MATCH_PARENT) {
+                Log.w(LOGTAG, "Inflation setting LayoutParams width to MATCH_PARENT - " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
                 this.width = MATCH_PARENT;
             }
 
             if (this.height == MATCH_PARENT) {
                 Log.w(LOGTAG, "Inflation setting LayoutParams height to MATCH_PARENT - " +
-                        "impossible! Falling back to WRAP_CONTENT");
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
                 this.height = WRAP_CONTENT;
             }
         }
@@ -1420,15 +1430,17 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         public LayoutParams(ViewGroup.LayoutParams other) {
             super(other);
 
-            if (this.width != MATCH_PARENT) {
-                Log.w(LOGTAG, "Constructing LayoutParams with width " + this.width +
-                        " - must be MATCH_PARENT");
-                this.width = MATCH_PARENT;
+            if (this.width == MATCH_PARENT) {
+                Log.w(LOGTAG, "Constructing LayoutParams with height MATCH_PARENT - " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
+                this.width = WRAP_CONTENT;
             }
 
             if (this.height == MATCH_PARENT) {
                 Log.w(LOGTAG, "Constructing LayoutParams with height MATCH_PARENT - " +
-                        "impossible! Falling back to WRAP_CONTENT");
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
                 this.height = WRAP_CONTENT;
             }
         }
