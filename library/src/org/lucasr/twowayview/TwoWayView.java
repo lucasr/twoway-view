@@ -690,10 +690,6 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     }
 
     private final boolean contentFits() {
-        return (mIsVertical ? contentFitsVertical() : contentFitsHorizontal());
-    }
-
-    private final boolean contentFitsVertical() {
         if (mItemCount == 0) {
             return true;
         }
@@ -702,21 +698,13 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             return false;
         }
 
-        return (mItemsStart >= getPaddingTop() &&
-                mItemsEnd <= getHeight() - getPaddingBottom());
-    }
-
-    private final boolean contentFitsHorizontal() {
-        if (mItemCount == 0) {
-            return true;
+        if (mIsVertical) {
+            return (mItemsStart >= getPaddingTop() &&
+                    mItemsEnd <= getHeight() - getPaddingBottom());
+        } else {
+            return (mItemsStart >= getPaddingLeft() &&
+                    mItemsEnd <= getWidth() - getPaddingRight());
         }
-
-        if (mFirstPosition != 0 || getChildCount() != mItemCount) {
-            return false;
-        }
-
-        return (mItemsStart >= getPaddingLeft() &&
-                mItemsEnd <= getWidth() - getPaddingRight());
     }
 
     private void recycleAllViews() {
