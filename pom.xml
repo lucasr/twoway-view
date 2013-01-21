@@ -21,19 +21,45 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.lucasr.twowayview</groupId>
-    <artifactId>parent</artifactId>
-    <packaging>pom</packaging>
-    <version>0.1</version>
-    <name>TwoWayView Project</name>
-    <description>A ListView-like widget with support for vertical and horizontal scrolling</description>
-    <url>https://github.com/lucasr/twoway-view</url>
-
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
     </parent>
+
+    <groupId>org.lucasr.twowayview</groupId>
+    <artifactId>parent</artifactId>
+    <packaging>pom</packaging>
+    <version>0.1</version>
+
+    <name>TwoWayView (Parent)</name>
+    <description>An AdapterView with support for vertical and horizontal scrolling.</description>
+    <url>https://github.com/lucasr/twoway-view</url>
+    <inceptionYear>2013</inceptionYear>
+
+    <modules>
+        <module>library</module>
+        <module>sample</module>
+    </modules>
+
+    <scm>
+        <url>https://github.com/lucasr/twoway-view</url>
+        <connection>scm:git:git://github.com/lucasr/twoway-view.git</connection>
+        <developerConnection>scm:git:git@github.com:lucasr/twoway-view.git</developerConnection>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Lucas Rocha</name>
+            <email>lucasr@lucasr.org</email>
+            <id>lucasr</id>
+            <url>http://lucasr.org</url>
+            <timezone>0</timezone>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
 
     <licenses>
         <license>
@@ -43,35 +69,21 @@
         </license>
     </licenses>
 
-    <scm>
-        <url>https://github.com/lucasr/twoway-view</url>
-        <connection>scm:git:git://github.com/lucasr/twoway-view.git</connection>
-        <developerConnection>scm:git:git@github.com:lucasr/twoway-view.git</developerConnection>
-        <tag>v0.1</tag>
-    </scm>
-
-    <developers>
-        <developer>
-            <name>Lucas Rocha</name>
-            <url>http://lucasr.org</url>
-            <id>lucasr</id>
-        </developer>
-    </developers>
-
-    <modules>
-        <module>library</module>
-        <module>sample</module>
-    </modules>
+    <organization>
+        <name>Lucas Rocha</name>
+        <url>http://lucasr.org</url>
+    </organization>
 
     <properties>
-        <!-- build settings -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
         <java.version>1.6</java.version>
         <android.version>4.1.2_r4</android.version>
-        <android-support.version>11</android-support.version>
         <android.platform>16</android.platform>
-        <android-maven.version>3.2.0</android-maven.version>
+        <android-support.version>11</android-support.version>
+
+        <android-maven.version>3.4.0</android-maven.version>
     </properties>
 
     <dependencyManagement>
@@ -82,6 +94,7 @@
                 <version>${android.version}</version>
                 <scope>provided</scope>
             </dependency>
+
             <dependency>
                 <groupId>android.support</groupId>
                 <artifactId>compatibility-v4</artifactId>
@@ -93,20 +106,16 @@
     <build>
         <pluginManagement>
             <plugins>
-                <!-- compiler settings -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>2.3.2</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-release-plugin</artifactId>
-                    <version>2.3.2</version>
+                    <version>2.5</version>
                     <configuration>
-                        <tagNameFormat>v@{project.version}</tagNameFormat>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
                     </configuration>
                 </plugin>
+
                 <plugin>
                     <groupId>com.jayway.maven.plugins.android.generation2</groupId>
                     <artifactId>android-maven-plugin</artifactId>
@@ -115,14 +124,26 @@
                         <sdk>
                             <platform>${android.platform}</platform>
                         </sdk>
-                        <undeployBeforeDeploy>true</undeployBeforeDeploy>
-                        <source>${sourceCompatibility}</source>
-                        <target>${sourceCompatibility}</target>
                     </configuration>
-                    <extensions>true</extensions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.8</version>
                 </plugin>
             </plugins>
         </pluginManagement>
-        <sourceDirectory>src</sourceDirectory>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.2.2</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>

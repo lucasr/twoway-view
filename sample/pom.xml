@@ -21,8 +21,8 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>sample-twowayview</artifactId>
-    <name>TwoWayView Sample</name>
+    <artifactId>sample</artifactId>
+    <name>TwoWayView (Sample)</name>
     <packaging>apk</packaging>
 
     <parent>
@@ -39,24 +39,29 @@
             <version>${android.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>android.support</groupId>
             <artifactId>compatibility-v4</artifactId>
             <version>${android-support.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.lucasr.twowayview</groupId>
             <artifactId>library</artifactId>
-            <type>jar</type>
             <version>${project.version}</version>
+            <type>apklib</type>
         </dependency>
     </dependencies>
 
     <build>
+        <sourceDirectory>src</sourceDirectory>
+
         <plugins>
             <plugin>
                 <groupId>com.jayway.maven.plugins.android.generation2</groupId>
                 <artifactId>android-maven-plugin</artifactId>
+                <extensions>true</extensions>
             </plugin>
         </plugins>
     </build>

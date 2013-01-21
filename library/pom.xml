@@ -21,10 +21,9 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.lucasr.twowayview</groupId>
     <artifactId>library</artifactId>
-    <packaging>jar</packaging>
-    <name>TwoWayView Library</name>
+    <name>TwoWayView (Library)</name>
+    <packaging>apklib</packaging>
 
     <parent>
         <groupId>org.lucasr.twowayview</groupId>
@@ -40,10 +39,56 @@
             <version>${android.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>android.support</groupId>
             <artifactId>compatibility-v4</artifactId>
             <version>${android-support.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+
+        <plugins>
+            <plugin>
+                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                <artifactId>android-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <nativeLibrariesDirectory>ignored</nativeLibrariesDirectory>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <type>jar</type>
+                                    <file>${project.build.directory}/${project.build.finalName}.jar</file>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
