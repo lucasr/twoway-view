@@ -25,6 +25,7 @@ import java.util.ArrayList;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -144,6 +145,12 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
         setWillNotDraw(false);
         setClipToPadding(false);
+
+        TypedArray a = context.getTheme().obtainStyledAttributes(R.styleable.TwoWayView);
+        initializeScrollbars(a);
+        a.recycle();
+
+        updateScrollbarsDirection();
     }
 
     public void setScrollDirection(ScrollDirection scrollDirection) {
@@ -153,6 +160,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
 
         mIsVertical = isVertical;
+
+        updateScrollbarsDirection();
         populate();
     }
 
@@ -260,6 +269,112 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             }
         }
         return INVALID_POSITION;
+    }
+
+    @Override
+    protected int computeVerticalScrollExtent() {
+        final int count = getChildCount();
+        if (count == 0) {
+            return 0;
+        }
+
+        int extent = count * 100;
+
+        View child = getChildAt(0);
+        final int childTop = child.getTop();
+
+        int childHeight = child.getHeight();
+        if (childHeight > 0) {
+            extent += (childTop * 100) / childHeight;
+        }
+
+        child = getChildAt(count - 1);
+        final int childBottom = child.getBottom();
+
+        childHeight = child.getHeight();
+        if (childHeight > 0) {
+            extent -= ((childBottom - getHeight()) * 100) / childHeight;
+        }
+
+        return extent;
+    }
+
+    @Override
+    protected int computeHorizontalScrollExtent() {
+        final int count = getChildCount();
+        if (count == 0) {
+            return 0;
+        }
+
+        int extent = count * 100;
+
+        View child = getChildAt(0);
+        final int childLeft = child.getLeft();
+
+        int childWidth = child.getWidth();
+        if (childWidth > 0) {
+            extent += (childLeft * 100) / childWidth;
+        }
+
+        child = getChildAt(count - 1);
+        final int childRight = child.getRight();
+
+        childWidth = child.getWidth();
+        if (childWidth > 0) {
+            extent -= ((childRight - getWidth()) * 100) / childWidth;
+        }
+
+        return extent;
+    }
+
+    @Override
+    protected int computeVerticalScrollOffset() {
+        final int firstPosition = mFirstPosition;
+        final int childCount = getChildCount();
+
+        if (firstPosition < 0 || childCount == 0) {
+            return 0;
+        }
+
+        final View child = getChildAt(0);
+        final int childTop = child.getTop();
+
+        int childHeight = child.getHeight();
+        if (childHeight > 0) {
+            return Math.max(firstPosition * 100 - (childTop * 100) / childHeight, 0);
+        }
+
+        return 0;
+    }
+
+    @Override
+    protected int computeHorizontalScrollOffset() {
+        final int firstPosition = mFirstPosition;
+        final int childCount = getChildCount();
+
+        if (firstPosition < 0 || childCount == 0) {
+            return 0;
+        }
+
+        final View child = getChildAt(0);
+        final int childLeft = child.getLeft();
+
+        int childWidth = child.getWidth();
+        if (childWidth > 0) {
+            return Math.max(firstPosition * 100 - (childLeft * 100) / childWidth, 0);
+        }
+
+        return 0;
+    }
+
+    @Override
+    protected int computeVerticalScrollRange() {
+        return Math.max(mItemCount * 100, 0);
+    }
+
+    @Override
+    protected int computeHorizontalScrollRange() {
+        return Math.max(mItemCount * 100, 0);
     }
 
     @Override
@@ -584,6 +699,11 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         return true;
     }
 
+    private void updateScrollbarsDirection() {
+        setHorizontalScrollBarEnabled(!mIsVertical);
+        setVerticalScrollBarEnabled(mIsVertical);
+    }
+
     private void triggerCheckForTap() {
         if (mPendingCheckForTap == null) {
             mPendingCheckForTap = new CheckForTap();
@@ -640,6 +760,10 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 back = false;
             }
 
+            if (!awakenScrollbarsInternal()) {
+               invalidate();
+            }
+
             movedBy = Math.min(overhang, allowOverhang);
             if (mIsVertical) {
                 offsetChildren(0, back ? movedBy : -movedBy);
@@ -687,6 +811,15 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
 
         return 0;
+    }
+
+    @TargetApi(5)
+    protected boolean awakenScrollbarsInternal() {
+        if (Build.VERSION.SDK_INT >= 5) {
+            return super.awakenScrollBars();
+        } else {
+            return false;
+        }
     }
 
     private final boolean contentFits() {
@@ -1563,6 +1696,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 // Reset items end position to be equal to start
                 mItemsEnd = mItemsStart;
             }
+
+            awakenScrollbarsInternal();
 
             // TODO: consider re-populating in a deferred runnable instead
             // (so that successive changes may still be batched)
