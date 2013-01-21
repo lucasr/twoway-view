@@ -29,6 +29,6 @@
         <attr name="android:scrollbarTrackHorizontal"/>
         <attr name="android:scrollbarTrackVertical"/>
         <attr name="android:scrollbars"/>
-        
+
     </declare-styleable>
 </resources>
