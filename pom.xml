@@ -68,7 +68,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.6</java.version>
-        <android.version>4.1.1.4</android.version>
+        <android.version>4.1.2_r4</android.version>
+        <android-support.version>11</android-support.version>
         <android.platform>16</android.platform>
         <android-maven.version>3.2.0</android-maven.version>
     </properties>
@@ -76,15 +77,15 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.google.android</groupId>
+                <groupId>android</groupId>
                 <artifactId>android</artifactId>
                 <version>${android.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>com.google.android</groupId>
-                   <artifactId>support-v4</artifactId>
-                <version>r7</version>
+                <groupId>android.support</groupId>
+                <artifactId>compatibility-v4</artifactId>
+                <version>${android-support.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

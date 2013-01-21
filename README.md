@@ -38,6 +38,13 @@ features. Here's a few (definitely not all!) of the upcoming features:
 * List selector
 * AdapterView selection
 
+Build instructions
+==================
+
+If you use Eclipse, simply import the Android project from existing source.
+If you use Maven, you'll need to deploy the latest Support Library locally
+using the [maven-android-sdk-deployer](https://github.com/mosabua/maven-android-sdk-deployer).
+
 License
 =======
 
