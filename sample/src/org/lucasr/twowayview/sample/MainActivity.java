@@ -44,7 +44,6 @@ public class MainActivity extends Activity {
                     long id) {
                 Toast.makeText(MainActivity.this, "Item clicked: " + position, Toast.LENGTH_SHORT).show();
             }
-
         });
 
         mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -70,9 +69,9 @@ public class MainActivity extends Activity {
     private void updateForOrientation() {
         int orientation = getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            mListView.setScrollDirection(TwoWayView.ScrollDirection.HORIZONTAL);
+            mListView.setOrientation(TwoWayView.Orientation.HORIZONTAL);
         } else {
-            mListView.setScrollDirection(TwoWayView.ScrollDirection.VERTICAL);
+            mListView.setOrientation(TwoWayView.Orientation.VERTICAL);
         }
     }
 }

@@ -18,6 +18,9 @@
 <resources>
     <declare-styleable name="TwoWayView">
 
+        <attr name="android:drawSelectorOnTop"/>
+        <attr name="android:listSelector"/>
+
         <attr name="android:scrollbarAlwaysDrawHorizontalTrack"/>
         <attr name="android:scrollbarAlwaysDrawVerticalTrack"/>
         <attr name="android:scrollbarDefaultDelayBeforeFade"/>

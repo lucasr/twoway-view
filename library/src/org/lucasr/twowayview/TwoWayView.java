@@ -22,6 +22,7 @@
 package org.lucasr.twowayview;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -29,16 +30,19 @@ import android.content.res.TypedArray;
 import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.SystemClock;
+import android.support.v4.util.SparseArrayCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.VelocityTrackerCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.EdgeEffectCompat;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
@@ -46,13 +50,15 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.AdapterView;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
 
 public class TwoWayView extends AdapterView<ListAdapter> {
     private static final String LOGTAG = "TwoWayView";
-    private static final boolean DEBUG = true;
+
+    private static final int INVALID_POINTER = -1;
 
     private static final int TOUCH_MODE_REST = -1;
     private static final int TOUCH_MODE_DOWN = 0;
@@ -60,33 +66,58 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     private static final int TOUCH_MODE_DONE_WAITING = 2;
     private static final int TOUCH_MODE_DRAGGING = 3;
     private static final int TOUCH_MODE_FLINGING = 4;
+    private static final int TOUCH_MODE_OVERSCROLL = 5;
 
-    private ListAdapter mAdapter;
+    private static final int TOUCH_MODE_UNKNOWN = -1;
+    private static final int TOUCH_MODE_ON = 0;
+    private static final int TOUCH_MODE_OFF = 1;
 
-    public static enum ScrollDirection {
+    private static final int LAYOUT_NORMAL = 0;
+    private static final int LAYOUT_FORCE_TOP = 1;
+    private static final int LAYOUT_SET_SELECTION = 2;
+    private static final int LAYOUT_FORCE_BOTTOM = 3;
+    private static final int LAYOUT_SPECIFIC = 4;
+    private static final int LAYOUT_SYNC = 5;
+    private static final int LAYOUT_MOVE_SELECTION = 6;
+
+    private static final int SYNC_SELECTED_POSITION = 0;
+    private static final int SYNC_FIRST_POSITION = 1;
+
+    private static final int SYNC_MAX_DURATION_MILLIS = 100;
+
+    static final int OVERSCROLL_LIMIT_DIVISOR = 3;
+
+    public static enum Orientation {
         VERTICAL,
         HORIZONTAL;
     };
+
+    private ListAdapter mAdapter;
 
     private boolean mIsVertical;
 
     private int mItemMargin;
 
-    private boolean mPopulating;
     private boolean mInLayout;
+    private boolean mBlockLayoutRequests;
+
+    private boolean mIsAttached;
 
     private final RecycleBin mRecycler;
-    private final AdapterDataSetObserver mObserver;
+    private AdapterDataSetObserver mDataSetObserver;
+
+    final boolean[] mIsScrap = new boolean[1];
 
     private boolean mDataChanged;
     private int mItemCount;
+    private int mOldItemCount;
     private boolean mHasStableIds;
+    private boolean mAreAllItemsSelectable;
 
     private int mFirstPosition;
+    private int mSpecificStart;
 
-    private int mRestoreOffset;
-    private Integer mItemsStart;
-    private Integer mItemsEnd;
+    private SavedState mPendingSync;
 
     private final int mTouchSlop;
     private final int mMaximumVelocity;
@@ -101,15 +132,44 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     private CheckForLongPress mPendingCheckForLongPress;
     private PerformClick mPerformClick;
     private Runnable mTouchModeReset;
+    private int mResurrectToPosition;
+
+    private boolean mIsChildViewEnabled;
+
+    private boolean mDrawSelectorOnTop;
+    private Drawable mSelector;
+    private int mSelectorPosition;
+    private final Rect mSelectorRect;
+
+    private int mOverScroll;
+    private final int mOverscrollDistance;
+
+    private SelectionNotifier mSelectionNotifier;
+
+    private boolean mNeedSync;
+    private int mSyncMode;
+    private int mSyncPosition;
+    private long mSyncRowId;
+    private long mSyncHeight;
+    private int mSelectedStart;
+
+    private int mNextSelectedPosition;
+    private long mNextSelectedRowId;
+    private int mSelectedPosition;
+    private long mSelectedRowId;
+    private int mOldSelectedPosition;
+    private long mOldSelectedRowId;
 
     private ContextMenuInfo mContextMenuInfo;
 
+    private int mLayoutMode;
     private int mTouchMode;
-    private final VelocityTracker mVelocityTracker = VelocityTracker.obtain();
+    private int mLastTouchMode;
+    private final VelocityTracker mVelocityTracker;
     private final Scroller mScroller;
 
-    private final EdgeEffectCompat mStartEdge;
-    private final EdgeEffectCompat mEndEdge;
+    private EdgeEffectCompat mStartEdge;
+    private EdgeEffectCompat mEndEdge;
 
     public TwoWayView(Context context) {
         this(context, null);
@@ -122,39 +182,79 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     public TwoWayView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
+        mNeedSync = false;
+        mVelocityTracker = VelocityTracker.obtain();
+
+        mLayoutMode = LAYOUT_NORMAL;
         mTouchMode = TOUCH_MODE_REST;
+        mLastTouchMode = TOUCH_MODE_UNKNOWN;
+
+        mIsAttached = false;
 
         mContextMenuInfo = null;
-
-        mItemsStart = null;
-        mItemsEnd = null;
 
         final ViewConfiguration vc = ViewConfiguration.get(context);
         mTouchSlop = vc.getScaledTouchSlop();
         mMaximumVelocity = vc.getScaledMaximumFlingVelocity();
         mFlingVelocity = vc.getScaledMinimumFlingVelocity();
+        mOverscrollDistance = getScaledOverscrollDistance(vc);
+
+        mOverScroll = 0;
+
         mScroller = new Scroller(context);
 
         mIsVertical = true;
 
+        mSelectorPosition = INVALID_POSITION;
+
+        mSelectorRect = new Rect();
+        mSelectedStart = 0;
+
+        mResurrectToPosition = INVALID_POSITION;
+
+        mSelectedStart = 0;
+        mNextSelectedPosition = INVALID_POSITION;
+        mNextSelectedRowId = INVALID_ROW_ID;
+        mSelectedPosition = INVALID_POSITION;
+        mSelectedRowId = INVALID_ROW_ID;
+        mOldSelectedPosition = INVALID_POSITION;
+        mOldSelectedRowId = INVALID_ROW_ID;
+
         mRecycler = new RecycleBin();
-        mObserver = new AdapterDataSetObserver();
+        mDataSetObserver = new AdapterDataSetObserver();
 
-        mStartEdge = new EdgeEffectCompat(context);
-        mEndEdge = new EdgeEffectCompat(context);
+        mAreAllItemsSelectable = true;
 
+        mStartEdge = null;
+        mEndEdge = null;
+
+        setClickable(true);
+        setFocusableInTouchMode(true);
+        setWillNotDraw(false);
+        setAlwaysDrawnWithCacheEnabled(false);
         setWillNotDraw(false);
         setClipToPadding(false);
 
-        TypedArray a = context.getTheme().obtainStyledAttributes(R.styleable.TwoWayView);
+        ViewCompat.setOverScrollMode(this, ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS);
+
+        TypedArray a = context.obtainStyledAttributes(R.styleable.TwoWayView);
         initializeScrollbars(a);
+
+        mDrawSelectorOnTop = a.getBoolean(
+                R.styleable.TwoWayView_android_drawSelectorOnTop, false);
+
+        Drawable d = a.getDrawable(R.styleable.TwoWayView_android_listSelector);
+        if (d != null) {
+            setSelector(d);
+        }
+
         a.recycle();
 
         updateScrollbarsDirection();
     }
 
-    public void setScrollDirection(ScrollDirection scrollDirection) {
-        final boolean isVertical = (scrollDirection.compareTo(ScrollDirection.VERTICAL) == 0);
+    public void setOrientation(Orientation orientation) {
+        final boolean isVertical = (orientation.compareTo(Orientation.VERTICAL) == 0);
         if (mIsVertical == isVertical) {
             return;
         }
@@ -162,11 +262,15 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         mIsVertical = isVertical;
 
         updateScrollbarsDirection();
-        populate();
+
+        resetState();
+        mRecycler.clear();
+
+        requestLayout();
     }
 
-    public ScrollDirection getScrollDirection() {
-        return (mIsVertical ? ScrollDirection.VERTICAL : ScrollDirection.HORIZONTAL);
+    public Orientation getOrientation() {
+        return (mIsVertical ? Orientation.VERTICAL : Orientation.HORIZONTAL);
     }
 
     public void setItemMargin(int itemMargin) {
@@ -175,11 +279,43 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
 
         mItemMargin = itemMargin;
-        populate();
+        requestLayout();
     }
 
     public int getItemMargin() {
         return mItemMargin;
+    }
+
+    public void setDrawSelectorOnTop(boolean drawSelectorOnTop) {
+        mDrawSelectorOnTop = drawSelectorOnTop;
+    }
+
+    public void setSelector(int resID) {
+        setSelector(getResources().getDrawable(resID));
+    }
+
+    public void setSelector(Drawable selector) {
+        if (mSelector != null) {
+            mSelector.setCallback(null);
+            unscheduleDrawable(mSelector);
+        }
+
+        mSelector = selector;
+        Rect padding = new Rect();
+        selector.getPadding(padding);
+
+        selector.setCallback(this);
+        updateSelectorState();
+    }
+
+    @Override
+    public int getSelectedItemPosition() {
+        return mNextSelectedPosition;
+    }
+
+    @Override
+    public long getSelectedItemId() {
+        return mNextSelectedRowId;
     }
 
     @Override
@@ -190,28 +326,44 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     @Override
     public void setAdapter(ListAdapter adapter) {
         if (mAdapter != null) {
-            mAdapter.unregisterDataSetObserver(mObserver);
+            mAdapter.unregisterDataSetObserver(mDataSetObserver);
         }
 
-        // TODO: If the new adapter says that there are stable IDs,
-        // remove certain layout records and onscreen views if they
-        // have changed instead of removing all of the state here.
-        clearAllState();
+        resetState();
+        mRecycler.clear();
 
         mAdapter = adapter;
         mDataChanged = true;
 
+        mOldSelectedPosition = INVALID_POSITION;
+        mOldSelectedRowId = INVALID_ROW_ID;
+
         if (mAdapter != null) {
+            mOldItemCount = mItemCount;
             mItemCount = adapter.getCount();
-            mAdapter.registerDataSetObserver(mObserver);
+
+            mAdapter.registerDataSetObserver(mDataSetObserver);
             mRecycler.setViewTypeCount(adapter.getViewTypeCount());
+
             mHasStableIds = adapter.hasStableIds();
+            mAreAllItemsSelectable = adapter.areAllItemsEnabled();
+
+            final int position = lookForSelectablePosition(0);
+            setSelectedPositionInt(position);
+            setNextSelectedPositionInt(position);
+
+            if (mItemCount == 0) {
+                checkSelectionChanged();
+            }
         } else {
             mItemCount = 0;
             mHasStableIds = false;
+            mAreAllItemsSelectable = true;
+
+            checkSelectionChanged();
         }
 
-        populate();
+        requestLayout();
     }
 
     @Override
@@ -247,6 +399,134 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
         // Child not found!
         return INVALID_POSITION;
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        if (mAdapter != null && mDataSetObserver == null) {
+            mDataSetObserver = new AdapterDataSetObserver();
+            mAdapter.registerDataSetObserver(mDataSetObserver);
+
+            // Data may have changed while we were detached. Refresh.
+            mDataChanged = true;
+            mOldItemCount = mItemCount;
+            mItemCount = mAdapter.getCount();
+        }
+
+        mIsAttached = true;
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        // Detach any view left in the scrap heap
+        mRecycler.clear();
+
+        if (mAdapter != null) {
+            mAdapter.unregisterDataSetObserver(mDataSetObserver);
+            mDataSetObserver = null;
+        }
+
+        if (mPerformClick != null) {
+            removeCallbacks(mPerformClick);
+        }
+
+        if (mTouchModeReset != null) {
+            removeCallbacks(mTouchModeReset);
+            mTouchModeReset.run();
+        }
+
+        mIsAttached = false;
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasWindowFocus) {
+        super.onWindowFocusChanged(hasWindowFocus);
+
+        final int touchMode = isInTouchMode() ? TOUCH_MODE_ON : TOUCH_MODE_OFF;
+
+        if (!hasWindowFocus) {
+            if (touchMode == TOUCH_MODE_OFF) {
+                // Remember the last selected element
+                mResurrectToPosition = mSelectedPosition;
+            }
+        } else {
+            // If we changed touch mode since the last time we had focus
+            if (touchMode != mLastTouchMode && mLastTouchMode != TOUCH_MODE_UNKNOWN) {
+                // If we come back in trackball mode, we bring the selection back
+                if (touchMode == TOUCH_MODE_OFF) {
+                    // This will trigger a layout
+                    resurrectSelection();
+
+                // If we come back in touch mode, then we want to hide the selector
+                } else {
+                    hideSelector();
+                    mLayoutMode = LAYOUT_NORMAL;
+                    layoutChildren();
+                }
+            }
+        }
+
+        mLastTouchMode = touchMode;
+    }
+
+    @Override
+    protected void onOverScrolled(int scrollX, int scrollY, boolean clampedX, boolean clampedY) {
+        boolean needsInvalidate = false;
+
+        if (mIsVertical && mOverScroll != scrollY) {
+            onScrollChanged(getScrollX(), scrollY, getScrollX(), mOverScroll);
+            mOverScroll = scrollY;
+            needsInvalidate = true;
+        } else if (!mIsVertical && mOverScroll != scrollX) {
+            onScrollChanged(scrollX, getScrollY(), mOverScroll, getScrollY());
+            mOverScroll = scrollX;
+            needsInvalidate = true;
+        }
+
+        if (needsInvalidate) {
+            invalidate();
+            awakenScrollbarsInternal();
+        }
+    }
+
+    @TargetApi(9)
+    protected boolean overScrollByInternal(int deltaX, int deltaY,
+            int scrollX, int scrollY,
+            int scrollRangeX, int scrollRangeY,
+            int maxOverScrollX, int maxOverScrollY,
+            boolean isTouchEvent) {
+        if (Build.VERSION.SDK_INT < 9) {
+            return false;
+        }
+
+        return super.overScrollBy(deltaX, deltaY, scrollX, scrollY, scrollRangeX,
+                scrollRangeY, maxOverScrollX, maxOverScrollY, isTouchEvent);
+    }
+
+    @Override
+    @TargetApi(9)
+    public void setOverScrollMode(int mode) {
+        if (Build.VERSION.SDK_INT < 9) {
+            return;
+        }
+
+        if (mode != ViewCompat.OVER_SCROLL_NEVER) {
+            if (mStartEdge == null) {
+                Context context = getContext();
+
+                mStartEdge = new EdgeEffectCompat(context);
+                mEndEdge = new EdgeEffectCompat(context);
+            }
+        } else {
+            mStartEdge = null;
+            mEndEdge = null;
+        }
+
+        super.setOverScrollMode(mode);
     }
 
     public int pointToPosition(int x, int y) {
@@ -369,12 +649,26 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
     @Override
     protected int computeVerticalScrollRange() {
-        return Math.max(mItemCount * 100, 0);
+        int result = Math.max(mItemCount * 100, 0);
+
+        if (mIsVertical && mOverScroll != 0) {
+            // Compensate for overscroll
+            result += Math.abs((int) ((float) mOverScroll / getHeight() * mItemCount * 100));
+        }
+
+        return result;
     }
 
     @Override
     protected int computeHorizontalScrollRange() {
-        return Math.max(mItemCount * 100, 0);
+        int result = Math.max(mItemCount * 100, 0);
+
+        if (!mIsVertical && mOverScroll != 0) {
+            // Compensate for overscroll
+            result += Math.abs((int) ((float) mOverScroll / getWidth() * mItemCount * 100));
+        }
+
+        return result;
     }
 
     @Override
@@ -406,26 +700,39 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        Log.d(LOGTAG, "onInterceptTouchEvent");
+
+        if (!mIsAttached) {
+            return false;
+        }
+
         mVelocityTracker.addMovement(ev);
 
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
         switch (action) {
         case MotionEvent.ACTION_DOWN:
+            Log.d(LOGTAG, "  - ACTION_DOWN");
+
             mVelocityTracker.clear();
+            mVelocityTracker.addMovement(ev);
+
             mScroller.abortAnimation();
 
             final float x = ev.getX();
             final float y = ev.getY();
 
             mLastTouchPos = (mIsVertical ? y : x);
-            final int motionPosition = pointToPosition((int) x, (int) y);
+
+            final int motionPosition = findMotionRowOrColumn((int) mLastTouchPos);
 
             mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
             mTouchRemainderPos = 0;
 
             if (mTouchMode == TOUCH_MODE_FLINGING) {
+                Log.d(LOGTAG, "    - Was flinging");
                 return true;
             } else if (motionPosition >= 0) {
+                Log.d(LOGTAG, "    - Mode is TOUCH_MODE_DOWN now");
                 mMotionPosition = motionPosition;
                 mTouchMode = TOUCH_MODE_DOWN;
             }
@@ -433,6 +740,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             break;
 
         case MotionEvent.ACTION_MOVE: {
+            Log.d(LOGTAG, "  - ACTION_MOVE");
+
             if (mTouchMode != TOUCH_MODE_DOWN) {
                 break;
             }
@@ -456,22 +765,16 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             final int delta = (int) diff;
             mTouchRemainderPos = diff - delta;
 
-            if (Math.abs(diff) > mTouchSlop) {
-                mTouchMode = TOUCH_MODE_DRAGGING;
-
-                setPressed(false);
-                View motionView = getChildAt(mMotionPosition - mFirstPosition);
-                if (motionView != null) {
-                    motionView.setPressed(false);
-                }
-
+            if (maybeStartScrolling(delta)) {
                 return true;
             }
         }
 
         case MotionEvent.ACTION_CANCEL:
         case MotionEvent.ACTION_UP:
+            mActivePointerId = INVALID_POINTER;
             mTouchMode = TOUCH_MODE_REST;
+
             break;
         }
 
@@ -481,7 +784,15 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         if (!isEnabled()) {
+            // A disabled view that is clickable still consumes the touch
+            // events, it just doesn't respond to them.
             return isClickable() || isLongClickable();
+        }
+
+        Log.d(LOGTAG, "onTouchEvent");
+
+        if (!mIsAttached) {
+            return false;
         }
 
         boolean needsInvalidate = false;
@@ -491,6 +802,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
         switch (action) {
         case MotionEvent.ACTION_DOWN: {
+            Log.d(LOGTAG, "  - ACTION_DOWN");
             if (mDataChanged) {
                 break;
             }
@@ -502,27 +814,38 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             final float y = ev.getY();
 
             mLastTouchPos = (mIsVertical ? y : x);
-            mMotionPosition = pointToPosition((int) x, (int) y);
+
+            int motionPosition = pointToPosition((int) x, (int) y);
 
             mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
             mTouchRemainderPos = 0;
 
+            if (mDataChanged) {
+                break;
+            }
+
             if (mTouchMode == TOUCH_MODE_FLINGING) {
+                Log.d(LOGTAG, "    - Was flinging, now dragging");
                 mTouchMode = TOUCH_MODE_DRAGGING;
+                motionPosition = findMotionRowOrColumn((int) mLastTouchPos);
                 return true;
             } else if (mMotionPosition >= 0 && mAdapter.isEnabled(mMotionPosition)) {
+                Log.d(LOGTAG, "    - Mode is TOUCH_MODE_DOWN now");
                 mTouchMode = TOUCH_MODE_DOWN;
                 triggerCheckForTap();
             }
+
+            mMotionPosition = motionPosition;
 
             break;
         }
 
         case MotionEvent.ACTION_MOVE: {
+            Log.d(LOGTAG, "  - ACTION_MOVE");
             final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
             if (index < 0) {
                 Log.e(LOGTAG, "onInterceptTouchEvent could not find pointer with id " +
-                        mActivePointerId + " - did StaggeredGridView receive an inconsistent " +
+                        mActivePointerId + " - did TwoWayView receive an inconsistent " +
                         "event stream?");
                 return false;
             }
@@ -534,32 +857,38 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 pos = MotionEventCompat.getX(ev, index);
             }
 
+            if (mDataChanged) {
+                // Re-sync everything if data has been changed
+                // since the scroll operation can query the adapter.
+                layoutChildren();
+            }
+
             final float diff = pos - mLastTouchPos + mTouchRemainderPos;
             final int delta = (int) diff;
             mTouchRemainderPos = diff - delta;
 
-            boolean canStartDragging =
-                    (mTouchMode == TOUCH_MODE_DOWN ||
-                     mTouchMode == TOUCH_MODE_TAP ||
-                     mTouchMode == TOUCH_MODE_DONE_WAITING);
+            switch (mTouchMode) {
+            case TOUCH_MODE_DOWN:
+            case TOUCH_MODE_TAP:
+            case TOUCH_MODE_DONE_WAITING:
+                // Check if we have moved far enough that it looks more like a
+                // scroll than a tap
+                maybeStartScrolling(delta);
+                break;
 
-            if (canStartDragging && Math.abs(diff) > mTouchSlop) {
-                mTouchMode = TOUCH_MODE_DRAGGING;
-            }
-
-            if (mTouchMode == TOUCH_MODE_DRAGGING) {
+            case TOUCH_MODE_DRAGGING:
+            case TOUCH_MODE_OVERSCROLL:
                 mLastTouchPos = pos;
-
-                if (!trackMotionScroll(delta, true)) {
-                    // Break fling velocity if we impacted an edge
-                    mVelocityTracker.clear();
-                }
+                maybeScroll(delta);
+                break;
             }
 
             break;
         }
 
         case MotionEvent.ACTION_CANCEL:
+            Log.d(LOGTAG, "  - ACTION_CANCEL");
+
             cancelCheckForTap();
             mTouchMode = TOUCH_MODE_REST;
 
@@ -569,16 +898,20 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 motionView.setPressed(false);
             }
 
-            needsInvalidate =
-                    mStartEdge.onRelease() | mEndEdge.onRelease();
+            if (mStartEdge != null && mEndEdge != null) {
+                needsInvalidate = mStartEdge.onRelease() | mEndEdge.onRelease();
+            }
 
             break;
 
         case MotionEvent.ACTION_UP: {
+            Log.d(LOGTAG, "  - ACTION_UP");
+
             switch (mTouchMode) {
             case TOUCH_MODE_DOWN:
             case TOUCH_MODE_TAP:
             case TOUCH_MODE_DONE_WAITING: {
+                Log.d(LOGTAG, "    - Not dragging");
                 final int motionPosition = mMotionPosition;
                 final View child = getChildAt(motionPosition - mFirstPosition);
 
@@ -605,6 +938,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                     performClick.mClickMotionPosition = motionPosition;
                     performClick.rememberWindowAttachCount();
 
+                    mResurrectToPosition = motionPosition;
+
                     if (mTouchMode == TOUCH_MODE_DOWN || mTouchMode == TOUCH_MODE_TAP) {
                         if (mTouchMode == TOUCH_MODE_DOWN) {
                             cancelCheckForTap();
@@ -612,11 +947,21 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                             cancelCheckForLongPress();
                         }
 
+                        mLayoutMode = LAYOUT_NORMAL;
+
                         if (!mDataChanged && mAdapter.isEnabled(motionPosition)) {
                             mTouchMode = TOUCH_MODE_TAP;
 
                             setPressed(true);
+                            positionSelector(mMotionPosition, child);
                             child.setPressed(true);
+
+                            if (mSelector != null) {
+                                Drawable d = mSelector.getCurrent();
+                                if (d != null && d instanceof TransitionDrawable) {
+                                    ((TransitionDrawable) d).resetTransition();
+                                }
+                            }
 
                             if (mTouchModeReset != null) {
                                 removeCallbacks(mTouchModeReset);
@@ -647,6 +992,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 }
 
                 mTouchMode = TOUCH_MODE_REST;
+                updateSelectorState();
+
                 break;
             }
 
@@ -662,7 +1009,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                             mActivePointerId);
                 }
 
-                if (Math.abs(velocity) >= mFlingVelocity) { // TODO
+                if (Math.abs(velocity) >= mFlingVelocity) {
+                    Log.d(LOGTAG, "    - Flinging");
                     mTouchMode = TOUCH_MODE_FLINGING;
 
                     mScroller.fling(0, 0,
@@ -676,6 +1024,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                     mLastTouchPos = 0;
                     needsInvalidate = true;
                 } else {
+                    Log.d(LOGTAG, "    - No fling, rest mode");
                     mTouchMode = TOUCH_MODE_REST;
                 }
 
@@ -685,8 +1034,9 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             cancelCheckForTap();
             setPressed(false);
 
-            needsInvalidate |=
-                    mStartEdge.onRelease() | mEndEdge.onRelease();
+            if (mStartEdge != null && mEndEdge != null) {
+                needsInvalidate |= mStartEdge.onRelease() | mEndEdge.onRelease();
+            }
 
             break;
         }
@@ -697,6 +1047,247 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
 
         return true;
+    }
+
+    public void onTouchModeChanged(boolean isInTouchMode) {
+        if (isInTouchMode) {
+            // Get rid of the selection when we enter touch mode
+            hideSelector();
+
+            // Layout, but only if we already have done so previously.
+            // (Otherwise may clobber a LAYOUT_SYNC layout that was requested to restore
+            // state.)
+            if (getHeight() > 0 && getChildCount() > 0) {
+                layoutChildren();
+            }
+
+            updateSelectorState();
+        } else {
+            final int touchMode = mTouchMode;
+            if (touchMode == TOUCH_MODE_OVERSCROLL) {
+                if (mOverScroll != 0) {
+                    mOverScroll = 0;
+                    finishEdgeGlows();
+                    invalidate();
+                }
+            }
+        }
+    }
+
+    private boolean maybeStartScrolling(int delta) {
+        final boolean isOverScroll = (mOverScroll != 0);
+        if (Math.abs(delta) <= mTouchSlop && !isOverScroll) {
+            return false;
+        }
+
+        Log.d(LOGTAG, "    - Dragging started");
+
+        if (isOverScroll) {
+            mTouchMode = TOUCH_MODE_OVERSCROLL;
+        } else {
+            mTouchMode = TOUCH_MODE_DRAGGING;
+        }
+
+        // Time to start stealing events! Once we've stolen them, don't
+        // let anyone steal from us.
+        final ViewParent parent = getParent();
+        if (parent != null) {
+            parent.requestDisallowInterceptTouchEvent(true);
+        }
+
+        setPressed(false);
+        View motionView = getChildAt(mMotionPosition - mFirstPosition);
+        if (motionView != null) {
+            motionView.setPressed(false);
+        }
+
+        return true;
+    }
+
+    private void maybeScroll(int delta) {
+        if (mTouchMode == TOUCH_MODE_DRAGGING) {
+            handleDragChange(delta);
+        } else if (mTouchMode == TOUCH_MODE_OVERSCROLL) {
+            handleOverScrollChange(delta);
+        }
+    }
+
+    private void handleDragChange(int delta) {
+        // Time to start stealing events! Once we've stolen them, don't
+        // let anyone steal from us.
+        final ViewParent parent = getParent();
+        if (parent != null) {
+            parent.requestDisallowInterceptTouchEvent(true);
+        }
+
+        final int motionIndex;
+        if (mMotionPosition >= 0) {
+            motionIndex = mMotionPosition - mFirstPosition;
+        } else {
+            // If we don't have a motion position that we can reliably track,
+            // pick something in the middle to make a best guess at things below.
+            motionIndex = getChildCount() / 2;
+        }
+
+        int motionViewPrevStart = 0;
+        View motionView = this.getChildAt(motionIndex);
+        if (motionView != null) {
+            motionViewPrevStart = (mIsVertical ? motionView.getTop() : motionView.getLeft());
+        }
+
+        Log.d(LOGTAG, "    - Tracking motion scroll");
+        boolean atEdge = trackMotionScroll(delta);
+
+        motionView = this.getChildAt(motionIndex);
+        if (motionView != null) {
+            final int motionViewRealStart =
+                    (mIsVertical ? motionView.getTop() : motionView.getLeft());
+
+            if (atEdge) {
+                final int overscroll = -delta - (motionViewRealStart - motionViewPrevStart);
+                updateOverScrollState(delta, overscroll);
+            }
+        }
+    }
+
+    private void updateOverScrollState(int delta, int overscroll) {
+        overScrollByInternal((mIsVertical ? 0 : overscroll),
+                             (mIsVertical ? overscroll : 0),
+                             (mIsVertical ? 0 : mOverScroll),
+                             (mIsVertical ? mOverScroll : 0),
+                             0, 0,
+                             (mIsVertical ? 0 : mOverscrollDistance),
+                             (mIsVertical ? mOverscrollDistance : 0),
+                             true);
+
+        if (Math.abs(mOverscrollDistance) == Math.abs(mOverScroll)) {
+            // Break fling velocity if we impacted an edge
+            if (mVelocityTracker != null) {
+                mVelocityTracker.clear();
+            }
+        }
+
+        final int overscrollMode = ViewCompat.getOverScrollMode(this);
+        if (overscrollMode == ViewCompat.OVER_SCROLL_ALWAYS ||
+                (overscrollMode == ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS && !contentFits())) {
+            mTouchMode = TOUCH_MODE_OVERSCROLL;
+
+            float pull = (float) overscroll / (mIsVertical ? getHeight() : getWidth());
+            if (delta > 0) {
+                mStartEdge.onPull(pull);
+
+                if (!mEndEdge.isFinished()) {
+                    mEndEdge.onRelease();
+                }
+            } else if (delta < 0) {
+                mEndEdge.onPull(pull);
+
+                if (!mStartEdge.isFinished()) {
+                    mStartEdge.onRelease();
+                }
+            }
+
+            if (delta != 0) {
+                ViewCompat.postInvalidateOnAnimation(this);
+            }
+        }
+    }
+
+    private void handleOverScrollChange(int delta) {
+        final int oldOverScroll = mOverScroll;
+        final int newOverScroll = oldOverScroll - delta;
+
+        int overScrollDistance = -delta;
+        if ((newOverScroll < 0 && oldOverScroll >= 0) ||
+                (newOverScroll > 0 && oldOverScroll <= 0)) {
+            overScrollDistance = -oldOverScroll;
+            delta += overScrollDistance;
+        } else {
+            delta = 0;
+        }
+
+        if (overScrollDistance != 0) {
+            updateOverScrollState(delta, overScrollDistance);
+        }
+
+        if (delta != 0) {
+            if (mOverScroll != 0) {
+                mOverScroll = 0;
+                ViewCompat.postInvalidateOnAnimation(this);
+            }
+
+            trackMotionScroll(delta);
+            mTouchMode = TOUCH_MODE_DRAGGING;
+
+            // We did not scroll the full amount. Treat this essentially like the
+            // start of a new touch scroll
+            mMotionPosition = findClosestMotionRowOrColumn((int) mLastTouchPos);
+            mTouchRemainderPos = 0;
+        }
+    }
+
+    int findMotionRowOrColumn(int motionPos) {
+        int childCount = getChildCount();
+        if (childCount == 0) {
+            return INVALID_POSITION;
+        }
+
+        for (int i = 0; i < childCount; i++) {
+            View v = getChildAt(i);
+
+            if ((mIsVertical && motionPos <= v.getBottom()) ||
+                    (!mIsVertical && motionPos <= v.getRight())) {
+                return mFirstPosition + i;
+            }
+        }
+
+        return INVALID_POSITION;
+    }
+
+    private int findClosestMotionRowOrColumn(int motionPos) {
+        final int childCount = getChildCount();
+        if (childCount == 0) {
+            return INVALID_POSITION;
+        }
+
+        final int motionRow = findMotionRowOrColumn(motionPos);
+        if (motionRow != INVALID_POSITION) {
+            return motionRow;
+        } else {
+            return mFirstPosition + childCount - 1;
+        }
+    }
+
+    @TargetApi(9)
+    private int getScaledOverscrollDistance(ViewConfiguration vc) {
+        if (Build.VERSION.SDK_INT < 9) {
+            return 0;
+        }
+
+        return vc.getScaledOverscrollDistance();
+    }
+
+    private boolean contentFits() {
+        final int childCount = getChildCount();
+        if (childCount == 0) {
+            return true;
+        }
+
+        if (childCount != mItemCount) {
+            return false;
+        }
+
+        View first = getChildAt(0);
+        View last = getChildAt(childCount - 1);
+
+        if (mIsVertical) {
+            return first.getTop() >= getPaddingTop() &&
+                    last.getBottom() <= getHeight() - getPaddingBottom();
+
+        } else {
+            return first.getLeft() >= getPaddingLeft() &&
+                    last.getRight() <= getWidth() - getPaddingRight();
+        }
     }
 
     private void updateScrollbarsDirection() {
@@ -739,69 +1330,159 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         removeCallbacks(mPendingCheckForLongPress);
     }
 
-    private boolean trackMotionScroll(int delta, boolean allowOverScroll) {
-        final boolean contentFits = contentFits();
-        final int allowOverhang = Math.abs(delta);
+    boolean trackMotionScroll(int incrementalDelta) {
+        Log.d(LOGTAG, "trackMotionScroll");
 
-        final int overScrolledBy;
-        final int movedBy;
+        Log.d(LOGTAG, "  - increamentalDelta: " + incrementalDelta);
 
-        if (!contentFits) {
-            final int overhang;
-            final boolean back;
+        final int childCount = getChildCount();
+        if (childCount == 0) {
+            return true;
+        }
 
-            mPopulating = true;
+        final View first = getChildAt(0);
+        final int firstStart = (mIsVertical ? first.getTop() : first.getLeft());
 
-            if (delta > 0) {
-                overhang = fillBefore(mFirstPosition - 1, allowOverhang);
-                back = true;
-            } else {
-                overhang = fillAfter(mFirstPosition + getChildCount(), allowOverhang) + mItemMargin;
-                back = false;
-            }
+        final View last = getChildAt(childCount - 1);
+        final int lastEnd = (mIsVertical ? last.getBottom() : last.getRight());
 
-            if (!awakenScrollbarsInternal()) {
-               invalidate();
-            }
+        Log.d(LOGTAG, "  - firstStart: " + firstStart);
+        Log.d(LOGTAG, "  - lastEnd: " + lastEnd);
 
-            movedBy = Math.min(overhang, allowOverhang);
-            if (mIsVertical) {
-                offsetChildren(0, back ? movedBy : -movedBy);
-            } else {
-                offsetChildren(back ? movedBy : -movedBy, 0);
-            }
+        final int paddingTop = getPaddingTop();
+        final int paddingBottom = getPaddingBottom();
+        final int paddingLeft = getPaddingLeft();
+        final int paddingRight = getPaddingRight();
 
-            recycleOffscreenViews();
+        final int paddingStart = (mIsVertical ? paddingTop : paddingLeft);
 
-            mPopulating = false;
+        final int spaceBefore = paddingStart - firstStart;
+        final int end = (mIsVertical ? getHeight() - paddingBottom :
+            getWidth() - paddingRight);
+        final int spaceAfter = lastEnd - end;
 
-            overScrolledBy = allowOverhang - overhang;
+        Log.d(LOGTAG, "  - spaceBefore: " + spaceBefore);
+        Log.d(LOGTAG, "  - spaceAfter: " + spaceAfter);
+
+        final int size;
+        if (mIsVertical) {
+            size = getHeight() - paddingBottom - paddingTop;
         } else {
-            overScrolledBy = allowOverhang;
-            movedBy = 0;
+            size = getWidth() - paddingRight - paddingLeft;
         }
 
-        if (allowOverScroll) {
-            final int overScrollMode = ViewCompat.getOverScrollMode(this);
+        if (incrementalDelta < 0) {
+            incrementalDelta = Math.max(-(size - 1), incrementalDelta);
+        } else {
+            incrementalDelta = Math.min(size - 1, incrementalDelta);
+        }
 
-            if (overScrollMode == ViewCompat.OVER_SCROLL_ALWAYS ||
-                    (overScrollMode == ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS && !contentFits)) {
+        Log.d(LOGTAG, "  - increamentalDelta is now: " + incrementalDelta);
 
-                if (overScrolledBy > 0) {
-                    final EdgeEffectCompat edge = delta > 0 ? mStartEdge : mEndEdge;
-                    final int size = (mIsVertical ? getHeight() : getWidth());
+        final int firstPosition = mFirstPosition;
 
-                    boolean needsInvalidate =
-                            edge.onPull((float) Math.abs(delta) / size);
+        Log.d(LOGTAG, "  - firstPosition: " + firstPosition);
 
-                    if (needsInvalidate) {
-                        ViewCompat.postInvalidateOnAnimation(this);
-                    }
+        final boolean cannotScrollDown = (firstPosition == 0 &&
+                firstStart >= paddingStart && incrementalDelta >= 0);
+        final boolean cannotScrollUp = (firstPosition + childCount == mItemCount &&
+                lastEnd <= end && incrementalDelta <= 0);
+
+        Log.d(LOGTAG, "  - cannotScrollDown: " + cannotScrollDown);
+        Log.d(LOGTAG, "  - cannotScrollUp: " + cannotScrollUp);
+
+        if (cannotScrollDown || cannotScrollUp) {
+            return incrementalDelta != 0;
+        }
+
+        final boolean inTouchMode = isInTouchMode();
+        if (inTouchMode) {
+            hideSelector();
+        }
+
+        int start = 0;
+        int count = 0;
+
+        final boolean down = (incrementalDelta < 0);
+        if (down) {
+            Log.d(LOGTAG, "  - scrolling down");
+
+            int childrenStart = -incrementalDelta + paddingStart;
+            Log.d(LOGTAG, "    - childrenStart: " + childrenStart);
+
+            for (int i = 0; i < childCount; i++) {
+                final View child = getChildAt(i);
+                final int childEnd = (mIsVertical ? child.getBottom() : child.getRight());
+                Log.d(LOGTAG, "      - childEnd: " + childEnd + " >= " + childrenStart);
+                if (childEnd >= childrenStart) {
+                    break;
                 }
+
+                count++;
+            }
+        } else {
+            Log.d(LOGTAG, "  - scrolling up");
+
+            int childrenEnd = end - incrementalDelta;
+            Log.d(LOGTAG, "    - childrenEnd: " + childrenEnd);
+
+            for (int i = childCount - 1; i >= 0; i--) {
+                final View child = getChildAt(i);
+                final int childStart = (mIsVertical ? child.getTop() : child.getLeft());
+                Log.d(LOGTAG, "      - childEnd: " + childStart + " >= " + childrenEnd);
+
+                if (childStart <= childrenEnd) {
+                    break;
+                }
+
+                start = i;
+                count++;
             }
         }
 
-        return delta == 0 || movedBy != 0;
+        Log.d(LOGTAG, "  - start: " + start);
+        Log.d(LOGTAG, "  - count: " + count);
+
+        mBlockLayoutRequests = true;
+
+        if (count > 0) {
+            detachViewsFromParent(start, count);
+        }
+
+        // invalidate before moving the children to avoid unnecessary invalidate
+        // calls to bubble up from the children all the way to the top
+        if (!awakenScrollbarsInternal()) {
+           invalidate();
+        }
+
+        offsetChildren(incrementalDelta);
+
+        if (down) {
+            mFirstPosition += count;
+        }
+
+        final int absIncrementalDelta = Math.abs(incrementalDelta);
+        if (spaceBefore < absIncrementalDelta || spaceAfter < absIncrementalDelta) {
+            fillGap(down);
+        }
+
+        if (!inTouchMode && mSelectedPosition != INVALID_POSITION) {
+            final int childIndex = mSelectedPosition - mFirstPosition;
+            if (childIndex >= 0 && childIndex < getChildCount()) {
+                positionSelector(mSelectedPosition, getChildAt(childIndex));
+            }
+        } else if (mSelectorPosition != INVALID_POSITION) {
+            final int childIndex = mSelectorPosition - mFirstPosition;
+            if (childIndex >= 0 && childIndex < getChildCount()) {
+                positionSelector(INVALID_POSITION, getChildAt(childIndex));
+            }
+        } else {
+            mSelectorRect.setEmpty();
+        }
+
+        mBlockLayoutRequests = false;
+
+        return false;
     }
 
     @TargetApi(14)
@@ -814,7 +1495,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     }
 
     @TargetApi(5)
-    protected boolean awakenScrollbarsInternal() {
+    private boolean awakenScrollbarsInternal() {
         if (Build.VERSION.SDK_INT >= 5) {
             return super.awakenScrollBars();
         } else {
@@ -822,127 +1503,56 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
     }
 
-    private final boolean contentFits() {
-        if (mItemCount == 0) {
-            return true;
-        }
-
-        if (mFirstPosition != 0 || getChildCount() != mItemCount) {
-            return false;
-        }
-
-        if (mIsVertical) {
-            return (mItemsStart >= getPaddingTop() &&
-                    mItemsEnd <= getHeight() - getPaddingBottom());
-        } else {
-            return (mItemsStart >= getPaddingLeft() &&
-                    mItemsEnd <= getWidth() - getPaddingRight());
-        }
-    }
-
-    private void recycleAllViews() {
-        for (int i = 0; i < getChildCount(); i++) {
-            mRecycler.addScrap(getChildAt(i));
-        }
-
-        detachAllViewsFromParent();
-    }
-
-    private void recycleOffscreenViews() {
-        final int size = (mIsVertical ? getHeight() : getWidth());
-        final int clearBefore = -mItemMargin;
-        final int clearAfter = size + mItemMargin;
-
-        for (int i = getChildCount() - 1; i >= 0; i--) {
-            final View child = getChildAt(i);
-            final int childStart = (mIsVertical ? child.getTop() : child.getLeft());
-
-            if (childStart <= clearAfter)  {
-                break;
-            }
-
-            detachViewFromParent(i);
-
-            mRecycler.addScrap(child);
-        }
-
-        while (getChildCount() > 0) {
-            final View child = getChildAt(0);
-            final int childEnd = (mIsVertical ? child.getBottom() : child.getRight());
-
-            if (childEnd >= clearBefore) {
-                break;
-            }
-
-            detachViewFromParent(0);
-
-            mRecycler.addScrap(child);
-            mFirstPosition++;
-        }
-
-        final int childCount = getChildCount();
-        if (childCount > 0) {
-            mItemsStart = Integer.MAX_VALUE;
-            mItemsEnd = Integer.MIN_VALUE;
-
-            for (int i = 0; i < childCount; i++) {
-                final View child = getChildAt(i);
-                final int childStart = (mIsVertical ? child.getTop() : child.getLeft()) - mItemMargin;
-                final int childEnd = (mIsVertical ? child.getBottom() : child.getRight());
-
-                if (childStart < mItemsStart) {
-                    mItemsStart = childStart;
-                }
-
-                if (childEnd > mItemsEnd) {
-                    mItemsEnd = childEnd;
-                }
-            }
-
-            if (mItemsStart == Integer.MAX_VALUE) {
-                mItemsStart = 0;
-                mItemsEnd = 0;
-            }
-        }
-    }
-
     @Override
     public void computeScroll() {
-        if (mScroller.computeScrollOffset()) {
-            int pos = 0;
-            if (mIsVertical) {
-                pos = mScroller.getCurrY();
-            } else {
-                pos = mScroller.getCurrX();
-            }
+        if (!mScroller.computeScrollOffset()) {
+            return;
+        }
 
-            final int diff = (int) (pos - mLastTouchPos);
-            mLastTouchPos = pos;
+        final int pos;
+        if (mIsVertical) {
+            pos = mScroller.getCurrY();
+        } else {
+            pos = mScroller.getCurrX();
+        }
 
-            final boolean stopped = !trackMotionScroll(diff, false);
+        final int diff = (int) (pos - mLastTouchPos);
+        mLastTouchPos = pos;
 
-            if (!stopped && !mScroller.isFinished()) {
-                ViewCompat.postInvalidateOnAnimation(this);
-            } else {
-                if (stopped) {
-                    final int overScrollMode = ViewCompat.getOverScrollMode(this);
-                    if (overScrollMode != ViewCompat.OVER_SCROLL_NEVER) {
-                        final EdgeEffectCompat edge =
-                                (diff > 0 ? mStartEdge : mEndEdge);
+        final boolean stopped = trackMotionScroll(diff);
 
-                        boolean needsInvalidate =
-                                edge.onAbsorb(Math.abs((int) getCurrVelocity()));
+        if (!stopped && !mScroller.isFinished()) {
+            ViewCompat.postInvalidateOnAnimation(this);
+        } else {
+            if (stopped) {
+                final int overScrollMode = ViewCompat.getOverScrollMode(this);
+                if (overScrollMode != ViewCompat.OVER_SCROLL_NEVER) {
+                    final EdgeEffectCompat edge =
+                            (diff > 0 ? mStartEdge : mEndEdge);
 
-                        if (needsInvalidate) {
-                            ViewCompat.postInvalidateOnAnimation(this);
-                        }
+                    boolean needsInvalidate =
+                            edge.onAbsorb(Math.abs((int) getCurrVelocity()));
+
+                    if (needsInvalidate) {
+                        ViewCompat.postInvalidateOnAnimation(this);
                     }
-
-                    mScroller.abortAnimation();
                 }
 
-                mTouchMode = TOUCH_MODE_REST;
+                mScroller.abortAnimation();
             }
+
+            Log.d(LOGTAG, "Stopped flinging");
+            mTouchMode = TOUCH_MODE_REST;
+        }
+    }
+
+    private void finishEdgeGlows() {
+        if (mStartEdge != null) {
+            mStartEdge.finish();
+        }
+
+        if (mEndEdge != null) {
+            mEndEdge.finish();
         }
     }
 
@@ -988,6 +1598,256 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         return needsInvalidate;
     }
 
+    private void drawSelector(Canvas canvas) {
+        if (!mSelectorRect.isEmpty()) {
+            final Drawable selector = mSelector;
+            selector.setBounds(mSelectorRect);
+            selector.draw(canvas);
+        }
+    }
+
+    private void useDefaultSelector() {
+        setSelector(getResources().getDrawable(
+                android.R.drawable.list_selector_background));
+    }
+
+    private boolean shouldShowSelector() {
+        return (hasFocus() && !isInTouchMode()) || touchModeDrawsInPressedState();
+    }
+
+    private void positionSelector(int position, View selected) {
+        if (position != INVALID_POSITION) {
+            mSelectorPosition = position;
+        }
+
+        mSelectorRect.set(selected.getLeft(), selected.getTop(), selected.getRight(),
+                selected.getBottom());
+
+        final boolean isChildViewEnabled = mIsChildViewEnabled;
+        if (selected.isEnabled() != isChildViewEnabled) {
+            mIsChildViewEnabled = !isChildViewEnabled;
+
+            if (getSelectedItemPosition() != INVALID_POSITION) {
+                refreshDrawableState();
+            }
+        }
+    }
+
+    private void hideSelector() {
+        if (mSelectedPosition != INVALID_POSITION) {
+            if (mLayoutMode != LAYOUT_SPECIFIC) {
+                mResurrectToPosition = mSelectedPosition;
+            }
+
+            if (mNextSelectedPosition >= 0 && mNextSelectedPosition != mSelectedPosition) {
+                mResurrectToPosition = mNextSelectedPosition;
+            }
+
+            setSelectedPositionInt(INVALID_POSITION);
+            setNextSelectedPositionInt(INVALID_POSITION);
+
+            mSelectedStart = 0;
+        }
+    }
+
+    private void setSelectedPositionInt(int position) {
+        mSelectedPosition = position;
+        mSelectedRowId = getItemIdAtPosition(position);
+    }
+
+    private void setSelectionInt(int position) {
+        setNextSelectedPositionInt(position);
+        boolean awakeScrollbars = false;
+
+        final int selectedPosition = mSelectedPosition;
+        if (selectedPosition >= 0) {
+            if (position == selectedPosition - 1) {
+                awakeScrollbars = true;
+            } else if (position == selectedPosition + 1) {
+                awakeScrollbars = true;
+            }
+        }
+
+        layoutChildren();
+
+        if (awakeScrollbars) {
+            awakenScrollbarsInternal();
+        }
+    }
+
+    private void setNextSelectedPositionInt(int position) {
+        mNextSelectedPosition = position;
+        mNextSelectedRowId = getItemIdAtPosition(position);
+
+        // If we are trying to sync to the selection, update that too
+        if (mNeedSync && mSyncMode == SYNC_SELECTED_POSITION && position >= 0) {
+            mSyncPosition = position;
+            mSyncRowId = mNextSelectedRowId;
+        }
+    }
+
+    private boolean touchModeDrawsInPressedState() {
+        switch (mTouchMode) {
+        case TOUCH_MODE_TAP:
+        case TOUCH_MODE_DONE_WAITING:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    private void updateSelectorState() {
+        if (mSelector != null) {
+            if (shouldShowSelector()) {
+                mSelector.setState(getDrawableState());
+            } else {
+                mSelector.setState(new int[] { 0 });
+            }
+        }
+    }
+
+    private void checkSelectionChanged() {
+        if ((mSelectedPosition != mOldSelectedPosition) || (mSelectedRowId != mOldSelectedRowId)) {
+            selectionChanged();
+            mOldSelectedPosition = mSelectedPosition;
+            mOldSelectedRowId = mSelectedRowId;
+        }
+    }
+
+    private void selectionChanged() {
+        OnItemSelectedListener listener = getOnItemSelectedListener();
+        if (listener == null) {
+            return;
+        }
+
+        if (mInLayout || mBlockLayoutRequests) {
+            // If we are in a layout traversal, defer notification
+            // by posting. This ensures that the view tree is
+            // in a consistent state and is able to accommodate
+            // new layout or invalidate requests.
+            if (mSelectionNotifier == null) {
+                mSelectionNotifier = new SelectionNotifier();
+            }
+
+            post(mSelectionNotifier);
+        } else {
+            fireOnSelected();
+        }
+    }
+
+    private void fireOnSelected() {
+        OnItemSelectedListener listener = getOnItemSelectedListener();
+        if (listener == null) {
+            return;
+        }
+
+        final int selection = getSelectedItemPosition();
+        if (selection >= 0) {
+            View v = getSelectedView();
+            listener.onItemSelected(this, v, selection,
+                    mAdapter.getItemId(selection));
+        } else {
+            listener.onNothingSelected(this);
+        }
+    }
+
+    private int lookForSelectablePosition(int position) {
+        return lookForSelectablePosition(position, true);
+    }
+
+    private int lookForSelectablePosition(int position, boolean lookDown) {
+        final ListAdapter adapter = mAdapter;
+        if (adapter == null || isInTouchMode()) {
+            return INVALID_POSITION;
+        }
+
+        final int itemCount = mItemCount;
+        if (!mAreAllItemsSelectable) {
+            if (lookDown) {
+                position = Math.max(0, position);
+                while (position < itemCount && !adapter.isEnabled(position)) {
+                    position++;
+                }
+            } else {
+                position = Math.min(position, itemCount - 1);
+                while (position >= 0 && !adapter.isEnabled(position)) {
+                    position--;
+                }
+            }
+
+            if (position < 0 || position >= itemCount) {
+                return INVALID_POSITION;
+            }
+
+            return position;
+        } else {
+            if (position < 0 || position >= itemCount) {
+                return INVALID_POSITION;
+            }
+
+            return position;
+        }
+    }
+
+    @Override
+    protected void drawableStateChanged() {
+        super.drawableStateChanged();
+        updateSelectorState();
+    }
+
+    @Override
+    protected int[] onCreateDrawableState(int extraSpace) {
+        // If the child view is enabled then do the default behavior.
+        if (mIsChildViewEnabled) {
+            // Common case
+            return super.onCreateDrawableState(extraSpace);
+        }
+
+        // The selector uses this View's drawable state. The selected child view
+        // is disabled, so we need to remove the enabled state from the drawable
+        // states.
+        final int enabledState = ENABLED_STATE_SET[0];
+
+        // If we don't have any extra space, it will return one of the static state arrays,
+        // and clearing the enabled state on those arrays is a bad thing!  If we specify
+        // we need extra space, it will create+copy into a new array that safely mutable.
+        int[] state = super.onCreateDrawableState(extraSpace + 1);
+        int enabledPos = -1;
+        for (int i = state.length - 1; i >= 0; i--) {
+            if (state[i] == enabledState) {
+                enabledPos = i;
+                break;
+            }
+        }
+
+        // Remove the enabled state
+        if (enabledPos >= 0) {
+            System.arraycopy(state, enabledPos + 1, state, enabledPos,
+                    state.length - enabledPos - 1);
+        }
+
+        return state;
+    }
+
+    @Override
+    protected boolean canAnimate() {
+        return (super.canAnimate() && mItemCount > 0);
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        final boolean drawSelectorOnTop = mDrawSelectorOnTop;
+        if (!drawSelectorOnTop) {
+            drawSelector(canvas);
+        }
+
+        super.dispatchDraw(canvas);
+
+        if (drawSelectorOnTop) {
+            drawSelector(canvas);
+        }
+    }
+
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
@@ -1009,20 +1869,55 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
     @Override
     public void requestLayout() {
-        if (!mPopulating) {
+        if (!mInLayout && !mBlockLayoutRequests) {
             super.requestLayout();
         }
     }
 
     @Override
     public View getSelectedView() {
-        // TODO Do nothing for now
-        return null;
+        if (mItemCount > 0 && mSelectedPosition >= 0) {
+            return getChildAt(mSelectedPosition - mFirstPosition);
+        } else {
+            return null;
+        }
     }
 
     @Override
     public void setSelection(int position) {
-        // TODO Do nothing for now
+        setSelectionFromOffset(position, 0);
+    }
+
+    public void setSelectionFromOffset(int position, int offset) {
+        if (mAdapter == null) {
+            return;
+        }
+
+        if (!isInTouchMode()) {
+            position = lookForSelectablePosition(position);
+            if (position >= 0) {
+                setNextSelectedPositionInt(position);
+            }
+        } else {
+            mResurrectToPosition = position;
+        }
+
+        if (position >= 0) {
+            mLayoutMode = LAYOUT_SPECIFIC;
+
+            if (mIsVertical) {
+                mSpecificStart = getPaddingTop() + offset;
+            } else {
+                mSpecificStart = getPaddingLeft() + offset;
+            }
+
+            if (mNeedSync) {
+                mSyncPosition = position;
+                mSyncRowId = mAdapter.getItemId(position);
+            }
+
+            requestLayout();
+        }
     }
 
     @Override
@@ -1033,6 +1928,10 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (mSelector == null) {
+            useDefaultSelector();
+        }
+
         int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
@@ -1056,60 +1955,601 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         mInLayout = true;
-        populate();
+
+        if (changed) {
+            final int childCount = getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                getChildAt(i).forceLayout();
+            }
+
+            mRecycler.markChildrenDirty();
+        }
+
+        layoutChildren();
+
         mInLayout = false;
 
         final int width = r - l - getPaddingLeft() - getPaddingRight();
         final int height = b - t - getPaddingTop() - getPaddingBottom();
 
-        if (mIsVertical) {
-            mStartEdge.setSize(width, height);
-            mEndEdge.setSize(width, height);
-        } else {
-            mStartEdge.setSize(height, width);
-            mEndEdge.setSize(height, width);
+        if (mStartEdge != null && mEndEdge != null) {
+            if (mIsVertical) {
+                mStartEdge.setSize(width, height);
+                mEndEdge.setSize(width, height);
+            } else {
+                mStartEdge.setSize(height, width);
+                mEndEdge.setSize(height, width);
+            }
         }
     }
 
-    private void populate() {
+    private void layoutChildren() {
         if (getWidth() == 0 || getHeight() == 0) {
             return;
         }
 
-        if (mItemsStart == null || mItemsEnd == null) {
-            final int padding = (mIsVertical ? getPaddingTop() : getPaddingLeft());
-            final int offset = padding + Math.min(mRestoreOffset, 0);
-
-            mItemsStart = offset;
-            mItemsEnd = offset;
-
-            removeAllViewsInternal();
-            mRestoreOffset = 0;
+        final boolean blockLayoutRequests = mBlockLayoutRequests;
+        if (!blockLayoutRequests) {
+            mBlockLayoutRequests = true;
+        } else {
+            return;
         }
 
-        mPopulating = true;
-        layoutChildren(mDataChanged);
-        fillAfter(mFirstPosition + getChildCount(), 0);
-        fillBefore(mFirstPosition - 1, 0);
-        mPopulating = false;
-        mDataChanged = false;
+        try {
+            invalidate();
+
+            if (mAdapter == null) {
+                resetState();
+                return;
+            }
+
+            final int start = (mIsVertical ? getPaddingTop() : getPaddingLeft());
+            final int end =
+                    (mIsVertical ? getHeight() - getPaddingBottom() : getWidth() - getPaddingRight());
+
+            int childCount = getChildCount();
+            int index = 0;
+            int delta = 0;
+
+            View selected = null;
+            View oldSelected = null;
+            View newSelected = null;
+            View oldFirstChild = null;
+
+            switch (mLayoutMode) {
+            case LAYOUT_SET_SELECTION:
+                index = mNextSelectedPosition - mFirstPosition;
+                if (index >= 0 && index < childCount) {
+                    newSelected = getChildAt(index);
+                }
+
+                break;
+
+            case LAYOUT_FORCE_TOP:
+            case LAYOUT_FORCE_BOTTOM:
+            case LAYOUT_SPECIFIC:
+            case LAYOUT_SYNC:
+                break;
+
+            case LAYOUT_MOVE_SELECTION:
+            default:
+                // Remember the previously selected view
+                index = mSelectedPosition - mFirstPosition;
+                if (index >= 0 && index < childCount) {
+                    oldSelected = getChildAt(index);
+                }
+
+                // Remember the previous first child
+                oldFirstChild = getChildAt(0);
+
+                if (mNextSelectedPosition >= 0) {
+                    delta = mNextSelectedPosition - mSelectedPosition;
+                }
+
+                // Caution: newSelected might be null
+                newSelected = getChildAt(index + delta);
+            }
+
+            final boolean dataChanged = mDataChanged;
+            if (dataChanged) {
+                handleDataChanged();
+            }
+
+            // Handle the empty set by removing all views that are visible
+            // and calling it a day
+            if (mItemCount == 0) {
+                resetState();
+                return;
+            } else if (mItemCount != mAdapter.getCount()) {
+                throw new IllegalStateException("The content of the adapter has changed but "
+                        + "TwoWayView did not receive a notification. Make sure the content of "
+                        + "your adapter is not modified from a background thread, but only "
+                        + "from the UI thread. [in TwoWayView(" + getId() + ", " + getClass()
+                        + ") with Adapter(" + mAdapter.getClass() + ")]");
+            }
+
+            setSelectedPositionInt(mNextSelectedPosition);
+
+            // Pull all children into the RecycleBin.
+            // These views will be reused if possible
+            final int firstPosition = mFirstPosition;
+            final RecycleBin recycleBin = mRecycler;
+
+            if (dataChanged) {
+                for (int i = 0; i < childCount; i++) {
+                    recycleBin.addScrapView(getChildAt(i), firstPosition + i);
+                }
+            } else {
+                recycleBin.fillActiveViews(childCount, firstPosition);
+            }
+
+            detachAllViewsFromParent();
+
+            switch (mLayoutMode) {
+            case LAYOUT_SET_SELECTION:
+                if (newSelected != null) {
+                    final int newSelectedStart =
+                            (mIsVertical ? newSelected.getTop() : newSelected.getLeft());
+
+                    selected = fillFromSelection(newSelectedStart, start, end);
+                } else {
+                    selected = fillFromMiddle(start, end);
+                }
+
+                break;
+
+            case LAYOUT_SYNC:
+                selected = fillSpecific(mSyncPosition, mSpecificStart);
+                break;
+
+            case LAYOUT_FORCE_BOTTOM:
+                selected = fillBefore(mItemCount - 1, end);
+                adjustViewsStartOrEnd();
+                break;
+
+            case LAYOUT_FORCE_TOP:
+                mFirstPosition = 0;
+                selected = fillFromOffset(start);
+                adjustViewsStartOrEnd();
+                break;
+
+            case LAYOUT_SPECIFIC:
+                selected = fillSpecific(reconcileSelectedPosition(), mSpecificStart);
+                break;
+
+            case LAYOUT_MOVE_SELECTION:
+                selected = moveSelection(oldSelected, newSelected, delta, start, end);
+                break;
+
+            default:
+                if (childCount == 0) {
+                    final int position = lookForSelectablePosition(0);
+                    setSelectedPositionInt(position);
+                    selected = fillFromOffset(start);
+                } else {
+                    if (mSelectedPosition >= 0 && mSelectedPosition < mItemCount) {
+                        int offset = start;
+                        if (oldSelected != null) {
+                            offset = (mIsVertical ? oldSelected.getTop() : oldSelected.getLeft());
+                        }
+                        selected = fillSpecific(mSelectedPosition, offset);
+                    } else if (mFirstPosition < mItemCount) {
+                        int offset = start;
+                        if (oldFirstChild != null) {
+                            offset = (mIsVertical ? oldFirstChild.getTop() : oldFirstChild.getLeft());
+                        }
+
+                        selected = fillSpecific(mFirstPosition, offset);
+                    } else {
+                        selected = fillSpecific(0, start);
+                    }
+                }
+
+                break;
+
+            }
+
+            recycleBin.scrapActiveViews();
+
+            if (selected != null) {
+                positionSelector(INVALID_POSITION, selected);
+                mSelectedStart = (mIsVertical ? selected.getTop() : selected.getLeft());
+            } else {
+                if (mTouchMode > TOUCH_MODE_DOWN && mTouchMode < TOUCH_MODE_DRAGGING) {
+                    View child = getChildAt(mMotionPosition - mFirstPosition);
+
+                    if (child != null) {
+                        positionSelector(mMotionPosition, child);
+                    }
+                } else {
+                    mSelectedStart = 0;
+                    mSelectorRect.setEmpty();
+                }
+            }
+        } finally {
+            if (!blockLayoutRequests) {
+                mBlockLayoutRequests = false;
+                mDataChanged = false;
+            }
+        }
     }
 
-    final void offsetChildren(int offsetX, int offsetY) {
+    private void offsetChildren(int offset) {
         final int childCount = getChildCount();
 
         for (int i = 0; i < childCount; i++) {
             final View child = getChildAt(i);
-            child.layout(child.getLeft() + offsetX, child.getTop() + offsetY,
-                    child.getRight() + offsetX, child.getBottom() + offsetY);
-        }
 
-        final int offset = (mIsVertical ? offsetY : offsetX);
-        mItemsStart += offset;
-        mItemsEnd += offset;
+            if (mIsVertical) {
+                child.offsetTopAndBottom(offset);
+            } else {
+                child.offsetLeftAndRight(offset);
+            }
+        }
     }
 
-    final int getChildWidthMeasureSpec(LayoutParams lp) {
+    private View moveSelection(View oldSelected, View newSelected, int delta, int start,
+            int end) {
+        final int selectedPosition = mSelectedPosition;
+
+        final int oldSelectedStart = (mIsVertical ? oldSelected.getTop() : oldSelected.getLeft());
+        final int oldSelectedEnd = (mIsVertical ? oldSelected.getBottom() : oldSelected.getRight());
+
+        View selected = null;
+
+        if (delta > 0) {
+            /*
+             * Case 1: Scrolling down.
+             */
+
+            /*
+             *     Before           After
+             *    |       |        |       |
+             *    +-------+        +-------+
+             *    |   A   |        |   A   |
+             *    |   1   |   =>   +-------+
+             *    +-------+        |   B   |
+             *    |   B   |        |   2   |
+             *    +-------+        +-------+
+             *    |       |        |       |
+             *
+             *    Try to keep the top of the previously selected item where it was.
+             *    oldSelected = A
+             *    selected = B
+             */
+
+            // Put oldSelected (A) where it belongs
+            oldSelected = makeAndAddView(selectedPosition - 1, oldSelectedStart, true, false);
+
+            final int itemMargin = mItemMargin;
+
+            // Now put the new selection (B) below that
+            selected = makeAndAddView(selectedPosition, oldSelectedEnd + itemMargin, true, true);
+
+            final int selectedStart = (mIsVertical ? selected.getTop() : selected.getLeft());
+            final int selectedEnd = (mIsVertical ? selected.getBottom() : selected.getRight());
+
+            // Some of the newly selected item extends below the bottom of the list
+            if (selectedEnd > end) {
+                // Find space available above the selection into which we can scroll upwards
+                final int spaceBefore = selectedStart - start;
+
+                // Find space required to bring the bottom of the selected item fully into view
+                final int spaceAfter = selectedEnd - end;
+
+                // Don't scroll more than half the size of the list
+                final int halfSpace = (end - start) / 2;
+                int offset = Math.min(spaceBefore, spaceAfter);
+                offset = Math.min(offset, halfSpace);
+
+                if (mIsVertical) {
+                    oldSelected.offsetTopAndBottom(-offset);
+                    selected.offsetTopAndBottom(-offset);
+                } else {
+                    oldSelected.offsetLeftAndRight(-offset);
+                    selected.offsetLeftAndRight(-offset);
+                }
+            }
+
+            // Fill in views before and after
+            fillBefore(mSelectedPosition - 2, selectedStart - itemMargin);
+            adjustViewsStartOrEnd();
+            fillAfter(mSelectedPosition + 1, selectedEnd + itemMargin);
+        } else if (delta < 0) {
+            /*
+             * Case 2: Scrolling up.
+             */
+
+            /*
+             *     Before           After
+             *    |       |        |       |
+             *    +-------+        +-------+
+             *    |   A   |        |   A   |
+             *    +-------+   =>   |   1   |
+             *    |   B   |        +-------+
+             *    |   2   |        |   B   |
+             *    +-------+        +-------+
+             *    |       |        |       |
+             *
+             *    Try to keep the top of the item about to become selected where it was.
+             *    newSelected = A
+             *    olSelected = B
+             */
+
+            if (newSelected != null) {
+                // Try to position the top of newSel (A) where it was before it was selected
+                final int newSelectedStart = (mIsVertical ? newSelected.getTop() : newSelected.getLeft());
+                selected = makeAndAddView(selectedPosition, newSelectedStart, true, true);
+            } else {
+                // If (A) was not on screen and so did not have a view, position
+                // it above the oldSelected (B)
+                selected = makeAndAddView(selectedPosition, oldSelectedStart, false, true);
+            }
+
+            final int selectedStart = (mIsVertical ? selected.getTop() : selected.getLeft());
+            final int selectedEnd = (mIsVertical ? selected.getBottom() : selected.getRight());
+
+            // Some of the newly selected item extends above the top of the list
+            if (selectedStart < start) {
+                // Find space required to bring the top of the selected item fully into view
+                final int spaceBefore = start - selectedStart;
+
+               // Find space available below the selection into which we can scroll downwards
+                final int spaceAfter = end - selectedEnd;
+
+                // Don't scroll more than half the height of the list
+                final int halfSpace = (end - start) / 2;
+                int offset = Math.min(spaceBefore, spaceAfter);
+                offset = Math.min(offset, halfSpace);
+
+                if (mIsVertical) {
+                    selected.offsetTopAndBottom(offset);
+                } else {
+                    selected.offsetLeftAndRight(offset);
+                }
+            }
+
+            // Fill in views above and below
+            fillBeforeAndAfter(selected, selectedPosition);
+        } else {
+            /*
+             * Case 3: Staying still
+             */
+
+            selected = makeAndAddView(selectedPosition, oldSelectedStart, true, true);
+
+            final int selectedStart = (mIsVertical ? selected.getTop() : selected.getLeft());
+            final int selectedEnd = (mIsVertical ? selected.getBottom() : selected.getRight());
+
+            // We're staying still...
+            if (oldSelectedStart < start) {
+                // ... but the top of the old selection was off screen.
+                // (This can happen if the data changes size out from under us)
+                int newEnd = selectedEnd;
+                if (newEnd < start + 20) {
+                    // Not enough visible -- bring it onscreen
+                    if (mIsVertical) {
+                        selected.offsetTopAndBottom(start - selectedStart);
+                    } else {
+                        selected.offsetLeftAndRight(start - selectedStart);
+                    }
+                }
+            }
+
+            // Fill in views above and below
+            fillBeforeAndAfter(selected, selectedPosition);
+        }
+
+        return selected;
+    }
+
+    private void handleDataChanged() {
+        final int itemCount = mItemCount;
+
+        mRecycler.clearTransientStateViews();
+
+        if (itemCount > 0) {
+            int newPos;
+            int selectablePos;
+
+            // Find the row we are supposed to sync to
+            if (mNeedSync) {
+                // Update this first, since setNextSelectedPositionInt inspects it
+                mNeedSync = false;
+                mPendingSync = null;
+
+                switch (mSyncMode) {
+                case SYNC_SELECTED_POSITION:
+                    if (isInTouchMode()) {
+                        // We saved our state when not in touch mode. (We know this because
+                        // mSyncMode is SYNC_SELECTED_POSITION.) Now we are trying to
+                        // restore in touch mode. Just leave mSyncPosition as it is (possibly
+                        // adjusting if the available range changed) and return.
+                        mLayoutMode = LAYOUT_SYNC;
+                        mSyncPosition = Math.min(Math.max(0, mSyncPosition), itemCount - 1);
+
+                        return;
+                    } else {
+                        // See if we can find a position in the new data with the same
+                        // id as the old selection. This will change mSyncPosition.
+                        newPos = findSyncPosition();
+                        if (newPos >= 0) {
+                            // Found it. Now verify that new selection is still selectable
+                            selectablePos = lookForSelectablePosition(newPos, true);
+                            if (selectablePos == newPos) {
+                                // Same row id is selected
+                                mSyncPosition = newPos;
+
+                                if (mSyncHeight == getHeight()) {
+                                    Log.d(LOGTAG, " height is the same");
+                                    // If we are at the same height as when we saved state, try
+                                    // to restore the scroll position too.
+                                    mLayoutMode = LAYOUT_SYNC;
+                                } else {
+                                    Log.d(LOGTAG, " height is NOT the same");
+                                    // We are not the same height as when the selection was saved, so
+                                    // don't try to restore the exact position
+                                    mLayoutMode = LAYOUT_SET_SELECTION;
+                                }
+
+                                // Restore selection
+                                setNextSelectedPositionInt(newPos);
+                                return;
+                            }
+                        }
+                    }
+                    break;
+
+                case SYNC_FIRST_POSITION:
+                    // Leave mSyncPosition as it is -- just pin to available range
+                    mLayoutMode = LAYOUT_SYNC;
+                    mSyncPosition = Math.min(Math.max(0, mSyncPosition), itemCount - 1);
+
+                    return;
+                }
+            }
+
+            if (!isInTouchMode()) {
+                // We couldn't find matching data -- try to use the same position
+                newPos = getSelectedItemPosition();
+
+                // Pin position to the available range
+                if (newPos >= itemCount) {
+                    newPos = itemCount - 1;
+                }
+                if (newPos < 0) {
+                    newPos = 0;
+                }
+
+                // Make sure we select something selectable -- first look down
+                selectablePos = lookForSelectablePosition(newPos, true);
+
+                if (selectablePos >= 0) {
+                    setNextSelectedPositionInt(selectablePos);
+                    return;
+                } else {
+                    // Looking down didn't work -- try looking up
+                    selectablePos = lookForSelectablePosition(newPos, false);
+                    if (selectablePos >= 0) {
+                        setNextSelectedPositionInt(selectablePos);
+                        return;
+                    }
+                }
+            } else {
+                // We already know where we want to resurrect the selection
+                if (mResurrectToPosition >= 0) {
+                    return;
+                }
+            }
+        }
+
+        // Nothing is selected. Give up and reset everything.
+        mLayoutMode = LAYOUT_FORCE_TOP;
+        mSelectedPosition = INVALID_POSITION;
+        mSelectedRowId = INVALID_ROW_ID;
+        mNextSelectedPosition = INVALID_POSITION;
+        mNextSelectedRowId = INVALID_ROW_ID;
+        mNeedSync = false;
+        mPendingSync = null;
+        mSelectorPosition = INVALID_POSITION;
+
+        checkSelectionChanged();
+
+    }
+
+    private int reconcileSelectedPosition() {
+        int position = mSelectedPosition;
+        if (position < 0) {
+            position = mResurrectToPosition;
+        }
+
+        position = Math.max(0, position);
+        position = Math.min(position, mItemCount - 1);
+
+        return position;
+    }
+
+    boolean resurrectSelection() {
+        final int childCount = getChildCount();
+        if (childCount <= 0) {
+            return false;
+        }
+
+        int selectedStart = 0;
+        int selectedPosition;
+
+        final int start = (mIsVertical ? getPaddingTop() : getPaddingLeft());
+        final int end =
+                (mIsVertical ? getHeight() - getPaddingBottom() : getWidth() - getPaddingRight());
+
+        final int firstPosition = mFirstPosition;
+        final int toPosition = mResurrectToPosition;
+        boolean down = true;
+
+        if (toPosition >= firstPosition && toPosition < firstPosition + childCount) {
+            selectedPosition = toPosition;
+
+            final View selected = getChildAt(selectedPosition - mFirstPosition);
+            selectedStart = (mIsVertical ? selected.getTop() : selected.getLeft());
+        } else if (toPosition < firstPosition) {
+            // Default to selecting whatever is first
+            selectedPosition = firstPosition;
+
+            for (int i = 0; i < childCount; i++) {
+                final View child = getChildAt(i);
+                final int childStart = (mIsVertical ? child.getTop() : child.getLeft());
+
+                if (i == 0) {
+                    // Remember the position of the first item
+                    selectedStart = childStart;
+                }
+
+                if (childStart >= start) {
+                    // Found a view whose top is fully visible
+                    selectedPosition = firstPosition + i;
+                    selectedStart = childStart;
+                    break;
+                }
+            }
+        } else {
+            selectedPosition = firstPosition + childCount - 1;
+            down = false;
+
+            for (int i = childCount - 1; i >= 0; i--) {
+                final View child = getChildAt(i);
+                final int childStart = (mIsVertical ? child.getTop() : child.getLeft());
+                final int childEnd = (mIsVertical ? child.getBottom() : child.getRight());
+
+                if (i == childCount - 1) {
+                    selectedStart = childStart;
+                }
+
+                if (childEnd <= end) {
+                    selectedPosition = firstPosition + i;
+                    selectedStart = childStart;
+                    break;
+                }
+            }
+        }
+
+        mResurrectToPosition = INVALID_POSITION;
+        mTouchMode = TOUCH_MODE_REST;
+
+        mSpecificStart = selectedStart;
+
+        selectedPosition = lookForSelectablePosition(selectedPosition, down);
+        if (selectedPosition >= firstPosition && selectedPosition <= getLastVisiblePosition()) {
+            mLayoutMode = LAYOUT_SPECIFIC;
+            updateSelectorState();
+            setSelectionInt(selectedPosition);
+        } else {
+            selectedPosition = INVALID_POSITION;
+        }
+
+        return selectedPosition >= 0;
+    }
+
+    private int getChildWidthMeasureSpec(LayoutParams lp) {
         if (!mIsVertical && lp.width == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (mIsVertical) {
@@ -1120,7 +2560,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
     }
 
-    final int getChildHeightMeasureSpec(LayoutParams lp) {
+    private int getChildHeightMeasureSpec(LayoutParams lp) {
         if (mIsVertical && lp.height == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (!mIsVertical) {
@@ -1131,286 +2571,683 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
     }
 
-    final void measureChild(View child, LayoutParams lp) {
+    private void measureChild(View child, LayoutParams lp) {
         final int widthSpec = getChildWidthMeasureSpec(lp);
         final int heightSpec = getChildHeightMeasureSpec(lp);
         child.measure(widthSpec, heightSpec);
     }
 
-    final void layoutChildren(boolean queryAdapter) {
-        final int paddingLeft = getPaddingLeft();
-        final int paddingTop = getPaddingTop();
-        final int itemMargin = mItemMargin;
+    private View makeAndAddView(int position, int offset, boolean flow, boolean selected) {
+        final int top;
+        final int left;
+
+        if (mIsVertical) {
+            top = offset;
+            left = getPaddingLeft();
+        } else {
+            top = getPaddingTop();
+            left = offset;
+        }
+
+        if (!mDataChanged) {
+            // Try to use an existing view for this position
+            final View activeChild = mRecycler.getActiveView(position);
+            if (activeChild != null) {
+                // Found it -- we're using an existing child
+                // This just needs to be positioned
+                setupChild(activeChild, position, top, left, flow, selected, true);
+
+                return activeChild;
+            }
+        }
+
+        // Make a new view for this position, or convert an unused view if possible
+        final View child = obtainView(position, mIsScrap);
+
+        // This needs to be positioned and measured
+        setupChild(child, position, top, left, flow, selected, mIsScrap[0]);
+
+        return child;
+    }
+
+    private void setupChild(View child, int position, int top, int left,
+            boolean flow, boolean selected, boolean recycled) {
+        final boolean isSelected = selected && shouldShowSelector();
+        final boolean updateChildSelected = isSelected != child.isSelected();
+        final int touchMode = mTouchMode;
+
+        final boolean isPressed = touchMode > TOUCH_MODE_DOWN && touchMode < TOUCH_MODE_DRAGGING &&
+                mMotionPosition == position;
+
+        final boolean updateChildPressed = isPressed != child.isPressed();
+        final boolean needToMeasure = !recycled || updateChildSelected || child.isLayoutRequested();
+
+        // Respect layout params that are already in the view. Otherwise make some up...
+        // noinspection unchecked
+        LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        if (lp == null) {
+            lp = generateDefaultLayoutParams();
+        }
+
+        lp.viewType = mAdapter.getItemViewType(position);
+
+        if (recycled && !lp.forceAdd) {
+            attachViewToParent(child, (flow ? -1 : 0), lp);
+        } else {
+            lp.forceAdd = false;
+            addViewInLayout(child, (flow ? -1 : 0), lp, true);
+        }
+
+        if (updateChildSelected) {
+            child.setSelected(isSelected);
+        }
+
+        if (updateChildPressed) {
+            child.setPressed(isPressed);
+        }
+
+        if (needToMeasure) {
+            measureChild(child, lp);
+        } else {
+            cleanupLayoutState(child);
+        }
+
+        final int w = child.getMeasuredWidth();
+        final int h = child.getMeasuredHeight();
+
+        if (needToMeasure) {
+            final int childTop = (mIsVertical && !flow ? top - h : top);
+            final int childLeft = (!mIsVertical && !flow ? left - w : left);
+            final int childRight = childLeft + w;
+            final int childBottom = childTop + h;
+
+            Log.d(LOGTAG, "setupChild childTop: " + childTop);
+            Log.d(LOGTAG, "setupChild childHeight: " + h);
+
+            child.layout(childLeft, childTop, childRight, childBottom);
+        } else {
+            child.offsetLeftAndRight(left - child.getLeft());
+            child.offsetTopAndBottom(top - child.getTop());
+        }
+
+//        lp = (LayoutParams) child.getLayoutParams();
+//        if (recycled && lp.scrappedFromPosition != position) {
+//            child.jumpDrawablesToCurrentState();
+//        }
+    }
+
+    void fillGap(boolean down) {
+        Log.d(LOGTAG, "fillGap");
         final int childCount = getChildCount();
 
-        mItemsEnd = Integer.MIN_VALUE;
+        Log.d(LOGTAG, "  - fillGap childCount: " + childCount);
 
-        for (int i = 0; i < childCount; i++) {
-            View child = getChildAt(i);
-            LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        if (down) {
+            Log.d(LOGTAG, "  - fillGap down");
+            final int paddingStart = (mIsVertical ? getPaddingTop() : getPaddingLeft());
 
-            final int position = mFirstPosition + i;
-            final boolean needsLayout = queryAdapter || child.isLayoutRequested();
-
-            if (queryAdapter) {
-                View newView = obtainView(position, child);
-                if (newView != child) {
-                    detachViewFromParent(i);
-                    removeDetachedView(child, false);
-
-                    addViewInternal(newView, i);
-                    child = newView;
-                }
-
-                lp = (LayoutParams) child.getLayoutParams();
+            final int lastEnd;
+            if (mIsVertical) {
+                lastEnd = getChildAt(childCount - 1).getBottom();
+            } else {
+                lastEnd = getChildAt(childCount - 1).getRight();
             }
 
-            if (needsLayout) {
-                measureChild(child, lp);
-            }
-
-            final int childStart = (mIsVertical ? child.getTop() : child.getLeft());
-            final int childPos = (mItemsEnd > Integer.MIN_VALUE ?
-                    mItemsEnd + itemMargin : childStart);
-
-            final int childWidth = child.getMeasuredWidth();
-            final int childHeight = child.getMeasuredHeight();
-
-            final int childTop = (mIsVertical ? childPos : paddingTop);
-            final int childBottom = childTop + childHeight;
-            final int childLeft = (mIsVertical ? paddingLeft : childPos);
-            final int childRight = childLeft + childWidth;
-
-            if (DEBUG) {
-                Log.d(LOGTAG, "Child view layout: l=" + childLeft +
-                        " t=" + childTop + " r=" + childRight + " b=" + childBottom);
-            }
-
-            child.layout(childLeft, childTop, childRight, childBottom);
-
-            mItemsEnd = (mIsVertical ? childBottom : childRight);
-        }
-
-        if (mItemsEnd == Integer.MIN_VALUE) {
-            mItemsEnd = mItemsStart;
-        }
-    }
-
-    final int fillBefore(int fromPosition, int overhang) {
-        final int paddingLeft = getPaddingLeft();
-        final int paddingTop = getPaddingTop();
-        final int itemMargin = mItemMargin;
-        final int start = (mIsVertical ? paddingTop : paddingLeft);
-        final int fillTo = start - overhang;
-        int position = fromPosition;
-
-        while (position >= 0 && mItemsStart > fillTo) {
-            final View child = obtainView(position, null);
-            LayoutParams lp = (LayoutParams) child.getLayoutParams();
-
-            if (child.getParent() != this) {
-                if (mInLayout) {
-                    addViewInternal(child, 0, lp);
-                } else {
-                    addViewInternal(child, 0);
-                }
-            }
-
-            if (mHasStableIds) {
-                final long id = mAdapter.getItemId(position);
-                lp.id = id;
-            }
-
-            measureChild(child, lp);
-
-            final int from = mItemsStart;
-
-            final int childWidth = child.getMeasuredWidth();
-            final int childHeight = child.getMeasuredHeight();
-
-            final int childBottom;
-            final int childTop;
-            final int childLeft;
-            final int childRight;
+            final int offset = (childCount > 0 ? lastEnd + mItemMargin : paddingStart);
+            Log.d(LOGTAG, "  - fillGap offset: " + offset);
+            fillAfter(mFirstPosition + childCount, offset);
+            correctTooHigh(getChildCount());
+        } else {
+            Log.d(LOGTAG, "  - fillGap up");
+            final int end;
+            final int firstStart;
 
             if (mIsVertical) {
-                childBottom = from;
-                childTop = childBottom - childHeight;
-                childLeft = paddingLeft;
-                childRight = childLeft + childWidth;
+                end = getHeight() - getPaddingBottom();
+                firstStart = getChildAt(0).getTop();
             } else {
-                childTop = paddingTop;
-                childBottom = childTop + childHeight;
-                childRight = from;
-                childLeft = childRight - childWidth;
+                end = getWidth() - getPaddingRight();
+                firstStart = getChildAt(0).getLeft();
             }
 
-            child.layout(childLeft, childTop, childRight, childBottom);
-
-            if (DEBUG) {
-                Log.d(LOGTAG, "fillBefore: child view layout: l=" + childLeft +
-                        " t=" + childTop + " r=" + childRight + " b=" + childBottom);
-            }
-
-            mItemsStart = (mIsVertical ? childTop : childLeft) - itemMargin;
-            mFirstPosition = position--;
+            final int offset = (childCount > 0 ? firstStart - mItemMargin : end);
+            Log.d(LOGTAG, "  - fillGap offset: " + offset);
+            fillBefore(mFirstPosition - 1, offset);
+            correctTooLow(getChildCount());
         }
-
-        return start - mItemsStart;
     }
 
-    final int fillAfter(int fromPosition, int overhang) {
-        final int paddingLeft = getPaddingLeft();
-        final int paddingTop = getPaddingTop();
-        final int itemMargin = mItemMargin;
+    private View fillBefore(int pos, int nextOffset) {
+        Log.d(LOGTAG, "fillBefore");
+        View selectedView = null;
+
+        Log.d(LOGTAG, "  - fillBefore pos: " + pos);
+        Log.d(LOGTAG, "  - fillBefore nextOffset: " + nextOffset);
+
+        final int start = (mIsVertical ? getPaddingTop() : getPaddingLeft());
+
+        Log.d(LOGTAG, "  - fillBefore start: " + start);
+
+        while (nextOffset > start && pos >= 0) {
+            boolean isSelected = (pos == mSelectedPosition);
+            View child = makeAndAddView(pos, nextOffset, false, isSelected);
+
+            Log.d(LOGTAG, "  - fillBefore new child top: " + child.getTop());
+
+            if (mIsVertical) {
+                nextOffset = child.getTop() - mItemMargin;
+            } else {
+                nextOffset = child.getLeft() - mItemMargin;
+            }
+
+            if (isSelected) {
+                selectedView = child;
+            }
+
+            pos--;
+
+            Log.d(LOGTAG, "  - fillBefore loop pos: " + pos);
+            Log.d(LOGTAG, "  - fillBefore loop nextOffset: " + nextOffset);
+        }
+
+        mFirstPosition = pos + 1;
+        Log.d(LOGTAG, "  - fillBefore pos later: " + pos);
+        Log.d(LOGTAG, "  - fillBefore mFirstPosition: " + mFirstPosition);
+
+        return selectedView;
+    }
+
+    private View fillAfter(int pos, int nextOffset) {
+        Log.d(LOGTAG, "fillAfter");
+        View selectedView = null;
+
         final int end =
                 (mIsVertical ? getHeight() - getPaddingBottom() : getWidth() - getPaddingRight());
-        final int fillTo = end + overhang;
-        int position = fromPosition;
 
-        while (position < mItemCount && mItemsEnd < fillTo) {
-            final View child = obtainView(position, null);
-            LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        while (nextOffset < end && pos < mItemCount) {
+            Log.d(LOGTAG, "  - fillAfter pos: " + pos);
+            Log.d(LOGTAG, "  - fillAfter nextOffset: " + nextOffset);
+            boolean selected = (pos == mSelectedPosition);
 
-            if (child.getParent() != this) {
-                if (mInLayout) {
-                    addViewInternal(child, -1, lp);
-                } else {
-                    addViewInternal(child);
-                }
-            }
-
-            if (mHasStableIds) {
-                final long id = mAdapter.getItemId(position);
-                lp.id = id;
-            }
-
-            measureChild(child, lp);
-
-            final int from = mItemsEnd;
-
-            final int childWidth = child.getMeasuredWidth();
-            final int childHeight = child.getMeasuredHeight();
-
-            final int childBottom;
-            final int childTop;
-            final int childLeft;
-            final int childRight;
+            View child = makeAndAddView(pos, nextOffset, true, selected);
 
             if (mIsVertical) {
-                childTop = from + itemMargin;
-                childBottom = childTop + childHeight;
-                childLeft = paddingLeft;
-                childRight = childLeft + childWidth;
+                nextOffset = child.getBottom() + mItemMargin;
             } else {
-                childTop = paddingTop;
-                childBottom = childTop + childHeight;
-                childLeft = from + itemMargin;
-                childRight = childLeft + childWidth;
+                nextOffset = child.getRight() + mItemMargin;
             }
 
-            child.layout(childLeft, childTop, childRight, childBottom);
-
-            if (DEBUG) {
-                Log.d(LOGTAG, "fillAfter: child view layout: l=" + childLeft +
-                        " t=" + childTop + " r=" + childRight + " b=" + childBottom +
-                        " mItemsEnd: " + mItemsEnd + " childWidth: " + childWidth);
+            if (selected) {
+                selectedView = child;
             }
 
-            mItemsEnd = (mIsVertical ? childBottom : childRight);
-            position++;
+            pos++;
         }
 
-        return mItemsEnd - end;
+        return selectedView;
     }
 
-    final View obtainView(int position, View optScrap) {
-        View view = mRecycler.getTransientStateView(position);
-        if (view != null) {
-            return view;
+    private View fillSpecific(int position, int top) {
+        final boolean tempIsSelected = (position == mSelectedPosition);
+        View temp = makeAndAddView(position, top, true, tempIsSelected);
+
+        // Possibly changed again in fillBefore if we add rows above this one.
+        mFirstPosition = position;
+
+        final int itemMargin = mItemMargin;
+
+        final int offsetBefore;
+        if (mIsVertical) {
+            offsetBefore = temp.getTop() - itemMargin;
+        } else {
+            offsetBefore = temp.getLeft() - itemMargin;
+        }
+        final View before = fillBefore(position - 1, offsetBefore);
+
+        // This will correct for the top of the first view not touching the top of the list
+        adjustViewsStartOrEnd();
+
+        final int offsetAfter;
+        if (mIsVertical) {
+            offsetAfter = temp.getBottom() + itemMargin;
+        } else {
+            offsetAfter = temp.getRight() + itemMargin;
+        }
+        final View after = fillAfter(position + 1, offsetAfter);
+
+        final int childCount = getChildCount();
+        if (childCount > 0) {
+            correctTooHigh(childCount);
         }
 
-        // Reuse optScrap if it's of the right type (and not null)
-        final int optType = (optScrap != null ?
-                ((LayoutParams) optScrap.getLayoutParams()).viewType : -1);
+        if (tempIsSelected) {
+            return temp;
+        } else if (before != null) {
+            return before;
+        } else {
+            return after;
+        }
+    }
 
-        final int positionViewType = mAdapter.getItemViewType(position);
+    private View fillFromOffset(int nextOffset) {
+        mFirstPosition = Math.min(mFirstPosition, mSelectedPosition);
+        mFirstPosition = Math.min(mFirstPosition, mItemCount - 1);
 
-        final View scrap = (optType == positionViewType ?
-                optScrap : mRecycler.getScrapView(positionViewType));
-
-        view = mAdapter.getView(position, scrap, this);
-
-        if (view != scrap && scrap != null) {
-            // The adapter didn't use it; put it back.
-            mRecycler.addScrap(scrap);
+        if (mFirstPosition < 0) {
+            mFirstPosition = 0;
         }
 
-        ViewGroup.LayoutParams lp = view.getLayoutParams();
-        if (view.getParent() != this) {
+        return fillAfter(mFirstPosition, nextOffset);
+    }
+
+    private View fillFromMiddle(int start, int end) {
+        final int size = end - start;
+        int position = reconcileSelectedPosition();
+
+        View selected = makeAndAddView(position, start, true, true);
+        mFirstPosition = position;
+
+        if (mIsVertical) {
+            int selectedHeight = selected.getMeasuredHeight();
+            if (selectedHeight <= size) {
+                selected.offsetTopAndBottom((size - selectedHeight) / 2);
+            }
+        } else {
+            int selectedWidth = selected.getMeasuredWidth();
+            if (selectedWidth <= size) {
+                selected.offsetLeftAndRight((size - selectedWidth) / 2);
+            }
+        }
+
+        fillBeforeAndAfter(selected, position);
+        correctTooHigh(getChildCount());
+
+        return selected;
+    }
+
+    private void fillBeforeAndAfter(View selected, int position) {
+        final int itemMargin = mItemMargin;
+
+        final int offsetBefore;
+        if (mIsVertical) {
+            offsetBefore = selected.getTop() - itemMargin;
+        } else {
+            offsetBefore = selected.getLeft() - itemMargin;
+        }
+
+        fillBefore(position - 1, offsetBefore);
+
+        adjustViewsStartOrEnd();
+
+        final int offsetAfter;
+        if (mIsVertical) {
+            offsetAfter = selected.getBottom() + itemMargin;
+        } else {
+            offsetAfter = selected.getRight() + itemMargin;
+        }
+
+        fillAfter(position + 1, offsetAfter);
+    }
+
+    private View fillFromSelection(int selectedTop, int start, int end) {
+        final int selectedPosition = mSelectedPosition;
+        View selected;
+
+        selected = makeAndAddView(selectedPosition, selectedTop, true, true);
+
+        final int selectedStart = (mIsVertical ? selected.getTop() : selected.getLeft());
+        final int selectedEnd = (mIsVertical ? selected.getBottom() : selected.getRight());
+
+        // Some of the newly selected item extends below the bottom of the list
+        if (selectedEnd > end) {
+            // Find space available above the selection into which we can scroll
+            // upwards
+            final int spaceAbove = selectedStart - start;
+
+            // Find space required to bring the bottom of the selected item
+            // fully into view
+            final int spaceBelow = selectedEnd - end;
+
+            final int offset = Math.min(spaceAbove, spaceBelow);
+
+            // Now offset the selected item to get it into view
+            selected.offsetTopAndBottom(-offset);
+        } else if (selectedStart < start) {
+            // Find space required to bring the top of the selected item fully
+            // into view
+            final int spaceAbove = start - selectedStart;
+
+            // Find space available below the selection into which we can scroll
+            // downwards
+            final int spaceBelow = end - selectedEnd;
+
+            final int offset = Math.min(spaceAbove, spaceBelow);
+
+            // Offset the selected item to get it into view
+            selected.offsetTopAndBottom(offset);
+        }
+
+        // Fill in views above and below
+        fillBeforeAndAfter(selected, selectedPosition);
+        correctTooHigh(getChildCount());
+
+        return selected;
+    }
+
+    private void correctTooHigh(int childCount) {
+        // First see if the last item is visible. If it is not, it is OK for the
+        // top of the list to be pushed up.
+        int lastPosition = mFirstPosition + childCount - 1;
+        if (lastPosition != mItemCount - 1 || childCount == 0) {
+            return;
+        }
+
+        // Get the last child ...
+        final View lastChild = getChildAt(childCount - 1);
+
+        // ... and its end edge
+        final int lastEnd;
+        if (mIsVertical) {
+            lastEnd = lastChild.getBottom();
+        } else {
+            lastEnd = lastChild.getRight();
+        }
+
+        // This is bottom of our drawable area
+        final int start = (mIsVertical ? getPaddingTop() : getPaddingLeft());
+        final int end =
+                (mIsVertical ? getHeight() - getPaddingBottom() : getWidth() - getPaddingRight());
+
+        // This is how far the end edge of the last view is from the end of the
+        // drawable area
+        int endOffset = end - lastEnd;
+
+        View firstChild = getChildAt(0);
+        final int firstStart = (mIsVertical ? firstChild.getTop() : firstChild.getLeft());
+
+        // Make sure we are 1) Too high, and 2) Either there are more rows above the
+        // first row or the first row is scrolled off the top of the drawable area
+        if (endOffset > 0 && (mFirstPosition > 0 || firstStart < start))  {
+            if (mFirstPosition == 0) {
+                // Don't pull the top too far down
+                endOffset = Math.min(endOffset, start - firstStart);
+            }
+
+            // Move everything down
+            offsetChildren(endOffset);
+
+            if (mFirstPosition > 0) {
+                // Fill the gap that was opened above mFirstPosition with more rows, if
+                // possible
+                fillBefore(mFirstPosition - 1, firstChild.getTop() - mItemMargin);
+
+                // Close up the remaining gap
+                adjustViewsStartOrEnd();
+            }
+        }
+    }
+
+    private void correctTooLow(int childCount) {
+        // First see if the first item is visible. If it is not, it is OK for the
+        // bottom of the list to be pushed down.
+        if (mFirstPosition != 0 || childCount == 0) {
+            return;
+        }
+
+        final View first = getChildAt(0);
+        final int firstStart = (mIsVertical ? first.getTop() : first.getLeft());
+
+        final int start = (mIsVertical ? getPaddingTop() : getPaddingLeft());
+
+        final int end;
+        if (mIsVertical) {
+            end = getHeight() - getPaddingBottom();
+        } else {
+            end = getWidth() - getPaddingRight();
+        }
+
+        // This is how far the start edge of the first view is from the start of the
+        // drawable area
+        int startOffset = firstStart - start;
+
+        View last = getChildAt(childCount - 1);
+        final int lastEnd = (mIsVertical ? last.getBottom() : last.getRight());
+
+        int lastPosition = mFirstPosition + childCount - 1;
+
+        // Make sure we are 1) Too low, and 2) Either there are more columns/rows below the
+        // last column/row or the last column/row is scrolled off the end of the
+        // drawable area
+        if (startOffset > 0) {
+            if (lastPosition < mItemCount - 1 || lastEnd > end)  {
+                if (lastPosition == mItemCount - 1) {
+                    // Don't pull the bottom too far up
+                    startOffset = Math.min(startOffset, lastEnd - end);
+                }
+
+                // Move everything up
+                offsetChildren(-startOffset);
+
+                if (lastPosition < mItemCount - 1) {
+                    // Fill the gap that was opened below the last position with more rows, if
+                    // possible
+                    fillAfter(lastPosition + 1, lastEnd + mItemMargin);
+
+                    // Close up the remaining gap
+                    adjustViewsStartOrEnd();
+                }
+            } else if (lastPosition == mItemCount - 1) {
+                adjustViewsStartOrEnd();
+            }
+        }
+    }
+
+    private void adjustViewsStartOrEnd() {
+        if (getChildCount() == 0) {
+            return;
+        }
+
+        final View firstChild = getChildAt(0);
+
+        int delta;
+        if (mIsVertical) {
+            delta = firstChild.getTop() - getPaddingTop() - mItemMargin;
+        } else {
+            delta = firstChild.getLeft() - getPaddingLeft() - mItemMargin;
+        }
+
+        if (delta < 0) {
+            // We only are looking to see if we are too low, not too high
+            delta = 0;
+        }
+
+        if (delta != 0) {
+            offsetChildren(-delta);
+        }
+    }
+
+    private int findSyncPosition() {
+        int itemCount = mItemCount;
+
+        if (itemCount == 0) {
+            return INVALID_POSITION;
+        }
+
+        final long idToMatch = mSyncRowId;
+
+        // If there isn't a selection don't hunt for it
+        if (idToMatch == INVALID_ROW_ID) {
+            return INVALID_POSITION;
+        }
+
+        // Pin seed to reasonable values
+        int seed = mSyncPosition;
+        seed = Math.max(0, seed);
+        seed = Math.min(itemCount - 1, seed);
+
+        long endTime = SystemClock.uptimeMillis() + SYNC_MAX_DURATION_MILLIS;
+
+        long rowId;
+
+        // first position scanned so far
+        int first = seed;
+
+        // last position scanned so far
+        int last = seed;
+
+        // True if we should move down on the next iteration
+        boolean next = false;
+
+        // True when we have looked at the first item in the data
+        boolean hitFirst;
+
+        // True when we have looked at the last item in the data
+        boolean hitLast;
+
+        // Get the item ID locally (instead of getItemIdAtPosition), so
+        // we need the adapter
+        final ListAdapter adapter = mAdapter;
+        if (adapter == null) {
+            return INVALID_POSITION;
+        }
+
+        while (SystemClock.uptimeMillis() <= endTime) {
+            rowId = adapter.getItemId(seed);
+            if (rowId == idToMatch) {
+                // Found it!
+                return seed;
+            }
+
+            hitLast = (last == itemCount - 1);
+            hitFirst = (first == 0);
+
+            if (hitLast && hitFirst) {
+                // Looked at everything
+                break;
+            }
+
+            if (hitFirst || (next && !hitLast)) {
+                // Either we hit the top, or we are trying to move down
+                last++;
+                seed = last;
+
+                // Try going up next time
+                next = false;
+            } else if (hitLast || (!next && !hitFirst)) {
+                // Either we hit the bottom, or we are trying to move up
+                first--;
+                seed = first;
+
+                // Try going down next time
+                next = true;
+            }
+        }
+
+        return INVALID_POSITION;
+    }
+
+    View obtainView(int position, boolean[] isScrap) {
+        isScrap[0] = false;
+        View scrapView;
+
+        scrapView = mRecycler.getTransientStateView(position);
+        if (scrapView != null) {
+            return scrapView;
+        }
+
+        scrapView = mRecycler.getScrapView(position);
+
+        final View child;
+        if (scrapView != null) {
+            child = mAdapter.getView(position, scrapView, this);
+
+            if (child != scrapView) {
+                mRecycler.addScrapView(scrapView, position);
+            } else {
+                isScrap[0] = true;
+            }
+        } else {
+            child = mAdapter.getView(position, null, this);
+        }
+
+        if (mHasStableIds) {
+            LayoutParams lp = (LayoutParams) child.getLayoutParams();
+
             if (lp == null) {
                 lp = generateDefaultLayoutParams();
             } else if (!checkLayoutParams(lp)) {
                 lp = generateLayoutParams(lp);
             }
+
+            lp.position = position;
+            lp.id = mAdapter.getItemId(position);
+            lp.viewType = mAdapter.getItemViewType(position);
+
+            child.setLayoutParams(lp);
         }
 
-        final LayoutParams twlp = (LayoutParams) lp;
-        twlp.position = position;
-        twlp.viewType = positionViewType;
-
-        return view;
+        return child;
     }
 
-    private void addViewInternal(View child) {
-        addViewInternal(child, -1);
-    }
-
-    private void addViewInternal(View child, int position) {
-        LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        if (lp == null) {
-            lp= generateDefaultLayoutParams();
-        }
-
-        addViewInternal(child, position, lp);
-    }
-
-    private void addViewInternal(View child, int position, LayoutParams lp) {
-        if (!mInLayout) {
-            requestLayout();
-            invalidate();
-        }
-
-        addViewInLayout(child, position, lp);
-    }
-
-    private void removeAllViewsInternal() {
+    void resetState() {
         removeAllViewsInLayout();
 
-        if (!mInLayout) {
-            requestLayout();
-            invalidate();
-        }
-    }
-
-    private void clearAllState() {
-        // Clear all layout records and views
-        removeAllViewsInternal();
-
-        // Reset to the top of the grid
-        resetStateForListStart();
-
-        // Clear recycler because there could be different view types now
-        mRecycler.clear();
-    }
-
-    private void resetStateForListStart() {
-        final int padding = (mIsVertical ? getPaddingTop() : getPaddingLeft());
-        mItemsStart = padding;
-        mItemsEnd = padding;
-
+        mSelectedStart = 0;
         mFirstPosition = 0;
-        mRestoreOffset = 0;
+        mDataChanged = false;
+        mNeedSync = false;
+        mPendingSync = null;
+        mOldSelectedPosition = INVALID_POSITION;
+        mOldSelectedRowId = INVALID_ROW_ID;
+
+        mOverScroll = 0;
+
+        setSelectedPositionInt(INVALID_POSITION);
+        setNextSelectedPositionInt(INVALID_POSITION);
+
+        mSelectorPosition = INVALID_POSITION;
+        mSelectorRect.setEmpty();
+
+        invalidate();
+    }
+
+    private void rememberSyncState() {
+        if (getChildCount() == 0) {
+            return;
+        }
+
+        mNeedSync = true;
+
+        if (mSelectedPosition >= 0) {
+            View child = getChildAt(mSelectedPosition - mFirstPosition);
+
+            mSyncRowId = mNextSelectedRowId;
+            mSyncPosition = mNextSelectedPosition;
+
+            if (child != null) {
+                mSpecificStart = (mIsVertical ? child.getTop() : child.getLeft());
+            }
+
+            mSyncMode = SYNC_SELECTED_POSITION;
+        } else {
+            // Sync the based on the offset of the first view
+            View child = getChildAt(0);
+            ListAdapter adapter = getAdapter();
+
+            if (mFirstPosition >= 0 && mFirstPosition < adapter.getCount()) {
+                mSyncRowId = adapter.getItemId(mFirstPosition);
+            } else {
+                mSyncRowId = NO_ID;
+            }
+
+            mSyncPosition = mFirstPosition;
+
+            if (child != null) {
+                mSpecificStart = child.getTop();
+            }
+
+            mSyncMode = SYNC_FIRST_POSITION;
+        }
     }
 
     private ContextMenuInfo createContextMenuInfo(View view, int position, long id) {
@@ -1440,18 +3277,6 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         return handled;
     }
 
-    public void setSelectionToTop() {
-        // Clear out the views (but don't clear out the layout records
-        // or recycler because the data has not changed)
-        removeAllViewsInternal();
-
-        // Reset to top of grid
-        resetStateForListStart();
-
-        // Start populating again
-        populate();
-    }
-
     @Override
     protected LayoutParams generateDefaultLayoutParams() {
         return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
@@ -1479,18 +3304,55 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
     @Override
     public Parcelable onSaveInstanceState() {
-        final Parcelable superState = super.onSaveInstanceState();
-        final SavedState ss = new SavedState(superState);
-        final int position = mFirstPosition;
+        Parcelable superState = super.onSaveInstanceState();
+        SavedState ss = new SavedState(superState);
 
-        ss.position = position;
+        if (mPendingSync != null) {
+            ss.selectedId = mPendingSync.selectedId;
+            ss.firstId = mPendingSync.firstId;
+            ss.viewStart = mPendingSync.viewStart;
+            ss.position = mPendingSync.position;
+            ss.height = mPendingSync.height;
 
-        if (getChildCount() > 0) {
-            if (mIsVertical) {
-                ss.offset = getChildAt(0).getTop() - mItemMargin - getPaddingTop();
-            } else {
-                ss.offset = getChildAt(0).getLeft() - mItemMargin - getPaddingLeft();
+            return ss;
+        }
+
+        boolean haveChildren = (getChildCount() > 0 && mItemCount > 0);
+        long selectedId = getSelectedItemId();
+        ss.selectedId = selectedId;
+        ss.height = getHeight();
+
+        if (selectedId >= 0) {
+            ss.viewStart = mSelectedStart;
+            ss.position = getSelectedItemPosition();
+            ss.firstId = INVALID_POSITION;
+        } else if (haveChildren && mFirstPosition > 0) {
+            // Remember the position of the first child.
+            // We only do this if we are not currently at the top of
+            // the list, for two reasons:
+            //
+            // (1) The list may be in the process of becoming empty, in
+            // which case mItemCount may not be 0, but if we try to
+            // ask for any information about position 0 we will crash.
+            //
+            // (2) Being "at the top" seems like a special case, anyway,
+            // and the user wouldn't expect to end up somewhere else when
+            // they revisit the list even if its content has changed.
+
+            View child = getChildAt(0);
+            ss.viewStart = (mIsVertical ? child.getTop() : child.getLeft());
+
+            int firstPos = mFirstPosition;
+            if (firstPos >= mItemCount) {
+                firstPos = mItemCount - 1;
             }
+
+            ss.position = firstPos;
+            ss.firstId = mAdapter.getItemId(firstPos);
+        } else {
+            ss.viewStart = 0;
+            ss.firstId = INVALID_POSITION;
+            ss.position = 0;
         }
 
         return ss;
@@ -1502,8 +3364,29 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         super.onRestoreInstanceState(ss.getSuperState());
 
         mDataChanged = true;
-        mFirstPosition = ss.position;
-        mRestoreOffset = ss.offset;
+        mSyncHeight = ss.height;
+
+        if (ss.selectedId >= 0) {
+            mNeedSync = true;
+            mPendingSync = ss;
+            mSyncRowId = ss.selectedId;
+            mSyncPosition = ss.position;
+            mSpecificStart = ss.viewStart;
+            mSyncMode = SYNC_SELECTED_POSITION;
+        } else if (ss.firstId >= 0) {
+            setSelectedPositionInt(INVALID_POSITION);
+
+            // Do this before setting mNeedSync since setNextSelectedPosition looks at mNeedSync
+            setNextSelectedPositionInt(INVALID_POSITION);
+
+            mSelectorPosition = INVALID_POSITION;
+            mNeedSync = true;
+            mPendingSync = ss;
+            mSyncRowId = ss.firstId;
+            mSyncPosition = ss.position;
+            mSpecificStart = ss.viewStart;
+            mSyncMode = SYNC_FIRST_POSITION;
+        }
 
         requestLayout();
     }
@@ -1523,6 +3406,23 @@ public class TwoWayView extends AdapterView<ListAdapter> {
          * The stable ID of the item this view displays
          */
         long id = -1;
+
+        /**
+         * The position the view was removed from when pulled out of the
+         * scrap heap.
+         * @hide
+         */
+        int scrappedFromPosition;
+
+        /**
+         * When a TwoWayView is measured with an AT_MOST measure spec, it needs
+         * to obtain children views to measure itself. When doing so, the children
+         * are not attached to the window, but put in the recycler which assumes
+         * they've been attached before. Setting this flag will force the reused
+         * view to be attached to the window rather than just attached to the
+         * parent.
+         */
+        boolean forceAdd;
 
         public LayoutParams(int width, int height) {
             super(width, height);
@@ -1579,21 +3479,17 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
     }
 
-    private class RecycleBin {
+    class RecycleBin {
+        private int mFirstActivePosition;
+        private View[] mActiveViews = new View[0];
         private ArrayList<View>[] mScrapViews;
         private int mViewTypeCount;
-        private int mMaxScrap;
-
-        private SparseArray<View> mTransientStateViews;
+        private ArrayList<View> mCurrentScrap;
+        private SparseArrayCompat<View> mTransientStateViews;
 
         public void setViewTypeCount(int viewTypeCount) {
             if (viewTypeCount < 1) {
-                throw new IllegalArgumentException("Must have at least one view type (" +
-                        viewTypeCount + " types reported)");
-            }
-
-            if (viewTypeCount == mViewTypeCount) {
-                return;
+                throw new IllegalArgumentException("Can't have a viewTypeCount < 1");
             }
 
             @SuppressWarnings("unchecked")
@@ -1603,21 +3499,56 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             }
 
             mViewTypeCount = viewTypeCount;
+            mCurrentScrap = scrapViews[0];
             mScrapViews = scrapViews;
         }
 
-        public void clear() {
-            final int typeCount = mViewTypeCount;
+        public void markChildrenDirty() {
+            if (mViewTypeCount == 1) {
+                final ArrayList<View> scrap = mCurrentScrap;
+                final int scrapCount = scrap.size();
 
-            for (int i = 0; i < typeCount; i++) {
-                final ArrayList<View> scraps = mScrapViews[i];
-
-                final int scrapCount = scraps.size();
-                for (int j = 0; j < scrapCount; j++) {
-                    removeDetachedView(scraps.get(j), false);
+                for (int i = 0; i < scrapCount; i++) {
+                    scrap.get(i).forceLayout();
                 }
+            } else {
+                final int typeCount = mViewTypeCount;
+                for (int i = 0; i < typeCount; i++) {
+                    final ArrayList<View> scrap = mScrapViews[i];
+                    final int scrapCount = scrap.size();
 
-                scraps.clear();
+                    for (int j = 0; j < scrapCount; j++) {
+                        scrap.get(j).forceLayout();
+                    }
+                }
+            }
+
+            if (mTransientStateViews != null) {
+                final int count = mTransientStateViews.size();
+                for (int i = 0; i < count; i++) {
+                    mTransientStateViews.valueAt(i).forceLayout();
+                }
+            }
+        }
+
+        void clear() {
+            if (mViewTypeCount == 1) {
+                final ArrayList<View> scrap = mCurrentScrap;
+                final int scrapCount = scrap.size();
+
+                for (int i = 0; i < scrapCount; i++) {
+                    removeDetachedView(scrap.remove(scrapCount - 1 - i), false);
+                }
+            } else {
+                final int typeCount = mViewTypeCount;
+                for (int i = 0; i < typeCount; i++) {
+                    final ArrayList<View> scrap = mScrapViews[i];
+                    final int scrapCount = scrap.size();
+
+                    for (int j = 0; j < scrapCount; j++) {
+                        removeDetachedView(scrap.remove(scrapCount - 1 - j), false);
+                    }
+                }
             }
 
             if (mTransientStateViews != null) {
@@ -1625,116 +3556,286 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             }
         }
 
-        public void clearTransientViews() {
-            if (mTransientStateViews != null) {
-                mTransientStateViews.clear();
+        void fillActiveViews(int childCount, int firstActivePosition) {
+            if (mActiveViews.length < childCount) {
+                mActiveViews = new View[childCount];
+            }
+
+            mFirstActivePosition = firstActivePosition;
+
+            final View[] activeViews = mActiveViews;
+            for (int i = 0; i < childCount; i++) {
+                View child = getChildAt(i);
+
+                // Note:  We do place AdapterView.ITEM_VIEW_TYPE_IGNORE in active views.
+                //        However, we will NOT place them into scrap views.
+                activeViews[i] = child;
             }
         }
 
-        public void addScrap(View v) {
-            final LayoutParams lp = (LayoutParams) v.getLayoutParams();
-            if (ViewCompat.hasTransientState(v)) {
-                if (mTransientStateViews == null) {
-                    mTransientStateViews = new SparseArray<View>();
-                }
+        View getActiveView(int position) {
+            final int index = position - mFirstActivePosition;
+            final View[] activeViews = mActiveViews;
 
-                mTransientStateViews.put(lp.position, v);
-                return;
+            if (index >= 0 && index < activeViews.length) {
+                final View match = activeViews[index];
+                activeViews[index] = null;
+
+                return match;
             }
 
-            final int childCount = getChildCount();
-            if (childCount > mMaxScrap) {
-                mMaxScrap = childCount;
-            }
-
-            ArrayList<View> scrap = mScrapViews[lp.viewType];
-            if (scrap.size() < mMaxScrap) {
-                scrap.add(v);
-            }
+            return null;
         }
 
-        public View getTransientStateView(int position) {
+        View getTransientStateView(int position) {
             if (mTransientStateViews == null) {
                 return null;
             }
 
-            final View result = mTransientStateViews.get(position);
-            if (result != null) {
-                mTransientStateViews.remove(position);
+            final int index = mTransientStateViews.indexOfKey(position);
+            if (index < 0) {
+                return null;
             }
+
+            final View result = mTransientStateViews.valueAt(index);
+            mTransientStateViews.removeAt(index);
 
             return result;
         }
 
-        public View getScrapView(int type) {
-            ArrayList<View> scraps = mScrapViews[type];
-            if (scraps.isEmpty()) {
+        void clearTransientStateViews() {
+            if (mTransientStateViews != null) {
+                mTransientStateViews.clear();
+            }
+        }
+
+        View getScrapView(int position) {
+            if (mViewTypeCount == 1) {
+                return retrieveFromScrap(mCurrentScrap, position);
+            } else {
+                int whichScrap = mAdapter.getItemViewType(position);
+                if (whichScrap >= 0 && whichScrap < mScrapViews.length) {
+                    return retrieveFromScrap(mScrapViews[whichScrap], position);
+                }
+            }
+
+            return null;
+        }
+
+        void addScrapView(View scrap, int position) {
+            LayoutParams lp = (LayoutParams) scrap.getLayoutParams();
+            if (lp == null) {
+                return;
+            }
+
+            lp.scrappedFromPosition = position;
+
+            if (mViewTypeCount == 1) {
+                mCurrentScrap.add(scrap);
+            } else {
+                mScrapViews[lp.viewType].add(scrap);
+            }
+        }
+
+        void scrapActiveViews() {
+            final View[] activeViews = mActiveViews;
+            final boolean multipleScraps = mViewTypeCount > 1;
+
+            ArrayList<View> scrapViews = mCurrentScrap;
+            final int count = activeViews.length;
+
+            for (int i = count - 1; i >= 0; i--) {
+                final View victim = activeViews[i];
+                if (victim != null) {
+                    final LayoutParams lp = (LayoutParams) victim.getLayoutParams();
+                    int whichScrap = lp.viewType;
+
+                    activeViews[i] = null;
+
+                    final boolean scrapHasTransientState = ViewCompat.hasTransientState(victim);
+                    if (scrapHasTransientState) {
+                        if (scrapHasTransientState) {
+                            removeDetachedView(victim, false);
+
+                            if (mTransientStateViews == null) {
+                                mTransientStateViews = new SparseArrayCompat<View>();
+                            }
+
+                            mTransientStateViews.put(mFirstActivePosition + i, victim);
+                        }
+
+                        continue;
+                    }
+
+                    if (multipleScraps) {
+                        scrapViews = mScrapViews[whichScrap];
+                    }
+
+                    lp.scrappedFromPosition = mFirstActivePosition + i;
+                    scrapViews.add(victim);
+                }
+            }
+
+            pruneScrapViews();
+        }
+
+        private void pruneScrapViews() {
+            final int maxViews = mActiveViews.length;
+            final int viewTypeCount = mViewTypeCount;
+            final ArrayList<View>[] scrapViews = mScrapViews;
+
+            for (int i = 0; i < viewTypeCount; ++i) {
+                final ArrayList<View> scrapPile = scrapViews[i];
+                int size = scrapPile.size();
+                final int extras = size - maxViews;
+
+                size--;
+
+                for (int j = 0; j < extras; j++) {
+                    removeDetachedView(scrapPile.remove(size--), false);
+                }
+            }
+
+            if (mTransientStateViews != null) {
+                for (int i = 0; i < mTransientStateViews.size(); i++) {
+                    final View v = mTransientStateViews.valueAt(i);
+                    if (!ViewCompat.hasTransientState(v)) {
+                        mTransientStateViews.removeAt(i);
+                        i--;
+                    }
+                }
+            }
+        }
+
+        void reclaimScrapViews(List<View> views) {
+            if (mViewTypeCount == 1) {
+                views.addAll(mCurrentScrap);
+            } else {
+                final int viewTypeCount = mViewTypeCount;
+                final ArrayList<View>[] scrapViews = mScrapViews;
+
+                for (int i = 0; i < viewTypeCount; ++i) {
+                    final ArrayList<View> scrapPile = scrapViews[i];
+                    views.addAll(scrapPile);
+                }
+            }
+        }
+
+        View retrieveFromScrap(ArrayList<View> scrapViews, int position) {
+            int size = scrapViews.size();
+            if (size <= 0) {
                 return null;
             }
 
-            final int index = scraps.size() - 1;
-            final View result = scraps.get(index);
-            scraps.remove(index);
+            for (int i = 0; i < size; i++) {
+                final View scrapView = scrapViews.get(i);
+                final LayoutParams lp = (LayoutParams) scrapView.getLayoutParams();
 
-            return result;
+                if (lp.scrappedFromPosition == position) {
+                    scrapViews.remove(i);
+                    return scrapView;
+                }
+            }
+
+            return scrapViews.remove(size - 1);
         }
     }
 
     private class AdapterDataSetObserver extends DataSetObserver {
+        private Parcelable mInstanceState = null;
+
         @Override
         public void onChanged() {
             mDataChanged = true;
-            mItemCount = mAdapter.getCount();
+            mOldItemCount = mItemCount;
+            mItemCount = getAdapter().getCount();
 
-            // TODO: Consider matching these back up if we have stable IDs.
-            mRecycler.clearTransientViews();
-
-            if (!mHasStableIds) {
-                // Clear all layout records and recycle the views
-                recycleAllViews();
-
-                // Reset items end position to be equal to start
-                mItemsEnd = mItemsStart;
+            // Detect the case where a cursor that was previously invalidated has
+            // been re-populated with new data.
+            if (TwoWayView.this.mHasStableIds && mInstanceState != null
+                    && mOldItemCount == 0 && mItemCount > 0) {
+                TwoWayView.this.onRestoreInstanceState(mInstanceState);
+                mInstanceState = null;
+            } else {
+                rememberSyncState();
             }
 
-            awakenScrollbarsInternal();
-
-            // TODO: consider re-populating in a deferred runnable instead
-            // (so that successive changes may still be batched)
             requestLayout();
         }
 
         @Override
         public void onInvalidated() {
+            mDataChanged = true;
+
+            if (TwoWayView.this.mHasStableIds) {
+                // Remember the current state for the case where our hosting activity is being
+                // stopped and later restarted
+                mInstanceState = TwoWayView.this.onSaveInstanceState();
+            }
+
+            // Data is invalid so we should reset our state
+            mOldItemCount = mItemCount;
+            mItemCount = 0;
+
+            mSelectedPosition = INVALID_POSITION;
+            mSelectedRowId = INVALID_ROW_ID;
+
+            mNextSelectedPosition = INVALID_POSITION;
+            mNextSelectedRowId = INVALID_ROW_ID;
+
+            mNeedSync = false;
+
+            requestLayout();
         }
     }
 
     static class SavedState extends BaseSavedState {
+        long selectedId;
+        long firstId;
+        int viewStart;
         int position;
-        int offset;
+        int height;
 
+        /**
+         * Constructor called from {@link TwoWayView#onSaveInstanceState()}
+         */
         SavedState(Parcelable superState) {
             super(superState);
         }
 
+        /**
+         * Constructor called from {@link #CREATOR}
+         */
         private SavedState(Parcel in) {
             super(in);
+
+            selectedId = in.readLong();
+            firstId = in.readLong();
+            viewStart = in.readInt();
             position = in.readInt();
-            offset = in.readInt();
+            height = in.readInt();
         }
 
         @Override
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
+
+            out.writeLong(selectedId);
+            out.writeLong(firstId);
+            out.writeInt(viewStart);
             out.writeInt(position);
-            out.writeInt(offset);
+            out.writeInt(height);
         }
 
         @Override
         public String toString() {
             return "TwoWayView.SavedState{"
-            + Integer.toHexString(System.identityHashCode(this))
-            + " position=" + position + "}";
+                    + Integer.toHexString(System.identityHashCode(this))
+                    + " selectedId=" + selectedId
+                    + " firstId=" + firstId
+                    + " viewStart=" + viewStart
+                    + " height=" + height
+                    + " position=" + position + "}";
         }
 
         public static final Parcelable.Creator<SavedState> CREATOR
@@ -1749,6 +3850,22 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 return new SavedState[size];
             }
         };
+    }
+
+    private class SelectionNotifier implements Runnable {
+        @Override
+        public void run() {
+            if (mDataChanged) {
+                // Data has changed between when this SelectionNotifier
+                // was posted and now. We need to wait until the AdapterView
+                // has been synched to the new data.
+                if (mAdapter != null) {
+                    post(this);
+                }
+            } else {
+                fireOnSelected();
+            }
+        }
     }
 
     private class WindowRunnnable {
@@ -1798,14 +3915,35 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
             final View child = getChildAt(mMotionPosition - mFirstPosition);
             if (child != null && !child.hasFocusable()) {
+                mLayoutMode = LAYOUT_NORMAL;
+
                 if (!mDataChanged) {
                     setPressed(true);
                     child.setPressed(true);
 
-                    layoutChildren(false);
+                    layoutChildren();
+                    positionSelector(mMotionPosition, child);
                     refreshDrawableState();
 
-                    if (isLongClickable()) {
+                    positionSelector(mMotionPosition, child);
+                    refreshDrawableState();
+
+                    final boolean longClickable = isLongClickable();
+
+                    if (mSelector != null) {
+                        Drawable d = mSelector.getCurrent();
+
+                        if (d != null && d instanceof TransitionDrawable) {
+                            if (longClickable) {
+                                final int longPressTimeout = ViewConfiguration.getLongPressTimeout();
+                                ((TransitionDrawable) d).startTransition(longPressTimeout);
+                            } else {
+                                ((TransitionDrawable) d).resetTransition();
+                            }
+                        }
+                    }
+
+                    if (longClickable) {
                         triggerCheckForLongPress();
                     } else {
                         mTouchMode = TOUCH_MODE_DONE_WAITING;
