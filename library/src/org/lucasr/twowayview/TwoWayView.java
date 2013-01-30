@@ -219,6 +219,25 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 int totalItemCount);
     }
 
+    /**
+     * A RecyclerListener is used to receive a notification whenever a View is placed
+     * inside the RecycleBin's scrap heap. This listener is used to free resources
+     * associated to Views placed in the RecycleBin.
+     *
+     * @see TwoWayView.RecycleBin
+     * @see TwoWayView#setRecyclerListener(TwoWayView.RecyclerListener)
+     */
+    public static interface RecyclerListener {
+        /**
+         * Indicates that the specified View was moved into the recycler's scrap heap.
+         * The view is not displayed on screen any more and any expensive resource
+         * associated with the view should be discarded.
+         *
+         * @param view
+         */
+        void onMovedToScrapHeap(View view);
+    }
+
     public TwoWayView(Context context) {
         this(context, null);
     }
@@ -345,6 +364,21 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     public void setOnScrollListener(OnScrollListener l) {
         mOnScrollListener = l;
         invokeOnItemScrollListener();
+    }
+
+    /**
+     * Sets the recycler listener to be notified whenever a View is set aside in
+     * the recycler for later reuse. This listener can be used to free resources
+     * associated to the View.
+     *
+     * @param listener The recycler listener to be notified of views set aside
+     *        in the recycler.
+     *
+     * @see TwoWayView.RecycleBin
+     * @see TwoWayView.RecyclerListener
+     */
+    public void setRecyclerListener(RecyclerListener l) {
+        mRecycler.mRecyclerListener = l;
     }
 
     public void setDrawSelectorOnTop(boolean drawSelectorOnTop) {
@@ -3585,6 +3619,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     }
 
     class RecycleBin {
+        private RecyclerListener mRecyclerListener;
         private int mFirstActivePosition;
         private View[] mActiveViews = new View[0];
         private ArrayList<View>[] mScrapViews;
@@ -3740,11 +3775,15 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             } else {
                 mScrapViews[lp.viewType].add(scrap);
             }
+
+            if (mRecyclerListener != null) {
+                mRecyclerListener.onMovedToScrapHeap(scrap);
+            }
         }
 
         void scrapActiveViews() {
             final View[] activeViews = mActiveViews;
-            final boolean multipleScraps = mViewTypeCount > 1;
+            final boolean multipleScraps = (mViewTypeCount > 1);
 
             ArrayList<View> scrapViews = mCurrentScrap;
             final int count = activeViews.length;
@@ -3778,6 +3817,10 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
                     lp.scrappedFromPosition = mFirstActivePosition + i;
                     scrapViews.add(victim);
+
+                    if (mRecyclerListener != null) {
+                        mRecyclerListener.onMovedToScrapHeap(victim);
+                    }
                 }
             }
 
