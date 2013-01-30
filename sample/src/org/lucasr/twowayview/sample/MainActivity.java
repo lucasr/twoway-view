@@ -23,12 +23,15 @@ import android.app.Activity;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
+    private static final String LOGTAG = "TwoWayViewSample";
+
     private TwoWayView mListView;
 
     private Toast mToast;
@@ -100,6 +103,13 @@ public class MainActivity extends Activity {
                     int visibleItemCount, int totalItemCount) {
                 mScrollMessage = "Scroll (first: " + firstVisibleItem + ", count = " + visibleItemCount + ")";
                 refreshToast();
+            }
+        });
+
+        mListView.setRecyclerListener(new TwoWayView.RecyclerListener() {
+            @Override
+            public void onMovedToScrapHeap(View view) {
+                Log.d(LOGTAG, "View moved to scrap heap");
             }
         });
 
