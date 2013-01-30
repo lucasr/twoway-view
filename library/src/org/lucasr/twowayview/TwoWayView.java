@@ -171,6 +171,54 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     private EdgeEffectCompat mStartEdge;
     private EdgeEffectCompat mEndEdge;
 
+    private OnScrollListener mOnScrollListener;
+    private int mLastScrollState;
+
+    public interface OnScrollListener {
+
+        /**
+         * The view is not scrolling. Note navigating the list using the trackball counts as
+         * being in the idle state since these transitions are not animated.
+         */
+        public static int SCROLL_STATE_IDLE = 0;
+
+        /**
+         * The user is scrolling using touch, and their finger is still on the screen
+         */
+        public static int SCROLL_STATE_TOUCH_SCROLL = 1;
+
+        /**
+         * The user had previously been scrolling using touch and had performed a fling. The
+         * animation is now coasting to a stop
+         */
+        public static int SCROLL_STATE_FLING = 2;
+
+        /**
+         * Callback method to be invoked while the list view or grid view is being scrolled. If the
+         * view is being scrolled, this method will be called before the next frame of the scroll is
+         * rendered. In particular, it will be called before any calls to
+         * {@link Adapter#getView(int, View, ViewGroup)}.
+         *
+         * @param view The view whose scroll state is being reported
+         *
+         * @param scrollState The current scroll state. One of {@link #SCROLL_STATE_IDLE},
+         * {@link #SCROLL_STATE_TOUCH_SCROLL} or {@link #SCROLL_STATE_IDLE}.
+         */
+        public void onScrollStateChanged(TwoWayView view, int scrollState);
+
+        /**
+         * Callback method to be invoked when the list or grid has been scrolled. This will be
+         * called after the scroll has completed
+         * @param view The view whose scroll state is being reported
+         * @param firstVisibleItem the index of the first visible cell (ignore if
+         *        visibleItemCount == 0)
+         * @param visibleItemCount the number of visible cells
+         * @param totalItemCount the number of items in the list adaptor
+         */
+        public void onScroll(TwoWayView view, int firstVisibleItem, int visibleItemCount,
+                int totalItemCount);
+    }
+
     public TwoWayView(Context context) {
         this(context, null);
     }
@@ -192,6 +240,9 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         mIsAttached = false;
 
         mContextMenuInfo = null;
+
+        mOnScrollListener = null;
+        mLastScrollState = OnScrollListener.SCROLL_STATE_IDLE;
 
         final ViewConfiguration vc = ViewConfiguration.get(context);
         mTouchSlop = vc.getScaledTouchSlop();
@@ -284,6 +335,16 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
     public int getItemMargin() {
         return mItemMargin;
+    }
+
+    /**
+     * Set the listener that will receive notifications every time the list scrolls.
+     *
+     * @param l the scroll listener
+     */
+    public void setOnScrollListener(OnScrollListener l) {
+        mOnScrollListener = l;
+        invokeOnItemScrollListener();
     }
 
     public void setDrawSelectorOnTop(boolean drawSelectorOnTop) {
@@ -774,6 +835,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         case MotionEvent.ACTION_UP:
             mActivePointerId = INVALID_POINTER;
             mTouchMode = TOUCH_MODE_REST;
+            reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
 
             break;
         }
@@ -827,6 +889,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             if (mTouchMode == TOUCH_MODE_FLINGING) {
                 Log.d(LOGTAG, "    - Was flinging, now dragging");
                 mTouchMode = TOUCH_MODE_DRAGGING;
+                reportScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
                 motionPosition = findMotionRowOrColumn((int) mLastTouchPos);
                 return true;
             } else if (mMotionPosition >= 0 && mAdapter.isEnabled(mMotionPosition)) {
@@ -891,6 +954,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
             cancelCheckForTap();
             mTouchMode = TOUCH_MODE_REST;
+            reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
 
             setPressed(false);
             View motionView = this.getChildAt(mMotionPosition - mFirstPosition);
@@ -998,6 +1062,12 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             }
 
             case TOUCH_MODE_DRAGGING:
+                if (contentFits()) {
+                    mTouchMode = TOUCH_MODE_REST;
+                    reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
+                    break;
+                }
+
                 mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
 
                 final float velocity;
@@ -1012,6 +1082,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 if (Math.abs(velocity) >= mFlingVelocity) {
                     Log.d(LOGTAG, "    - Flinging");
                     mTouchMode = TOUCH_MODE_FLINGING;
+                    reportScrollStateChange(OnScrollListener.SCROLL_STATE_FLING);
 
                     mScroller.fling(0, 0,
                                     (int) (mIsVertical ? 0 : velocity),
@@ -1026,6 +1097,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 } else {
                     Log.d(LOGTAG, "    - No fling, rest mode");
                     mTouchMode = TOUCH_MODE_REST;
+                    reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
                 }
 
                 break;
@@ -1074,6 +1146,33 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         }
     }
 
+    /**
+     * Notify our scroll listener (if there is one) of a change in scroll state
+     */
+    private void invokeOnItemScrollListener() {
+        if (mOnScrollListener != null) {
+            mOnScrollListener.onScroll(this, mFirstPosition, getChildCount(), mItemCount);
+        }
+
+        // Dummy values, View's implementation does not use these.
+        onScrollChanged(0, 0, 0, 0);
+    }
+
+    void reportScrollStateChange(int newState) {
+        if (newState == OnScrollListener.SCROLL_STATE_FLING && mLastScrollState == OnScrollListener.SCROLL_STATE_FLING) {
+            Log.d(LOGTAG, "flinging NOT?");
+        }
+
+        if (newState == mLastScrollState) {
+            return;
+        }
+
+        if (mOnScrollListener != null) {
+            mLastScrollState = newState;
+            mOnScrollListener.onScrollStateChanged(this, newState);
+        }
+    }
+
     private boolean maybeStartScrolling(int delta) {
         final boolean isOverScroll = (mOverScroll != 0);
         if (Math.abs(delta) <= mTouchSlop && !isOverScroll) {
@@ -1100,6 +1199,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         if (motionView != null) {
             motionView.setPressed(false);
         }
+
+        reportScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
 
         return true;
     }
@@ -1283,7 +1384,6 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         if (mIsVertical) {
             return first.getTop() >= getPaddingTop() &&
                     last.getBottom() <= getHeight() - getPaddingBottom();
-
         } else {
             return first.getLeft() >= getPaddingLeft() &&
                     last.getRight() <= getWidth() - getPaddingRight();
@@ -1482,6 +1582,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
         mBlockLayoutRequests = false;
 
+        invokeOnItemScrollListener();
+
         return false;
     }
 
@@ -1543,6 +1645,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
             Log.d(LOGTAG, "Stopped flinging");
             mTouchMode = TOUCH_MODE_REST;
+            reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
         }
     }
 
@@ -2534,6 +2637,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
         mResurrectToPosition = INVALID_POSITION;
         mTouchMode = TOUCH_MODE_REST;
+        reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
 
         mSpecificStart = selectedStart;
 
@@ -2542,6 +2646,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             mLayoutMode = LAYOUT_SPECIFIC;
             updateSelectorState();
             setSelectionInt(selectedPosition);
+            invokeOnItemScrollListener();
         } else {
             selectedPosition = INVALID_POSITION;
         }
