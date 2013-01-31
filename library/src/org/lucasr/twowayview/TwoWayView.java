@@ -3327,7 +3327,6 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             }
 
             lp.id = mAdapter.getItemId(position);
-            lp.viewType = mAdapter.getItemViewType(position);
 
             child.setLayoutParams(lp);
         }
