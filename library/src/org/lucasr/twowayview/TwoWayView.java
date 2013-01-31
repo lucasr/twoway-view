@@ -3326,7 +3326,6 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 lp = generateLayoutParams(lp);
             }
 
-            lp.position = position;
             lp.id = mAdapter.getItemId(position);
             lp.viewType = mAdapter.getItemViewType(position);
 
@@ -3539,11 +3538,6 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     }
 
     public static class LayoutParams extends ViewGroup.LayoutParams {
-        /**
-         * Item position this view represents
-         */
-        int position;
-
         /**
          * Type of this view as reported by the adapter
          */
