@@ -1089,6 +1089,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                                     ViewConfiguration.getPressedStateDuration());
                         } else {
                             mTouchMode = TOUCH_MODE_REST;
+                            updateSelectorState();
                         }
                     }
                 }
