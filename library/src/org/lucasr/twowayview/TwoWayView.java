@@ -88,8 +88,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     static final int OVERSCROLL_LIMIT_DIVISOR = 3;
 
     public static enum Orientation {
-        VERTICAL,
-        HORIZONTAL;
+        HORIZONTAL,
+        VERTICAL;
     };
 
     private ListAdapter mAdapter;
@@ -307,7 +307,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
         ViewCompat.setOverScrollMode(this, ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS);
 
-        TypedArray a = context.obtainStyledAttributes(R.styleable.TwoWayView);
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TwoWayView, defStyle, 0);
         initializeScrollbars(a);
 
         mDrawSelectorOnTop = a.getBoolean(
@@ -316,6 +316,11 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         Drawable d = a.getDrawable(R.styleable.TwoWayView_android_listSelector);
         if (d != null) {
             setSelector(d);
+        }
+
+        int orientation = a.getInt(R.styleable.TwoWayView_android_orientation, -1);
+        if (orientation >= 0) {
+            setOrientation(Orientation.values()[orientation]);
         }
 
         a.recycle();
@@ -332,7 +337,6 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         mIsVertical = isVertical;
 
         updateScrollbarsDirection();
-
         resetState();
         mRecycler.clear();
 

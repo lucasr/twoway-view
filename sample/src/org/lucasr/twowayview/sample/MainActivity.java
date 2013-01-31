@@ -20,7 +20,6 @@ import org.lucasr.twowayview.TwoWayView;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -113,15 +112,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        updateForOrientation();
-
         mListView.setAdapter(new SimpleListAdapter(MainActivity.this));
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        updateForOrientation();
     }
 
     private void refreshToast() {
@@ -149,14 +140,5 @@ public class MainActivity extends Activity {
 
         mToast.setText(buffer.toString());
         mToast.show();
-    }
-
-    private void updateForOrientation() {
-        int orientation = getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            mListView.setOrientation(TwoWayView.Orientation.HORIZONTAL);
-        } else {
-            mListView.setOrientation(TwoWayView.Orientation.VERTICAL);
-        }
     }
 }
