@@ -1138,6 +1138,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
             }
 
             cancelCheckForTap();
+            cancelCheckForLongPress();
             setPressed(false);
 
             if (mStartEdge != null && mEndEdge != null) {
@@ -1227,6 +1228,8 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         if (parent != null) {
             parent.requestDisallowInterceptTouchEvent(true);
         }
+
+        cancelCheckForLongPress();
 
         setPressed(false);
         View motionView = getChildAt(mMotionPosition - mFirstPosition);
