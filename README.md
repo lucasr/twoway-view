@@ -35,8 +35,6 @@ features. Here's a few (definitely not all!) of the upcoming features:
 * Accessibility support
 * Keyboard events and navigation
 * Focus handling
-* List selector
-* AdapterView selection
 
 Build instructions
 ==================
