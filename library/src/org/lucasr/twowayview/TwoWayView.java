@@ -58,6 +58,7 @@ import android.widget.Scroller;
 public class TwoWayView extends AdapterView<ListAdapter> {
     private static final String LOGTAG = "TwoWayView";
 
+    private static final int NO_POSITION = -1;
     private static final int INVALID_POINTER = -1;
 
     private static final int TOUCH_MODE_REST = -1;
@@ -2082,16 +2083,47 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
         int heightSize = MeasureSpec.getSize(heightMeasureSpec);
 
-        if (widthMode != MeasureSpec.EXACTLY) {
-            Log.e(LOGTAG, "onMeasure: must have an exact width or match_parent! " +
-                    "Using fallback spec of EXACTLY " + widthSize);
-            widthMode = MeasureSpec.EXACTLY;
+        int childWidth = 0;
+        int childHeight = 0;
+
+        mItemCount = (mAdapter == null ? 0 : mAdapter.getCount());
+        if (mItemCount > 0 && (widthMode == MeasureSpec.UNSPECIFIED ||
+                heightMode == MeasureSpec.UNSPECIFIED)) {
+            final View child = obtainView(0, mIsScrap);
+
+            final int secondaryMeasureSpec =
+                    (mIsVertical ? widthMeasureSpec : heightMeasureSpec);
+
+            measureScrapChild(child, 0, secondaryMeasureSpec);
+
+            childWidth = child.getMeasuredWidth();
+            childHeight = child.getMeasuredHeight();
+
+            if (recycleOnMeasure()) {
+                mRecycler.addScrapView(child, -1);
+            }
         }
 
-        if (heightMode != MeasureSpec.EXACTLY) {
-            Log.e(LOGTAG, "onMeasure: must have an exact height or match_parent! " +
-                    "Using fallback spec of EXACTLY " + heightSize);
-            heightMode = MeasureSpec.EXACTLY;
+        if (widthMode == MeasureSpec.UNSPECIFIED) {
+            widthSize = getPaddingLeft() + getPaddingRight() + childWidth;
+            if (mIsVertical) {
+                widthSize += getVerticalScrollbarWidth();
+            }
+        }
+
+        if (heightMode == MeasureSpec.UNSPECIFIED) {
+            heightSize = getPaddingTop() + getPaddingBottom() + childHeight;
+            if (!mIsVertical) {
+                heightSize += getHorizontalScrollbarHeight();
+            }
+        }
+
+        if (mIsVertical && heightMode == MeasureSpec.AT_MOST) {
+            heightSize = measureHeightOfChildren(widthMeasureSpec, 0, NO_POSITION, heightSize, -1);
+        }
+
+        if (!mIsVertical && widthMode == MeasureSpec.AT_MOST) {
+            widthSize = measureWidthOfChildren(heightMeasureSpec, 0, NO_POSITION, widthSize, -1);
         }
 
         setMeasuredDimension(widthSize, heightSize);
@@ -2317,6 +2349,10 @@ public class TwoWayView extends AdapterView<ListAdapter> {
                 mDataChanged = false;
             }
         }
+    }
+
+    protected boolean recycleOnMeasure() {
+        return true;
     }
 
     private void offsetChildren(int offset) {
@@ -2724,6 +2760,211 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         child.measure(widthSpec, heightSpec);
     }
 
+    private void measureScrapChild(View scrapChild, int position, int secondaryMeasureSpec) {
+        LayoutParams lp = (LayoutParams) scrapChild.getLayoutParams();
+        if (lp == null) {
+            lp = generateDefaultLayoutParams();
+            scrapChild.setLayoutParams(lp);
+        }
+
+        lp.viewType = mAdapter.getItemViewType(position);
+        lp.forceAdd = true;
+
+        final int widthMeasureSpec;
+        final int heightMeasureSpec;
+        if (mIsVertical) {
+            widthMeasureSpec = secondaryMeasureSpec;
+            heightMeasureSpec = getChildHeightMeasureSpec(lp);
+        } else {
+            widthMeasureSpec = getChildWidthMeasureSpec(lp);
+            heightMeasureSpec = secondaryMeasureSpec;
+        }
+
+        scrapChild.measure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    /**
+     * Measures the height of the given range of children (inclusive) and
+     * returns the height with this TwoWayView's padding and item margin heights
+     * included. If maxHeight is provided, the measuring will stop when the
+     * current height reaches maxHeight.
+     *
+     * @param widthMeasureSpec The width measure spec to be given to a child's
+     *            {@link View#measure(int, int)}.
+     * @param startPosition The position of the first child to be shown.
+     * @param endPosition The (inclusive) position of the last child to be
+     *            shown. Specify {@link #NO_POSITION} if the last child should be
+     *            the last available child from the adapter.
+     * @param maxHeight The maximum height that will be returned (if all the
+     *            children don't fit in this value, this value will be
+     *            returned).
+     * @param disallowPartialChildPosition In general, whether the returned
+     *            height should only contain entire children. This is more
+     *            powerful--it is the first inclusive position at which partial
+     *            children will not be allowed. Example: it looks nice to have
+     *            at least 3 completely visible children, and in portrait this
+     *            will most likely fit; but in landscape there could be times
+     *            when even 2 children can not be completely shown, so a value
+     *            of 2 (remember, inclusive) would be good (assuming
+     *            startPosition is 0).
+     * @return The height of this TwoWayView with the given children.
+     */
+    private int measureHeightOfChildren(int widthMeasureSpec, int startPosition, int endPosition,
+            final int maxHeight, int disallowPartialChildPosition) {
+
+        final int paddingTop = getPaddingTop();
+        final int paddingBottom = getPaddingBottom();
+
+        final ListAdapter adapter = mAdapter;
+        if (adapter == null) {
+            return paddingTop + paddingBottom;
+        }
+
+        // Include the padding of the list
+        int returnedHeight = paddingTop + paddingBottom;
+        final int itemMargin = mItemMargin;
+
+        // The previous height value that was less than maxHeight and contained
+        // no partial children
+        int prevHeightWithoutPartialChild = 0;
+        int i;
+        View child;
+
+        // mItemCount - 1 since endPosition parameter is inclusive
+        endPosition = (endPosition == NO_POSITION) ? adapter.getCount() - 1 : endPosition;
+        final RecycleBin recycleBin = mRecycler;
+        final boolean shouldRecycle = recycleOnMeasure();
+        final boolean[] isScrap = mIsScrap;
+
+        for (i = startPosition; i <= endPosition; ++i) {
+            child = obtainView(i, isScrap);
+
+            measureScrapChild(child, i, widthMeasureSpec);
+
+            if (i > 0) {
+                // Count the item margin for all but one child
+                returnedHeight += itemMargin;
+            }
+
+            // Recycle the view before we possibly return from the method
+            if (shouldRecycle) {
+                recycleBin.addScrapView(child, -1);
+            }
+
+            returnedHeight += child.getMeasuredHeight();
+
+            if (returnedHeight >= maxHeight) {
+                // We went over, figure out which height to return.  If returnedHeight > maxHeight,
+                // then the i'th position did not fit completely.
+                return (disallowPartialChildPosition >= 0) // Disallowing is enabled (> -1)
+                            && (i > disallowPartialChildPosition) // We've past the min pos
+                            && (prevHeightWithoutPartialChild > 0) // We have a prev height
+                            && (returnedHeight != maxHeight) // i'th child did not fit completely
+                        ? prevHeightWithoutPartialChild
+                        : maxHeight;
+            }
+
+            if ((disallowPartialChildPosition >= 0) && (i >= disallowPartialChildPosition)) {
+                prevHeightWithoutPartialChild = returnedHeight;
+            }
+        }
+
+        // At this point, we went through the range of children, and they each
+        // completely fit, so return the returnedHeight
+        return returnedHeight;
+    }
+
+    /**
+     * Measures the width of the given range of children (inclusive) and
+     * returns the width with this TwoWayView's padding and item margin widths
+     * included. If maxWidth is provided, the measuring will stop when the
+     * current width reaches maxWidth.
+     *
+     * @param heightMeasureSpec The height measure spec to be given to a child's
+     *            {@link View#measure(int, int)}.
+     * @param startPosition The position of the first child to be shown.
+     * @param endPosition The (inclusive) position of the last child to be
+     *            shown. Specify {@link #NO_POSITION} if the last child should be
+     *            the last available child from the adapter.
+     * @param maxWidth The maximum width that will be returned (if all the
+     *            children don't fit in this value, this value will be
+     *            returned).
+     * @param disallowPartialChildPosition In general, whether the returned
+     *            width should only contain entire children. This is more
+     *            powerful--it is the first inclusive position at which partial
+     *            children will not be allowed. Example: it looks nice to have
+     *            at least 3 completely visible children, and in portrait this
+     *            will most likely fit; but in landscape there could be times
+     *            when even 2 children can not be completely shown, so a value
+     *            of 2 (remember, inclusive) would be good (assuming
+     *            startPosition is 0).
+     * @return The width of this TwoWayView with the given children.
+     */
+    private int measureWidthOfChildren(int heightMeasureSpec, int startPosition, int endPosition,
+            final int maxWidth, int disallowPartialChildPosition) {
+
+        final int paddingLeft = getPaddingLeft();
+        final int paddingRight = getPaddingRight();
+
+        final ListAdapter adapter = mAdapter;
+        if (adapter == null) {
+            return paddingLeft + paddingRight;
+        }
+
+        // Include the padding of the list
+        int returnedWidth = paddingLeft + paddingRight;
+        final int itemMargin = mItemMargin;
+
+        // The previous height value that was less than maxHeight and contained
+        // no partial children
+        int prevWidthWithoutPartialChild = 0;
+        int i;
+        View child;
+
+        // mItemCount - 1 since endPosition parameter is inclusive
+        endPosition = (endPosition == NO_POSITION) ? adapter.getCount() - 1 : endPosition;
+        final RecycleBin recycleBin = mRecycler;
+        final boolean shouldRecycle = recycleOnMeasure();
+        final boolean[] isScrap = mIsScrap;
+
+        for (i = startPosition; i <= endPosition; ++i) {
+            child = obtainView(i, isScrap);
+
+            measureScrapChild(child, i, heightMeasureSpec);
+
+            if (i > 0) {
+                // Count the item margin for all but one child
+                returnedWidth += itemMargin;
+            }
+
+            // Recycle the view before we possibly return from the method
+            if (shouldRecycle) {
+                recycleBin.addScrapView(child, -1);
+            }
+
+            returnedWidth += child.getMeasuredHeight();
+
+            if (returnedWidth >= maxWidth) {
+                // We went over, figure out which width to return.  If returnedWidth > maxWidth,
+                // then the i'th position did not fit completely.
+                return (disallowPartialChildPosition >= 0) // Disallowing is enabled (> -1)
+                            && (i > disallowPartialChildPosition) // We've past the min pos
+                            && (prevWidthWithoutPartialChild > 0) // We have a prev width
+                            && (returnedWidth != maxWidth) // i'th child did not fit completely
+                        ? prevWidthWithoutPartialChild
+                        : maxWidth;
+            }
+
+            if ((disallowPartialChildPosition >= 0) && (i >= disallowPartialChildPosition)) {
+                prevWidthWithoutPartialChild = returnedWidth;
+            }
+        }
+
+        // At this point, we went through the range of children, and they each
+        // completely fit, so return the returnedWidth
+        return returnedWidth;
+    }
+
     private View makeAndAddView(int position, int offset, boolean flow, boolean selected) {
         final int top;
         final int left;
@@ -2770,7 +3011,6 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         final boolean needToMeasure = !recycled || updateChildSelected || child.isLayoutRequested();
 
         // Respect layout params that are already in the view. Otherwise make some up...
-        // noinspection unchecked
         LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (lp == null) {
             lp = generateDefaultLayoutParams();
