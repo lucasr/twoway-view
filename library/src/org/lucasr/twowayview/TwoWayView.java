@@ -63,6 +63,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private static final int NO_POSITION = -1;
     private static final int INVALID_POINTER = -1;
 
+    public static final int[] STATE_NOTHING = new int[] { 0 };
+
     private static final int TOUCH_MODE_REST = -1;
     private static final int TOUCH_MODE_DOWN = 0;
     private static final int TOUCH_MODE_TAP = 1;
@@ -1856,7 +1858,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             if (shouldShowSelector()) {
                 mSelector.setState(getDrawableState());
             } else {
-                mSelector.setState(new int[] { 0 });
+                mSelector.setState(STATE_NOTHING);
             }
         }
     }
