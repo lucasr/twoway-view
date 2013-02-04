@@ -51,11 +51,13 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
 
-public class TwoWayView extends AdapterView<ListAdapter> {
+public class TwoWayView extends AdapterView<ListAdapter> implements
+        ViewTreeObserver.OnTouchModeChangeListener {
     private static final String LOGTAG = "TwoWayView";
 
     private static final int NO_POSITION = -1;
@@ -505,6 +507,9 @@ public class TwoWayView extends AdapterView<ListAdapter> {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
+        final ViewTreeObserver treeObserver = getViewTreeObserver();
+        treeObserver.addOnTouchModeChangeListener(this);
+
         if (mAdapter != null && mDataSetObserver == null) {
             mDataSetObserver = new AdapterDataSetObserver();
             mAdapter.registerDataSetObserver(mDataSetObserver);
@@ -524,6 +529,9 @@ public class TwoWayView extends AdapterView<ListAdapter> {
 
         // Detach any view left in the scrap heap
         mRecycler.clear();
+
+        final ViewTreeObserver treeObserver = getViewTreeObserver();
+        treeObserver.removeOnTouchModeChangeListener(this);
 
         if (mAdapter != null) {
             mAdapter.unregisterDataSetObserver(mDataSetObserver);
@@ -1162,6 +1170,7 @@ public class TwoWayView extends AdapterView<ListAdapter> {
         return true;
     }
 
+    @Override
     public void onTouchModeChanged(boolean isInTouchMode) {
         if (isInTouchMode) {
             // Get rid of the selection when we enter touch mode
