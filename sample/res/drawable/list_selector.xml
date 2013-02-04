@@ -8,11 +8,11 @@
     <item android:state_focused="true"
           android:state_enabled="false"
           android:state_pressed="true"
-          android:drawable="@color/light_gray"/>
+          android:drawable="@drawable/list_disabled"/>
 
     <item android:state_focused="true"
           android:state_enabled="false"
-          android:drawable="@color/light_gray"/>
+          android:drawable="@drawable/list_disabled"/>
 
     <item android:state_focused="true"
           android:state_pressed="true"
@@ -23,6 +23,6 @@
           android:drawable="@drawable/list_selector_background_transition"/>
 
     <item android:state_focused="true"
-          android:drawable="@color/medium_gray"/>
+          android:drawable="@drawable/list_focused"/>
 
 </selector>
