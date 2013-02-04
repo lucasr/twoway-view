@@ -1181,7 +1181,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             // Layout, but only if we already have done so previously.
             // (Otherwise may clobber a LAYOUT_SYNC layout that was requested to restore
             // state.)
-            if (getHeight() > 0 && getChildCount() > 0) {
+            if (getWidth() > 0 && getHeight() > 0 && getChildCount() > 0) {
                 layoutChildren();
             }
 
