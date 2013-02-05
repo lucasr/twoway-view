@@ -1573,6 +1573,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 }
 
                 count++;
+                mRecycler.addScrapView(child, firstPosition + i);
             }
         } else {
             Log.d(LOGTAG, "  - scrolling up");
@@ -1591,6 +1592,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
                 start = i;
                 count++;
+                mRecycler.addScrapView(child, firstPosition + i);
             }
         }
 
