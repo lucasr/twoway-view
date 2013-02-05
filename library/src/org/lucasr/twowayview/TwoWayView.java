@@ -3053,9 +3053,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int w = child.getMeasuredWidth();
         final int h = child.getMeasuredHeight();
 
+        final int childTop = (mIsVertical && !flow ? top - h : top);
+        final int childLeft = (!mIsVertical && !flow ? left - w : left);
+
         if (needToMeasure) {
-            final int childTop = (mIsVertical && !flow ? top - h : top);
-            final int childLeft = (!mIsVertical && !flow ? left - w : left);
             final int childRight = childLeft + w;
             final int childBottom = childTop + h;
 
@@ -3064,8 +3065,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
             child.layout(childLeft, childTop, childRight, childBottom);
         } else {
-            child.offsetLeftAndRight(left - child.getLeft());
-            child.offsetTopAndBottom(top - child.getTop());
+            child.offsetLeftAndRight(childLeft - child.getLeft());
+            child.offsetTopAndBottom(childTop - child.getTop());
         }
 
 //        lp = (LayoutParams) child.getLayoutParams();
