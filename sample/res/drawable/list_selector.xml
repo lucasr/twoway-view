@@ -23,6 +23,14 @@
           android:drawable="@drawable/list_selector_background_transition"/>
 
     <item android:state_focused="true"
+          android:state_activated="true"
+          android:drawable="@drawable/list_focused"/>
+
+    <item android:state_focused="false"
+          android:state_activated="true"
+          android:drawable="@drawable/list_longpressed"/>
+
+    <item android:state_focused="true"
           android:drawable="@drawable/list_focused"/>
 
 </selector>

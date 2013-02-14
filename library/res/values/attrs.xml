@@ -20,6 +20,8 @@
 
         <attr name="android:orientation"/>
 
+        <attr name="android:choiceMode"/>
+
         <attr name="android:drawSelectorOnTop"/>
         <attr name="android:listSelector"/>
 

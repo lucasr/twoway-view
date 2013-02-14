@@ -36,6 +36,7 @@ import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.support.v4.util.LongSparseArray;
 import android.support.v4.util.SparseArrayCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.VelocityTrackerCompat;
@@ -43,6 +44,7 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.EdgeEffectCompat;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
@@ -53,6 +55,7 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
+import android.widget.Checkable;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
 
@@ -90,7 +93,13 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     private static final int SYNC_MAX_DURATION_MILLIS = 100;
 
-    static final int OVERSCROLL_LIMIT_DIVISOR = 3;
+    private static final int CHECK_POSITION_SEARCH_DISTANCE = 20;
+
+    public static enum ChoiceMode {
+        NONE,
+        SINGLE,
+        MULTIPLE
+    }
 
     public static enum Orientation {
         HORIZONTAL,
@@ -164,6 +173,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private long mSelectedRowId;
     private int mOldSelectedPosition;
     private long mOldSelectedRowId;
+
+    private ChoiceMode mChoiceMode;
+    private int mCheckedItemCount;
+    private SparseBooleanArray mCheckStates;
+    LongSparseArray<Integer> mCheckedIdStates;
 
     private ContextMenuInfo mContextMenuInfo;
 
@@ -295,6 +309,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         mOldSelectedPosition = INVALID_POSITION;
         mOldSelectedRowId = INVALID_ROW_ID;
 
+        mChoiceMode = ChoiceMode.NONE;
+        mCheckedItemCount = 0;
+        mCheckedIdStates = null;
+        mCheckStates = null;
+
         mRecycler = new RecycleBin();
         mDataSetObserver = new AdapterDataSetObserver();
 
@@ -326,6 +345,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         int orientation = a.getInt(R.styleable.TwoWayView_android_orientation, -1);
         if (orientation >= 0) {
             setOrientation(Orientation.values()[orientation]);
+        }
+
+        int choiceMode = a.getInt(R.styleable.TwoWayView_android_choiceMode, -1);
+        if (choiceMode >= 0) {
+            setChoiceMode(ChoiceMode.values()[choiceMode]);
         }
 
         a.recycle();
@@ -422,6 +446,142 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return mNextSelectedRowId;
     }
 
+    public int getCheckedItemCount() {
+        return mCheckedItemCount;
+    }
+
+    public boolean isItemChecked(int position) {
+        if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0 && mCheckStates != null) {
+            return mCheckStates.get(position);
+        }
+
+        return false;
+    }
+
+    public int getCheckedItemPosition() {
+        if (mChoiceMode.compareTo(ChoiceMode.SINGLE) == 0 &&
+                mCheckStates != null && mCheckStates.size() == 1) {
+            return mCheckStates.keyAt(0);
+        }
+
+        return INVALID_POSITION;
+    }
+
+    public SparseBooleanArray getCheckedItemPositions() {
+        if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0) {
+            return mCheckStates;
+        }
+
+        return null;
+    }
+
+    public long[] getCheckedItemIds() {
+        if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0 ||
+                mCheckedIdStates == null || mAdapter == null) {
+            return new long[0];
+        }
+
+        final LongSparseArray<Integer> idStates = mCheckedIdStates;
+        final int count = idStates.size();
+        final long[] ids = new long[count];
+
+        for (int i = 0; i < count; i++) {
+            ids[i] = idStates.keyAt(i);
+        }
+
+        return ids;
+    }
+
+    public void setItemChecked(int position, boolean value) {
+        if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0) {
+            return;
+        }
+
+        if (mChoiceMode.compareTo(ChoiceMode.MULTIPLE) == 0) {
+            boolean oldValue = mCheckStates.get(position);
+            mCheckStates.put(position, value);
+
+            if (mCheckedIdStates != null && mAdapter.hasStableIds()) {
+                if (value) {
+                    mCheckedIdStates.put(mAdapter.getItemId(position), position);
+                } else {
+                    mCheckedIdStates.delete(mAdapter.getItemId(position));
+                }
+            }
+
+            if (oldValue != value) {
+                if (value) {
+                    mCheckedItemCount++;
+                } else {
+                    mCheckedItemCount--;
+                }
+            }
+        } else {
+            boolean updateIds = mCheckedIdStates != null && mAdapter.hasStableIds();
+
+            // Clear all values if we're checking something, or unchecking the currently
+            // selected item
+            if (value || isItemChecked(position)) {
+                mCheckStates.clear();
+
+                if (updateIds) {
+                    mCheckedIdStates.clear();
+                }
+            }
+
+            // This may end up selecting the value we just cleared but this way
+            // we ensure length of mCheckStates is 1, a fact getCheckedItemPosition relies on
+            if (value) {
+                mCheckStates.put(position, true);
+
+                if (updateIds) {
+                    mCheckedIdStates.put(mAdapter.getItemId(position), position);
+                }
+
+                mCheckedItemCount = 1;
+            } else if (mCheckStates.size() == 0 || !mCheckStates.valueAt(0)) {
+                mCheckedItemCount = 0;
+            }
+        }
+
+        // Do not generate a data change while we are in the layout phase
+        if (!mInLayout && !mBlockLayoutRequests) {
+            mDataChanged = true;
+            rememberSyncState();
+            requestLayout();
+        }
+    }
+
+    public void clearChoices() {
+        if (mCheckStates != null) {
+            mCheckStates.clear();
+        }
+
+        if (mCheckedIdStates != null) {
+            mCheckedIdStates.clear();
+        }
+
+        mCheckedItemCount = 0;
+    }
+
+    public ChoiceMode getChoiceMode() {
+        return mChoiceMode;
+    }
+
+    public void setChoiceMode(ChoiceMode choiceMode) {
+        mChoiceMode = choiceMode;
+
+        if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0) {
+            if (mCheckStates == null) {
+                mCheckStates = new SparseBooleanArray();
+            }
+
+            if (mCheckedIdStates == null && mAdapter != null && mAdapter.hasStableIds()) {
+                mCheckedIdStates = new LongSparseArray<Integer>();
+            }
+        }
+    }
+
     @Override
     public ListAdapter getAdapter() {
         return mAdapter;
@@ -442,6 +602,14 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         mOldSelectedPosition = INVALID_POSITION;
         mOldSelectedRowId = INVALID_ROW_ID;
 
+        if (mCheckStates != null) {
+            mCheckStates.clear();
+        }
+
+        if (mCheckedIdStates != null) {
+            mCheckedIdStates.clear();
+        }
+
         if (mAdapter != null) {
             mOldItemCount = mItemCount;
             mItemCount = adapter.getCount();
@@ -451,6 +619,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
             mHasStableIds = adapter.hasStableIds();
             mAreAllItemsSelectable = adapter.areAllItemsEnabled();
+
+            if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0 && mHasStableIds &&
+                    mCheckedIdStates == null) {
+                mCheckedIdStates = new LongSparseArray<Integer>();
+            }
 
             final int position = lookForSelectablePosition(0);
             setSelectedPositionInt(position);
@@ -2537,11 +2710,50 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return selected;
     }
 
+    void confirmCheckedPositionsById() {
+        // Clear out the positional check states, we'll rebuild it below from IDs.
+        mCheckStates.clear();
+
+        for (int checkedIndex = 0; checkedIndex < mCheckedIdStates.size(); checkedIndex++) {
+            final long id = mCheckedIdStates.keyAt(checkedIndex);
+            final int lastPos = mCheckedIdStates.valueAt(checkedIndex);
+
+            final long lastPosId = mAdapter.getItemId(lastPos);
+            if (id != lastPosId) {
+                // Look around to see if the ID is nearby. If not, uncheck it.
+                final int start = Math.max(0, lastPos - CHECK_POSITION_SEARCH_DISTANCE);
+                final int end = Math.min(lastPos + CHECK_POSITION_SEARCH_DISTANCE, mItemCount);
+                boolean found = false;
+
+                for (int searchPos = start; searchPos < end; searchPos++) {
+                    final long searchId = mAdapter.getItemId(searchPos);
+                    if (id == searchId) {
+                        found = true;
+                        mCheckStates.put(searchPos, true);
+                        mCheckedIdStates.setValueAt(checkedIndex, searchPos);
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    mCheckedIdStates.delete(id);
+                    checkedIndex--;
+                    mCheckedItemCount--;
+                }
+            } else {
+                mCheckStates.put(lastPos, true);
+            }
+        }
+    }
+
     private void handleDataChanged() {
-        final int itemCount = mItemCount;
+        if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0 && mAdapter != null && mAdapter.hasStableIds()) {
+            confirmCheckedPositionsById();
+        }
 
         mRecycler.clearTransientStateViews();
 
+        final int itemCount = mItemCount;
         if (itemCount > 0) {
             int newPos;
             int selectablePos;
@@ -3011,6 +3223,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return child;
     }
 
+    @TargetApi(11)
     private void setupChild(View child, int position, int top, int left,
             boolean flow, boolean selected, boolean recycled) {
         final boolean isSelected = selected && shouldShowSelector();
@@ -3044,6 +3257,15 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         if (updateChildPressed) {
             child.setPressed(isPressed);
+        }
+
+        if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0 && mCheckStates != null) {
+            if (child instanceof Checkable) {
+                ((Checkable) child).setChecked(mCheckStates.get(position));
+            } else if (getContext().getApplicationInfo().targetSdkVersion
+                    >= Build.VERSION_CODES.HONEYCOMB) {
+                child.setActivated(mCheckStates.get(position));
+            }
         }
 
         if (needToMeasure) {
@@ -3653,6 +3875,75 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return new AdapterContextMenuInfo(view, position, id);
     }
 
+    @TargetApi(11)
+    private void updateOnScreenCheckedViews() {
+        final int firstPos = mFirstPosition;
+        final int count = getChildCount();
+
+        final boolean useActivated = getContext().getApplicationInfo().targetSdkVersion
+                >= Build.VERSION_CODES.HONEYCOMB;
+
+        for (int i = 0; i < count; i++) {
+            final View child = getChildAt(i);
+            final int position = firstPos + i;
+
+            if (child instanceof Checkable) {
+                ((Checkable) child).setChecked(mCheckStates.get(position));
+            } else if (useActivated) {
+                child.setActivated(mCheckStates.get(position));
+            }
+        }
+    }
+
+    @Override
+    public boolean performItemClick(View view, int position, long id) {
+        boolean checkedStateChanged = false;
+
+        if (mChoiceMode.compareTo(ChoiceMode.MULTIPLE) == 0) {
+            boolean checked = !mCheckStates.get(position, false);
+            mCheckStates.put(position, checked);
+
+            if (mCheckedIdStates != null && mAdapter.hasStableIds()) {
+                if (checked) {
+                    mCheckedIdStates.put(mAdapter.getItemId(position), position);
+                } else {
+                    mCheckedIdStates.delete(mAdapter.getItemId(position));
+                }
+            }
+
+            if (checked) {
+                mCheckedItemCount++;
+            } else {
+                mCheckedItemCount--;
+            }
+
+            checkedStateChanged = true;
+        } else if (mChoiceMode.compareTo(ChoiceMode.SINGLE) == 0) {
+            boolean checked = !mCheckStates.get(position, false);
+            if (checked) {
+                mCheckStates.clear();
+                mCheckStates.put(position, true);
+
+                if (mCheckedIdStates != null && mAdapter.hasStableIds()) {
+                    mCheckedIdStates.clear();
+                    mCheckedIdStates.put(mAdapter.getItemId(position), position);
+                }
+
+                mCheckedItemCount = 1;
+            } else if (mCheckStates.size() == 0 || !mCheckStates.valueAt(0)) {
+                mCheckedItemCount = 0;
+            }
+
+            checkedStateChanged = true;
+        }
+
+        if (checkedStateChanged) {
+            updateOnScreenCheckedViews();
+        }
+
+        return super.performItemClick(view, position, id);
+    }
+
     private boolean performLongPress(final View child,
             final int longPressPosition, final long longPressId) {
         // CHOICE_MODE_MULTIPLE_MODAL takes over long press.
@@ -3758,6 +4049,23 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             ss.position = 0;
         }
 
+        if (mCheckStates != null) {
+            ss.checkState = mCheckStates.clone();
+        }
+
+        if (mCheckedIdStates != null) {
+            final LongSparseArray<Integer> idState = new LongSparseArray<Integer>();
+
+            final int count = mCheckedIdStates.size();
+            for (int i = 0; i < count; i++) {
+                idState.put(mCheckedIdStates.keyAt(i), mCheckedIdStates.valueAt(i));
+            }
+
+            ss.checkIdState = idState;
+        }
+
+        ss.checkedItemCount = mCheckedItemCount;
+
         return ss;
     }
 
@@ -3790,6 +4098,16 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             mSpecificStart = ss.viewStart;
             mSyncMode = SYNC_FIRST_POSITION;
         }
+
+        if (ss.checkState != null) {
+            mCheckStates = ss.checkState;
+        }
+
+        if (ss.checkIdState != null) {
+            mCheckedIdStates = ss.checkIdState;
+        }
+
+        mCheckedItemCount = ss.checkedItemCount;
 
         requestLayout();
     }
@@ -4202,6 +4520,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         int viewStart;
         int position;
         int height;
+        int checkedItemCount;
+        SparseBooleanArray checkState;
+        LongSparseArray<Integer> checkIdState;
 
         /**
          * Constructor called from {@link TwoWayView#onSaveInstanceState()}
@@ -4221,6 +4542,19 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             viewStart = in.readInt();
             position = in.readInt();
             height = in.readInt();
+
+            checkedItemCount = in.readInt();
+            checkState = in.readSparseBooleanArray();
+
+            final int N = in.readInt();
+            if (N > 0) {
+                checkIdState = new LongSparseArray<Integer>();
+                for (int i = 0; i < N; i++) {
+                    final long key = in.readLong();
+                    final int value = in.readInt();
+                    checkIdState.put(key, value);
+                }
+            }
         }
 
         @Override
@@ -4232,6 +4566,17 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             out.writeInt(viewStart);
             out.writeInt(position);
             out.writeInt(height);
+
+            out.writeInt(checkedItemCount);
+            out.writeSparseBooleanArray(checkState);
+
+            final int N = checkIdState != null ? checkIdState.size() : 0;
+            out.writeInt(N);
+
+            for (int i = 0; i < N; i++) {
+                out.writeLong(checkIdState.keyAt(i));
+                out.writeInt(checkIdState.valueAt(i));
+            }
         }
 
         @Override
@@ -4242,7 +4587,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     + " firstId=" + firstId
                     + " viewStart=" + viewStart
                     + " height=" + height
-                    + " position=" + position + "}";
+                    + " position=" + position
+                    + " checkState=" + checkState + "}";
         }
 
         public static final Parcelable.Creator<SavedState> CREATOR
