@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
                     int position, long id) {
                 mClickMessage = "Item long pressed: " + position;
                 refreshToast();
-                return false;
+                return true;
             }
         });
 
