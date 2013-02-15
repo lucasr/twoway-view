@@ -1275,6 +1275,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                             mTouchMode = TOUCH_MODE_REST;
                             updateSelectorState();
                         }
+                    } else if (!mDataChanged && mAdapter.isEnabled(motionPosition)) {
+                        performClick.run();
                     }
                 }
 
