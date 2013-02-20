@@ -2531,6 +2531,17 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     mSelectorRect.setEmpty();
                 }
             }
+
+            mLayoutMode = LAYOUT_NORMAL;
+            mDataChanged = false;
+            mNeedSync = false;
+
+            setNextSelectedPositionInt(mSelectedPosition);
+            if (mItemCount > 0) {
+                checkSelectionChanged();
+            }
+
+            invokeOnItemScrollListener();
         } finally {
             if (!blockLayoutRequests) {
                 mBlockLayoutRequests = false;
