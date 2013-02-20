@@ -983,8 +983,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        Log.d(LOGTAG, "onInterceptTouchEvent");
-
         if (!mIsAttached) {
             return false;
         }
@@ -994,8 +992,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
         switch (action) {
         case MotionEvent.ACTION_DOWN:
-            Log.d(LOGTAG, "  - ACTION_DOWN");
-
             mVelocityTracker.clear();
             mVelocityTracker.addMovement(ev);
 
@@ -1012,10 +1008,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             mTouchRemainderPos = 0;
 
             if (mTouchMode == TOUCH_MODE_FLINGING) {
-                Log.d(LOGTAG, "    - Was flinging");
                 return true;
             } else if (motionPosition >= 0) {
-                Log.d(LOGTAG, "    - Mode is TOUCH_MODE_DOWN now");
                 mMotionPosition = motionPosition;
                 mTouchMode = TOUCH_MODE_DOWN;
             }
@@ -1023,8 +1017,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             break;
 
         case MotionEvent.ACTION_MOVE: {
-            Log.d(LOGTAG, "  - ACTION_MOVE");
-
             if (mTouchMode != TOUCH_MODE_DOWN) {
                 break;
             }
@@ -1073,8 +1065,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             return isClickable() || isLongClickable();
         }
 
-        Log.d(LOGTAG, "onTouchEvent");
-
         if (!mIsAttached) {
             return false;
         }
@@ -1086,7 +1076,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
         switch (action) {
         case MotionEvent.ACTION_DOWN: {
-            Log.d(LOGTAG, "  - ACTION_DOWN");
             if (mDataChanged) {
                 break;
             }
@@ -1109,13 +1098,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             }
 
             if (mTouchMode == TOUCH_MODE_FLINGING) {
-                Log.d(LOGTAG, "    - Was flinging, now dragging");
                 mTouchMode = TOUCH_MODE_DRAGGING;
                 reportScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
                 motionPosition = findMotionRowOrColumn((int) mLastTouchPos);
                 return true;
             } else if (mMotionPosition >= 0 && mAdapter.isEnabled(mMotionPosition)) {
-                Log.d(LOGTAG, "    - Mode is TOUCH_MODE_DOWN now");
                 mTouchMode = TOUCH_MODE_DOWN;
                 triggerCheckForTap();
             }
@@ -1126,7 +1113,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         case MotionEvent.ACTION_MOVE: {
-            Log.d(LOGTAG, "  - ACTION_MOVE");
             final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
             if (index < 0) {
                 Log.e(LOGTAG, "onInterceptTouchEvent could not find pointer with id " +
@@ -1172,8 +1158,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         case MotionEvent.ACTION_CANCEL:
-            Log.d(LOGTAG, "  - ACTION_CANCEL");
-
             cancelCheckForTap();
             mTouchMode = TOUCH_MODE_REST;
             reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
@@ -1191,13 +1175,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             break;
 
         case MotionEvent.ACTION_UP: {
-            Log.d(LOGTAG, "  - ACTION_UP");
-
             switch (mTouchMode) {
             case TOUCH_MODE_DOWN:
             case TOUCH_MODE_TAP:
             case TOUCH_MODE_DONE_WAITING: {
-                Log.d(LOGTAG, "    - Not dragging");
                 final int motionPosition = mMotionPosition;
                 final View child = getChildAt(motionPosition - mFirstPosition);
 
@@ -1305,7 +1286,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 }
 
                 if (Math.abs(velocity) >= mFlingVelocity) {
-                    Log.d(LOGTAG, "    - Flinging");
                     mTouchMode = TOUCH_MODE_FLINGING;
                     reportScrollStateChange(OnScrollListener.SCROLL_STATE_FLING);
 
@@ -1320,7 +1300,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     mLastTouchPos = 0;
                     needsInvalidate = true;
                 } else {
-                    Log.d(LOGTAG, "    - No fling, rest mode");
                     mTouchMode = TOUCH_MODE_REST;
                     reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
                 }
@@ -1386,10 +1365,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     void reportScrollStateChange(int newState) {
-        if (newState == OnScrollListener.SCROLL_STATE_FLING && mLastScrollState == OnScrollListener.SCROLL_STATE_FLING) {
-            Log.d(LOGTAG, "flinging NOT?");
-        }
-
         if (newState == mLastScrollState) {
             return;
         }
@@ -1405,8 +1380,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         if (Math.abs(delta) <= mTouchSlop && !isOverScroll) {
             return false;
         }
-
-        Log.d(LOGTAG, "    - Dragging started");
 
         if (isOverScroll) {
             mTouchMode = TOUCH_MODE_OVERSCROLL;
@@ -1465,7 +1438,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             motionViewPrevStart = (mIsVertical ? motionView.getTop() : motionView.getLeft());
         }
 
-        Log.d(LOGTAG, "    - Tracking motion scroll");
         boolean atEdge = trackMotionScroll(delta);
 
         motionView = this.getChildAt(motionIndex);
@@ -1660,10 +1632,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     boolean trackMotionScroll(int incrementalDelta) {
-        Log.d(LOGTAG, "trackMotionScroll");
-
-        Log.d(LOGTAG, "  - increamentalDelta: " + incrementalDelta);
-
         final int childCount = getChildCount();
         if (childCount == 0) {
             return true;
@@ -1674,9 +1642,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         final View last = getChildAt(childCount - 1);
         final int lastEnd = (mIsVertical ? last.getBottom() : last.getRight());
-
-        Log.d(LOGTAG, "  - firstStart: " + firstStart);
-        Log.d(LOGTAG, "  - lastEnd: " + lastEnd);
 
         final int paddingTop = getPaddingTop();
         final int paddingBottom = getPaddingBottom();
@@ -1689,9 +1654,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int end = (mIsVertical ? getHeight() - paddingBottom :
             getWidth() - paddingRight);
         final int spaceAfter = lastEnd - end;
-
-        Log.d(LOGTAG, "  - spaceBefore: " + spaceBefore);
-        Log.d(LOGTAG, "  - spaceAfter: " + spaceAfter);
 
         final int size;
         if (mIsVertical) {
@@ -1706,19 +1668,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             incrementalDelta = Math.min(size - 1, incrementalDelta);
         }
 
-        Log.d(LOGTAG, "  - increamentalDelta is now: " + incrementalDelta);
-
         final int firstPosition = mFirstPosition;
-
-        Log.d(LOGTAG, "  - firstPosition: " + firstPosition);
 
         final boolean cannotScrollDown = (firstPosition == 0 &&
                 firstStart >= paddingStart && incrementalDelta >= 0);
         final boolean cannotScrollUp = (firstPosition + childCount == mItemCount &&
                 lastEnd <= end && incrementalDelta <= 0);
-
-        Log.d(LOGTAG, "  - cannotScrollDown: " + cannotScrollDown);
-        Log.d(LOGTAG, "  - cannotScrollUp: " + cannotScrollUp);
 
         if (cannotScrollDown || cannotScrollUp) {
             return incrementalDelta != 0;
@@ -1734,10 +1689,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         final boolean down = (incrementalDelta < 0);
         if (down) {
-            Log.d(LOGTAG, "  - scrolling down");
-
             int childrenStart = -incrementalDelta + paddingStart;
-            Log.d(LOGTAG, "    - childrenStart: " + childrenStart);
 
             for (int i = 0; i < childCount; i++) {
                 final View child = getChildAt(i);
@@ -1751,15 +1703,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 mRecycler.addScrapView(child, firstPosition + i);
             }
         } else {
-            Log.d(LOGTAG, "  - scrolling up");
-
             int childrenEnd = end - incrementalDelta;
-            Log.d(LOGTAG, "    - childrenEnd: " + childrenEnd);
 
             for (int i = childCount - 1; i >= 0; i--) {
                 final View child = getChildAt(i);
                 final int childStart = (mIsVertical ? child.getTop() : child.getLeft());
-                Log.d(LOGTAG, "      - childEnd: " + childStart + " >= " + childrenEnd);
 
                 if (childStart <= childrenEnd) {
                     break;
@@ -1770,9 +1718,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 mRecycler.addScrapView(child, firstPosition + i);
             }
         }
-
-        Log.d(LOGTAG, "  - start: " + start);
-        Log.d(LOGTAG, "  - count: " + count);
 
         mBlockLayoutRequests = true;
 
@@ -1874,7 +1819,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 mScroller.abortAnimation();
             }
 
-            Log.d(LOGTAG, "Stopped flinging");
             mTouchMode = TOUCH_MODE_REST;
             reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
         }
@@ -2800,12 +2744,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                                 mSyncPosition = newPos;
 
                                 if (mSyncHeight == getHeight()) {
-                                    Log.d(LOGTAG, " height is the same");
                                     // If we are at the same height as when we saved state, try
                                     // to restore the scroll position too.
                                     mLayoutMode = LAYOUT_SYNC;
                                 } else {
-                                    Log.d(LOGTAG, " height is NOT the same");
                                     // We are not the same height as when the selection was saved, so
                                     // don't try to restore the exact position
                                     mLayoutMode = LAYOUT_SET_SELECTION;
@@ -3297,9 +3239,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             final int childRight = childLeft + w;
             final int childBottom = childTop + h;
 
-            Log.d(LOGTAG, "setupChild childTop: " + childTop);
-            Log.d(LOGTAG, "setupChild childHeight: " + h);
-
             child.layout(childLeft, childTop, childRight, childBottom);
         } else {
             child.offsetLeftAndRight(childLeft - child.getLeft());
@@ -3313,13 +3252,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     void fillGap(boolean down) {
-        Log.d(LOGTAG, "fillGap");
         final int childCount = getChildCount();
 
-        Log.d(LOGTAG, "  - fillGap childCount: " + childCount);
-
         if (down) {
-            Log.d(LOGTAG, "  - fillGap down");
             final int paddingStart = (mIsVertical ? getPaddingTop() : getPaddingLeft());
 
             final int lastEnd;
@@ -3330,11 +3265,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             }
 
             final int offset = (childCount > 0 ? lastEnd + mItemMargin : paddingStart);
-            Log.d(LOGTAG, "  - fillGap offset: " + offset);
             fillAfter(mFirstPosition + childCount, offset);
             correctTooHigh(getChildCount());
         } else {
-            Log.d(LOGTAG, "  - fillGap up");
             final int end;
             final int firstStart;
 
@@ -3347,28 +3280,19 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             }
 
             final int offset = (childCount > 0 ? firstStart - mItemMargin : end);
-            Log.d(LOGTAG, "  - fillGap offset: " + offset);
             fillBefore(mFirstPosition - 1, offset);
             correctTooLow(getChildCount());
         }
     }
 
     private View fillBefore(int pos, int nextOffset) {
-        Log.d(LOGTAG, "fillBefore");
         View selectedView = null;
 
-        Log.d(LOGTAG, "  - fillBefore pos: " + pos);
-        Log.d(LOGTAG, "  - fillBefore nextOffset: " + nextOffset);
-
         final int start = (mIsVertical ? getPaddingTop() : getPaddingLeft());
-
-        Log.d(LOGTAG, "  - fillBefore start: " + start);
 
         while (nextOffset > start && pos >= 0) {
             boolean isSelected = (pos == mSelectedPosition);
             View child = makeAndAddView(pos, nextOffset, false, isSelected);
-
-            Log.d(LOGTAG, "  - fillBefore new child top: " + child.getTop());
 
             if (mIsVertical) {
                 nextOffset = child.getTop() - mItemMargin;
@@ -3381,28 +3305,20 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             }
 
             pos--;
-
-            Log.d(LOGTAG, "  - fillBefore loop pos: " + pos);
-            Log.d(LOGTAG, "  - fillBefore loop nextOffset: " + nextOffset);
         }
 
         mFirstPosition = pos + 1;
-        Log.d(LOGTAG, "  - fillBefore pos later: " + pos);
-        Log.d(LOGTAG, "  - fillBefore mFirstPosition: " + mFirstPosition);
 
         return selectedView;
     }
 
     private View fillAfter(int pos, int nextOffset) {
-        Log.d(LOGTAG, "fillAfter");
         View selectedView = null;
 
         final int end =
                 (mIsVertical ? getHeight() - getPaddingBottom() : getWidth() - getPaddingRight());
 
         while (nextOffset < end && pos < mItemCount) {
-            Log.d(LOGTAG, "  - fillAfter pos: " + pos);
-            Log.d(LOGTAG, "  - fillAfter nextOffset: " + nextOffset);
             boolean selected = (pos == mSelectedPosition);
 
             View child = makeAndAddView(pos, nextOffset, true, selected);
