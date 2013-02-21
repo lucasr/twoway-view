@@ -1364,7 +1364,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         onScrollChanged(0, 0, 0, 0);
     }
 
-    void reportScrollStateChange(int newState) {
+    private void reportScrollStateChange(int newState) {
         if (newState == mLastScrollState) {
             return;
         }
