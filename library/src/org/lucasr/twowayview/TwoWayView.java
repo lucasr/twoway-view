@@ -59,6 +59,24 @@ import android.widget.Checkable;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
 
+/*
+ * Implementation Notes:
+ *
+ * Some terminology:
+ *
+ *     index    - index of the items that are currently visible
+ *     position - index of the items in the cursor
+ *
+ * Given the bi-directional nature of this view, the source code
+ * usually names variables with 'start' to mean 'top' or 'left'; and
+ * 'end' to mean 'bottom' or 'right', depending on the current
+ * orientation of the widget.
+ */
+
+/**
+ * A view that shows items in a vertical or horizontal scrolling list.
+ * The items come from the {@link ListAdapter} associated with this view.
+ */
 public class TwoWayView extends AdapterView<ListAdapter> implements
         ViewTreeObserver.OnTouchModeChangeListener {
     private static final String LOGTAG = "TwoWayView";
@@ -414,14 +432,37 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         mRecycler.mRecyclerListener = l;
     }
 
+    /**
+     * Controls whether the selection highlight drawable should be drawn on top of the item or
+     * behind it.
+     *
+     * @param onTop If true, the selector will be drawn on the item it is highlighting. The default
+     *        is false.
+     *
+     * @attr ref android.R.styleable#AbsListView_drawSelectorOnTop
+     */
     public void setDrawSelectorOnTop(boolean drawSelectorOnTop) {
         mDrawSelectorOnTop = drawSelectorOnTop;
     }
 
+    /**
+     * Set a Drawable that should be used to highlight the currently selected item.
+     *
+     * @param resID A Drawable resource to use as the selection highlight.
+     *
+     * @attr ref android.R.styleable#AbsListView_listSelector
+     */
     public void setSelector(int resID) {
         setSelector(getResources().getDrawable(resID));
     }
 
+    /**
+     * Set a Drawable that should be used to highlight the currently selected item.
+     *
+     * @param selector A Drawable to use as the selection highlight.
+     *
+     * @attr ref android.R.styleable#AbsListView_listSelector
+     */
     public void setSelector(Drawable selector) {
         if (mSelector != null) {
             mSelector.setCallback(null);
@@ -436,20 +477,60 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         updateSelectorState();
     }
 
+    /**
+     * Returns the selector {@link android.graphics.drawable.Drawable} that is used to draw the
+     * selection in the list.
+     *
+     * @return the drawable used to display the selector
+     */
+    public Drawable getSelector() {
+        return mSelector;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getSelectedItemPosition() {
         return mNextSelectedPosition;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long getSelectedItemId() {
         return mNextSelectedRowId;
     }
 
+    /**
+     * Returns the number of items currently selected. This will only be valid
+     * if the choice mode is not {@link #CHOICE_MODE_NONE} (default).
+     *
+     * <p>To determine the specific items that are currently selected, use one of
+     * the <code>getChecked*</code> methods.
+     *
+     * @return The number of items currently selected
+     *
+     * @see #getCheckedItemPosition()
+     * @see #getCheckedItemPositions()
+     * @see #getCheckedItemIds()
+     */
     public int getCheckedItemCount() {
         return mCheckedItemCount;
     }
 
+    /**
+     * Returns the checked state of the specified position. The result is only
+     * valid if the choice mode has been set to {@link #CHOICE_MODE_SINGLE}
+     * or {@link #CHOICE_MODE_MULTIPLE}.
+     *
+     * @param position The item whose checked state to return
+     * @return The item's checked state or <code>false</code> if choice mode
+     *         is invalid
+     *
+     * @see #setChoiceMode(int)
+     */
     public boolean isItemChecked(int position) {
         if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0 && mCheckStates != null) {
             return mCheckStates.get(position);
@@ -458,6 +539,15 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return false;
     }
 
+    /**
+     * Returns the currently checked item. The result is only valid if the choice
+     * mode has been set to {@link #CHOICE_MODE_SINGLE}.
+     *
+     * @return The position of the currently checked item or
+     *         {@link #INVALID_POSITION} if nothing is selected
+     *
+     * @see #setChoiceMode(int)
+     */
     public int getCheckedItemPosition() {
         if (mChoiceMode.compareTo(ChoiceMode.SINGLE) == 0 &&
                 mCheckStates != null && mCheckStates.size() == 1) {
@@ -467,6 +557,15 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return INVALID_POSITION;
     }
 
+    /**
+     * Returns the set of checked items in the list. The result is only valid if
+     * the choice mode has not been set to {@link #CHOICE_MODE_NONE}.
+     *
+     * @return  A SparseBooleanArray which will return true for each call to
+     *          get(int position) where position is a position in the list,
+     *          or <code>null</code> if the choice mode is set to
+     *          {@link #CHOICE_MODE_NONE}.
+     */
     public SparseBooleanArray getCheckedItemPositions() {
         if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0) {
             return mCheckStates;
@@ -475,6 +574,14 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return null;
     }
 
+    /**
+     * Returns the set of checked items ids. The result is only valid if the
+     * choice mode has not been set to {@link #CHOICE_MODE_NONE} and the adapter
+     * has stable IDs. ({@link ListAdapter#hasStableIds()} == {@code true})
+     *
+     * @return A new array which contains the id of each checked item in the
+     *         list.
+     */
     public long[] getCheckedItemIds() {
         if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0 ||
                 mCheckedIdStates == null || mAdapter == null) {
@@ -492,6 +599,14 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return ids;
     }
 
+    /**
+     * Sets the checked state of the specified position. The is only valid if
+     * the choice mode has been set to {@link #CHOICE_MODE_SINGLE} or
+     * {@link #CHOICE_MODE_MULTIPLE}.
+     *
+     * @param position The item whose checked state is to be checked
+     * @param value The new checked state for the item
+     */
     public void setItemChecked(int position, boolean value) {
         if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0) {
             return;
@@ -552,6 +667,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
     }
 
+    /**
+     * Clear any choices previously set
+     */
     public void clearChoices() {
         if (mCheckStates != null) {
             mCheckStates.clear();
@@ -564,10 +682,24 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         mCheckedItemCount = 0;
     }
 
+    /**
+     * @see #setChoiceMode(int)
+     *
+     * @return The current choice mode
+     */
     public ChoiceMode getChoiceMode() {
         return mChoiceMode;
     }
 
+    /**
+     * Defines the choice behavior for the List. By default, Lists do not have any choice behavior
+     * ({@link #CHOICE_MODE_NONE}). By setting the choiceMode to {@link #CHOICE_MODE_SINGLE}, the
+     * List allows up to one item to  be in a chosen state. By setting the choiceMode to
+     * {@link #CHOICE_MODE_MULTIPLE}, the list allows any number of items to be chosen.
+     *
+     * @param choiceMode One of {@link #CHOICE_MODE_NONE}, {@link #CHOICE_MODE_SINGLE}, or
+     * {@link #CHOICE_MODE_MULTIPLE}
+     */
     public void setChoiceMode(ChoiceMode choiceMode) {
         mChoiceMode = choiceMode;
 
@@ -777,7 +909,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     @TargetApi(9)
-    protected boolean overScrollByInternal(int deltaX, int deltaY,
+    private boolean overScrollByInternal(int deltaX, int deltaY,
             int scrollX, int scrollY,
             int scrollRangeX, int scrollRangeY,
             int maxOverScrollX, int maxOverScrollY,
