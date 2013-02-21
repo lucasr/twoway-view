@@ -3376,11 +3376,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             child.offsetLeftAndRight(childLeft - child.getLeft());
             child.offsetTopAndBottom(childTop - child.getTop());
         }
-
-//        lp = (LayoutParams) child.getLayoutParams();
-//        if (recycled && lp.scrappedFromPosition != position) {
-//            child.jumpDrawablesToCurrentState();
-//        }
     }
 
     void fillGap(boolean down) {
