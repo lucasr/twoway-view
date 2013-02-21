@@ -202,7 +202,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private int mLayoutMode;
     private int mTouchMode;
     private int mLastTouchMode;
-    private final VelocityTracker mVelocityTracker;
+    private VelocityTracker mVelocityTracker;
     private final Scroller mScroller;
 
     private EdgeEffectCompat mStartEdge;
@@ -287,7 +287,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         super(context, attrs, defStyle);
 
         mNeedSync = false;
-        mVelocityTracker = VelocityTracker.obtain();
+        mVelocityTracker = null;
 
         mLayoutMode = LAYOUT_NORMAL;
         mTouchMode = TOUCH_MODE_REST;
@@ -1114,17 +1114,24 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     @Override
+    public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+        if (disallowIntercept) {
+            recycleVelocityTracker();
+        }
+
+        super.requestDisallowInterceptTouchEvent(disallowIntercept);
+    }
+
+    @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         if (!mIsAttached) {
             return false;
         }
 
-        mVelocityTracker.addMovement(ev);
-
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
         switch (action) {
         case MotionEvent.ACTION_DOWN:
-            mVelocityTracker.clear();
+            initOrResetVelocityTracker();
             mVelocityTracker.addMovement(ev);
 
             mScroller.abortAnimation();
@@ -1152,6 +1159,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             if (mTouchMode != TOUCH_MODE_DOWN) {
                 break;
             }
+
+            initVelocityTrackerIfNotExists();
+            mVelocityTracker.addMovement(ev);
 
             final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
             if (index < 0) {
@@ -1181,6 +1191,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         case MotionEvent.ACTION_UP:
             mActivePointerId = INVALID_POINTER;
             mTouchMode = TOUCH_MODE_REST;
+            recycleVelocityTracker();
             reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
 
             break;
@@ -1203,6 +1214,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         boolean needsInvalidate = false;
 
+        initVelocityTrackerIfNotExists();
         mVelocityTracker.addMovement(ev);
 
         final int action = ev.getAction() & MotionEventCompat.ACTION_MASK;
@@ -1303,6 +1315,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             if (mStartEdge != null && mEndEdge != null) {
                 needsInvalidate = mStartEdge.onRelease() | mEndEdge.onRelease();
             }
+
+            recycleVelocityTracker();
 
             break;
 
@@ -1447,6 +1461,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 needsInvalidate |= mStartEdge.onRelease() | mEndEdge.onRelease();
             }
 
+            recycleVelocityTracker();
+
             break;
         }
         }
@@ -1481,6 +1497,27 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     invalidate();
                 }
             }
+        }
+    }
+
+    private void initOrResetVelocityTracker() {
+        if (mVelocityTracker == null) {
+            mVelocityTracker = VelocityTracker.obtain();
+        } else {
+            mVelocityTracker.clear();
+        }
+    }
+
+    private void initVelocityTrackerIfNotExists() {
+        if (mVelocityTracker == null) {
+            mVelocityTracker = VelocityTracker.obtain();
+        }
+    }
+
+    private void recycleVelocityTracker() {
+        if (mVelocityTracker != null) {
+            mVelocityTracker.recycle();
+            mVelocityTracker = null;
         }
     }
 
