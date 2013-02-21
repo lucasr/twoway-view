@@ -3782,6 +3782,27 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
     }
 
+    @TargetApi(11)
+    private SparseBooleanArray cloneCheckStates() {
+        if (mCheckStates == null) {
+            return null;
+        }
+
+        SparseBooleanArray checkedStates;
+
+        if (Build.VERSION.SDK_INT >= 11) {
+            checkedStates = mCheckStates.clone();
+        } else {
+            checkedStates = new SparseBooleanArray();
+
+            for (int i = 0; i < mCheckStates.size(); i++) {
+                checkedStates.put(mCheckStates.keyAt(i), mCheckStates.valueAt(i));
+            }
+        }
+
+        return checkedStates;
+    }
+
     private int findSyncPosition() {
         int itemCount = mItemCount;
 
@@ -4143,7 +4164,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         if (mCheckStates != null) {
-            ss.checkState = mCheckStates.clone();
+            ss.checkState = cloneCheckStates();
         }
 
         if (mCheckedIdStates != null) {
