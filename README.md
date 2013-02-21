@@ -18,7 +18,7 @@ A lot more to come, stay tuned.
 How do I use it?
 ================
 
-1. Add TwoWayView's jar as a dependency to your project.
+1. Import TwoWayView as a library to your project.
 
 2. Add a `TwoWayView` to your layout.
 
