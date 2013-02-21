@@ -138,6 +138,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private final RecycleBin mRecycler;
     private AdapterDataSetObserver mDataSetObserver;
 
+    private boolean mItemsCanFocus;
+
     final boolean[] mIsScrap = new boolean[1];
 
     private boolean mDataChanged;
@@ -158,6 +160,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private float mTouchRemainderPos;
     private int mActivePointerId;
 
+    private final Rect mTempRect;
+
     private Rect mTouchFrame;
     private int mMotionPosition;
     private CheckForTap mPendingCheckForTap;
@@ -175,6 +179,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     private int mOverScroll;
     private final int mOverscrollDistance;
+
+    private boolean mDesiredFocusableState;
+    private boolean mDesiredFocusableInTouchModeState;
 
     private SelectionNotifier mSelectionNotifier;
 
@@ -314,6 +321,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         mIsVertical = true;
 
+        mItemsCanFocus = false;
+
+        mTempRect = new Rect();
+
         mSelectorPosition = INVALID_POSITION;
 
         mSelectorRect = new Rect();
@@ -407,6 +418,27 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     public int getItemMargin() {
         return mItemMargin;
+    }
+
+    /**
+     * Indicates that the views created by the ListAdapter can contain focusable
+     * items.
+     *
+     * @param itemsCanFocus true if items can get focus, false otherwise
+     */
+    public void setItemsCanFocus(boolean itemsCanFocus) {
+        mItemsCanFocus = itemsCanFocus;
+        if (!itemsCanFocus) {
+            setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        }
+    }
+
+    /**
+     * @return Whether the views created by the ListAdapter can contain focusable
+     * items.
+     */
+    public boolean getItemsCanFocus() {
+        return mItemsCanFocus;
     }
 
     /**
@@ -776,10 +808,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             checkSelectionChanged();
         }
 
-        if (mEmptyView != null) {
-            updateEmptyStatus();
-        }
-
+        checkFocus();
         requestLayout();
     }
 
@@ -816,6 +845,83 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         // Child not found!
         return INVALID_POSITION;
+    }
+
+    @Override
+    public void getFocusedRect(Rect r) {
+        View view = getSelectedView();
+
+        if (view != null && view.getParent() == this) {
+            // The focused rectangle of the selected view offset into the
+            // coordinate space of this view.
+            view.getFocusedRect(r);
+            offsetDescendantRectToMyCoords(view, r);
+        } else {
+            super.getFocusedRect(r);
+        }
+    }
+
+    @Override
+    protected void onFocusChanged(boolean gainFocus, int direction, Rect previouslyFocusedRect) {
+        super.onFocusChanged(gainFocus, direction, previouslyFocusedRect);
+
+        if (gainFocus && mSelectedPosition < 0 && !isInTouchMode()) {
+            if (!mIsAttached && mAdapter != null) {
+                // Data may have changed while we were detached and it's valid
+                // to change focus while detached. Refresh so we don't die.
+                mDataChanged = true;
+                mOldItemCount = mItemCount;
+                mItemCount = mAdapter.getCount();
+            }
+
+            resurrectSelection();
+        }
+
+        final ListAdapter adapter = mAdapter;
+        int closetChildIndex = INVALID_POSITION;
+        int closestChildStart = 0;
+
+        if (adapter != null && gainFocus && previouslyFocusedRect != null) {
+            previouslyFocusedRect.offset(getScrollX(), getScrollY());
+
+            // Don't cache the result of getChildCount or mFirstPosition here,
+            // it could change in layoutChildren.
+            if (adapter.getCount() < getChildCount() + mFirstPosition) {
+                mLayoutMode = LAYOUT_NORMAL;
+                layoutChildren();
+            }
+
+            // Figure out which item should be selected based on previously
+            // focused rect.
+            Rect otherRect = mTempRect;
+            int minDistance = Integer.MAX_VALUE;
+            final int childCount = getChildCount();
+            final int firstPosition = mFirstPosition;
+
+            for (int i = 0; i < childCount; i++) {
+                // Only consider selectable views
+                if (!adapter.isEnabled(firstPosition + i)) {
+                    continue;
+                }
+
+                View other = getChildAt(i);
+                other.getDrawingRect(otherRect);
+                offsetDescendantRectToMyCoords(other, otherRect);
+                int distance = getDistance(previouslyFocusedRect, otherRect, direction);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closetChildIndex = i;
+                    closestChildStart = (mIsVertical ? other.getTop() : other.getLeft());
+                }
+            }
+        }
+
+        if (closetChildIndex >= 0) {
+            setSelectionFromOffset(closetChildIndex + mFirstPosition, closestChildStart);
+        } else {
+            requestLayout();
+        }
     }
 
     @Override
@@ -1710,7 +1816,70 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
     }
 
-    int findMotionRowOrColumn(int motionPos) {
+    /**
+     * What is the distance between the source and destination rectangles given the direction of
+     * focus navigation between them? The direction basically helps figure out more quickly what is
+     * self evident by the relationship between the rects...
+     *
+     * @param source the source rectangle
+     * @param dest the destination rectangle
+     * @param direction the direction
+     * @return the distance between the rectangles
+     */
+    private static int getDistance(Rect source, Rect dest, int direction) {
+        int sX, sY; // source x, y
+        int dX, dY; // dest x, y
+
+        switch (direction) {
+        case View.FOCUS_RIGHT:
+            sX = source.right;
+            sY = source.top + source.height() / 2;
+            dX = dest.left;
+            dY = dest.top + dest.height() / 2;
+            break;
+
+        case View.FOCUS_DOWN:
+            sX = source.left + source.width() / 2;
+            sY = source.bottom;
+            dX = dest.left + dest.width() / 2;
+            dY = dest.top;
+            break;
+
+        case View.FOCUS_LEFT:
+            sX = source.left;
+            sY = source.top + source.height() / 2;
+            dX = dest.right;
+            dY = dest.top + dest.height() / 2;
+            break;
+
+        case View.FOCUS_UP:
+            sX = source.left + source.width() / 2;
+            sY = source.top;
+            dX = dest.left + dest.width() / 2;
+            dY = dest.bottom;
+            break;
+
+        case View.FOCUS_FORWARD:
+        case View.FOCUS_BACKWARD:
+            sX = source.right + source.width() / 2;
+            sY = source.top + source.height() / 2;
+            dX = dest.left + dest.width() / 2;
+            dY = dest.top + dest.height() / 2;
+            break;
+
+        default:
+            throw new IllegalArgumentException("direction must be one of "
+                    + "{FOCUS_UP, FOCUS_DOWN, FOCUS_LEFT, FOCUS_RIGHT, "
+                    + "FOCUS_FORWARD, FOCUS_BACKWARD}.");
+        }
+
+        int deltaX = dX - sX;
+        int deltaY = dY - sY;
+
+        return deltaY * deltaY + deltaX * deltaX;
+    }
+
+    private int findMotionRowOrColumn(int motionPos) {
         int childCount = getChildCount();
         if (childCount == 0) {
             return INVALID_POSITION;
@@ -2502,6 +2671,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             int index = 0;
             int delta = 0;
 
+            View focusLayoutRestoreView = null;
+
             View selected = null;
             View oldSelected = null;
             View newSelected = null;
@@ -2561,6 +2732,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
             setSelectedPositionInt(mNextSelectedPosition);
 
+            // Reset the focus restoration
+            View focusLayoutRestoreDirectChild = null;
+
             // Pull all children into the RecycleBin.
             // These views will be reused if possible
             final int firstPosition = mFirstPosition;
@@ -2572,6 +2746,28 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 }
             } else {
                 recycleBin.fillActiveViews(childCount, firstPosition);
+            }
+
+            // Take focus back to us temporarily to avoid the eventual
+            // call to clear focus when removing the focused child below
+            // from messing things up when ViewAncestor assigns focus back
+            // to someone else.
+            final View focusedChild = getFocusedChild();
+            if (focusedChild != null) {
+                // We can remember the focused view to restore after relayout if the
+                // data hasn't changed, or if the focused position is a header or footer.
+                if (!dataChanged) {
+                    focusLayoutRestoreDirectChild = focusedChild;
+
+                    // Remember the specific view that had focus
+                    focusLayoutRestoreView = findFocus();
+                    if (focusLayoutRestoreView != null) {
+                        // Tell it we are going to mess with it
+                        focusLayoutRestoreView.onStartTemporaryDetach();
+                    }
+                }
+
+                requestFocus();
             }
 
             detachAllViewsFromParent();
@@ -2643,7 +2839,29 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             recycleBin.scrapActiveViews();
 
             if (selected != null) {
-                positionSelector(INVALID_POSITION, selected);
+                if (mItemsCanFocus && hasFocus() && !selected.hasFocus()) {
+                    final boolean focusWasTaken = (selected == focusLayoutRestoreDirectChild &&
+                            focusLayoutRestoreView != null &&
+                            focusLayoutRestoreView.requestFocus()) || selected.requestFocus();
+
+                    if (!focusWasTaken) {
+                        // Selected item didn't take focus, fine, but still want
+                        // to make sure something else outside of the selected view
+                        // has focus
+                        final View focused = getFocusedChild();
+                        if (focused != null) {
+                            focused.clearFocus();
+                        }
+
+                        positionSelector(INVALID_POSITION, selected);
+                    } else {
+                        selected.setSelected(false);
+                        mSelectorRect.setEmpty();
+                    }
+                } else {
+                    positionSelector(INVALID_POSITION, selected);
+                }
+
                 mSelectedStart = (mIsVertical ? selected.getTop() : selected.getLeft());
             } else {
                 if (mTouchMode > TOUCH_MODE_DOWN && mTouchMode < TOUCH_MODE_DRAGGING) {
@@ -2656,6 +2874,19 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     mSelectedStart = 0;
                     mSelectorRect.setEmpty();
                 }
+
+                // Even if there is not selected position, we may need to restore
+                // focus (i.e. something focusable in touch mode)
+                if (hasFocus() && focusLayoutRestoreView != null) {
+                    focusLayoutRestoreView.requestFocus();
+                }
+            }
+
+            // Tell focus view we are done mucking with it, if it is still in
+            // our view hierarchy.
+            if (focusLayoutRestoreView != null
+                    && focusLayoutRestoreView.getWindowToken() != null) {
+                focusLayoutRestoreView.onFinishTemporaryDetach();
             }
 
             mLayoutMode = LAYOUT_NORMAL;
@@ -4624,8 +4855,50 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         updateEmptyStatus();
     }
 
+    @Override
+    public void setFocusable(boolean focusable) {
+        final ListAdapter adapter = getAdapter();
+        final boolean empty = (adapter == null || adapter.getCount() == 0);
+
+        mDesiredFocusableState = focusable;
+        if (!focusable) {
+            mDesiredFocusableInTouchModeState = false;
+        }
+
+        super.setFocusable(focusable && !empty);
+    }
+
+    @Override
+    public void setFocusableInTouchMode(boolean focusable) {
+        final ListAdapter adapter = getAdapter();
+        final boolean empty = (adapter == null || adapter.getCount() == 0);
+
+        mDesiredFocusableInTouchModeState = focusable;
+        if (focusable) {
+            mDesiredFocusableState = true;
+        }
+
+        super.setFocusableInTouchMode(focusable && !empty);
+    }
+
+    private void checkFocus() {
+        final ListAdapter adapter = getAdapter();
+        final boolean focusable = (adapter != null && adapter.getCount() > 0);
+
+        // The order in which we set focusable in touch mode/focusable may matter
+        // for the client, see View.setFocusableInTouchMode() comments for more
+        // details
+        super.setFocusableInTouchMode(focusable && mDesiredFocusableInTouchModeState);
+        super.setFocusable(focusable && mDesiredFocusableState);
+
+        if (mEmptyView != null) {
+            updateEmptyStatus();
+        }
+    }
+
     private void updateEmptyStatus() {
         final boolean isEmpty = (mAdapter == null || mAdapter.isEmpty());
+
         if (isEmpty) {
             if (mEmptyView != null) {
                 mEmptyView.setVisibility(View.VISIBLE);
@@ -4670,10 +4943,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 rememberSyncState();
             }
 
-            if (mEmptyView != null) {
-                updateEmptyStatus();
-            }
-
+            checkFocus();
             requestLayout();
         }
 
@@ -4699,10 +4969,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
             mNeedSync = false;
 
-            if (mEmptyView != null) {
-                updateEmptyStatus();
-            }
-
+            checkFocus();
             requestLayout();
         }
     }
