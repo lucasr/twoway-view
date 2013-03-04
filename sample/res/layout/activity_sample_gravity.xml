@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
    Copyright (C) 2012 Lucas Rocha
+   Copyright (C) 2013 Evelio Tarazona Cáceres
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -23,4 +24,5 @@
                                   android:layout_width="fill_parent"
                                   android:layout_height="fill_parent"
                                   android:drawSelectorOnTop="false"
-                                  tools:context=".MainActivity" />
+                                  app:fillOrientation="false"
+                                  tools:context=".GravitySampleActivity" />

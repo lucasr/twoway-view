@@ -51,6 +51,7 @@ import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.FocusFinder;
+import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -140,6 +141,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private ListAdapter mAdapter;
 
     private boolean mIsVertical;
+    private boolean mFillOrientation;
 
     private int mItemMargin;
 
@@ -341,6 +343,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         mScroller = new Scroller(context);
 
         mIsVertical = true;
+        mFillOrientation = true;
 
         mItemsCanFocus = false;
 
@@ -406,6 +409,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             setChoiceMode(ChoiceMode.values()[choiceMode]);
         }
 
+        setFillOrientation(a.getBoolean(R.styleable.TwoWayView_fillOrientation, true));
+
         a.recycle();
 
         updateScrollbarsDirection();
@@ -428,6 +433,14 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     public Orientation getOrientation() {
         return (mIsVertical ? Orientation.VERTICAL : Orientation.HORIZONTAL);
+    }
+
+    public boolean isFillOrientation() {
+        return mFillOrientation;
+    }
+
+    public void setFillOrientation(boolean fillOrientation) {
+        mFillOrientation = fillOrientation;
     }
 
     public void setItemMargin(int itemMargin) {
@@ -4485,7 +4498,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private int getChildWidthMeasureSpec(LayoutParams lp) {
         if (!mIsVertical && lp.width == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-        } else if (mIsVertical) {
+        } else if (mFillOrientation && mIsVertical) {
             final int maxWidth = getWidth() - getPaddingLeft() - getPaddingRight();
             return MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.EXACTLY);
         } else {
@@ -4496,7 +4509,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private int getChildHeightMeasureSpec(LayoutParams lp) {
         if (mIsVertical && lp.height == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-        } else if (!mIsVertical) {
+        } else if (mFillOrientation && !mIsVertical) {
             final int maxHeight = getHeight() - getPaddingTop() - getPaddingBottom();
             return MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.EXACTLY);
         } else {
@@ -4818,8 +4831,43 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int w = child.getMeasuredWidth();
         final int h = child.getMeasuredHeight();
 
-        final int childTop = (mIsVertical && !flow ? top - h : top);
-        final int childLeft = (!mIsVertical && !flow ? left - w : left);
+        int gravityTop = top;
+        int gravityLeft = left;
+        if (!mFillOrientation) { // Only perform gravity math if required
+            if (mIsVertical) {
+                final int width = getWidth();
+                switch (lp.gravity & Gravity.HORIZONTAL_GRAVITY_MASK) {
+                    case Gravity.CENTER_HORIZONTAL:
+                        gravityLeft = left + (width - w) / 2;
+                        break;
+                    case Gravity.RIGHT:
+                        gravityLeft = width - getPaddingRight() - w;
+                        break;
+                    case Gravity.LEFT:
+                    default:
+                        gravityLeft = left;
+                        break;
+                }
+            } else {
+                final int height = getHeight();
+                switch (lp.gravity & Gravity.VERTICAL_GRAVITY_MASK) {
+                    case Gravity.CENTER_VERTICAL:
+                        gravityTop = top + (height - h) / 2;
+                        break;
+                    case Gravity.BOTTOM:
+                        gravityTop = height - getPaddingBottom() - h;
+                        break;
+                    case Gravity.TOP:
+                    default:
+                        gravityTop = top;
+                        break;
+                }
+            }
+        }
+
+        final int childTop = (mIsVertical && !flow ? top - h : gravityTop);
+        final int childLeft = (!mIsVertical && !flow ? left - w : gravityLeft);
+
 
         if (needToMeasure) {
             final int childRight = childLeft + w;
@@ -5658,6 +5706,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     public static class LayoutParams extends ViewGroup.LayoutParams {
+        private static final int[] LAYOUT_ATTRS = new int[]{
+                android.R.attr.layout_gravity
+        };
         /**
          * Type of this view as reported by the adapter
          */
@@ -5684,6 +5735,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
          * parent.
          */
         boolean forceAdd;
+
+        public int gravity = -1;
 
         public LayoutParams(int width, int height) {
             super(width, height);
@@ -5719,6 +5772,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                         "Falling back to WRAP_CONTENT");
                 this.height = WRAP_CONTENT;
             }
+
+            TypedArray a = c.obtainStyledAttributes(attrs, LAYOUT_ATTRS);
+            gravity = a.getInt(0, -1);
+            a.recycle();
         }
 
         public LayoutParams(ViewGroup.LayoutParams other) {

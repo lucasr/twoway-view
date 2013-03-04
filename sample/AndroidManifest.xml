@@ -35,6 +35,23 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".BasicSampleActivity"
+                android:label="@string/basic" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="org.lucasr.twowayview.sample.SAMPLE"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".GravitySampleActivity"
+                android:label="@string/no_fill_and_gravity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="org.lucasr.twowayview.sample.SAMPLE"/>
+            </intent-filter>
+        </activity>
+
+
     </application>
 
 </manifest>

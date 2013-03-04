@@ -25,9 +25,11 @@ import android.widget.TextView;
 
 public class SimpleListAdapter extends BaseAdapter {
 	private final Context mContext;
+    private final int mItemLayoutId;
 
-	public SimpleListAdapter(Context context) {
+    public SimpleListAdapter(Context context, int itemLayoutId) {
 		mContext = context;
+        mItemLayoutId = itemLayoutId;
 	}
 
 	@Override
@@ -50,10 +52,15 @@ public class SimpleListAdapter extends BaseAdapter {
 	    ViewHolder holder = null;
 
 		if (convertView == null) {
-			convertView = LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
+			convertView = LayoutInflater.from(mContext).inflate(mItemLayoutId, parent, false);
+
+            View titleView = convertView.findViewById(R.id.title);
+            if (!(titleView instanceof TextView)) {
+                throw new IllegalArgumentException("You must define a TextView with id = title in your item layout");
+            }
 
 			holder = new ViewHolder();
-			holder.title = (TextView) convertView.findViewById(R.id.title);
+			holder.title = (TextView) titleView;
 
 			convertView.setTag(holder);
 		} else {
