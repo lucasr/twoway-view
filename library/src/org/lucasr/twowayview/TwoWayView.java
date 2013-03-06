@@ -3653,7 +3653,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private void correctTooHigh(int childCount) {
         // First see if the last item is visible. If it is not, it is OK for the
         // top of the list to be pushed up.
-        int lastPosition = mFirstPosition + childCount - 1;
+        final int lastPosition = mFirstPosition + childCount - 1;
         if (lastPosition != mItemCount - 1 || childCount == 0) {
             return;
         }
