@@ -3503,9 +3503,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return selectedView;
     }
 
-    private View fillSpecific(int position, int top) {
+    private View fillSpecific(int position, int offset) {
         final boolean tempIsSelected = (position == mSelectedPosition);
-        View temp = makeAndAddView(position, top, true, tempIsSelected);
+        View temp = makeAndAddView(position, offset, true, tempIsSelected);
 
         // Possibly changed again in fillBefore if we add rows above this one.
         mFirstPosition = position;
