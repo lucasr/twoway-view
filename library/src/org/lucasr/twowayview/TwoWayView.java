@@ -333,7 +333,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         mCheckStates = null;
 
         mRecycler = new RecycleBin();
-        mDataSetObserver = new AdapterDataSetObserver();
+        mDataSetObserver = null;
 
         mAreAllItemsSelectable = true;
 
@@ -721,7 +721,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     @Override
     public void setAdapter(ListAdapter adapter) {
-        if (mAdapter != null) {
+        if (mAdapter != null && mDataSetObserver != null) {
             mAdapter.unregisterDataSetObserver(mDataSetObserver);
         }
 
@@ -746,7 +746,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             mOldItemCount = mItemCount;
             mItemCount = adapter.getCount();
 
+            mDataSetObserver = new AdapterDataSetObserver();
             mAdapter.registerDataSetObserver(mDataSetObserver);
+
             mRecycler.setViewTypeCount(adapter.getViewTypeCount());
 
             mHasStableIds = adapter.hasStableIds();
