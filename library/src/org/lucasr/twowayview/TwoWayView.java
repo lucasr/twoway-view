@@ -4470,7 +4470,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             if (mViewTypeCount == 1) {
                 mCurrentScrap.add(scrap);
             } else {
-                mScrapViews[lp.viewType].add(scrap);
+                if (lp.viewType != ITEM_VIEW_TYPE_IGNORE)
+                    mScrapViews[lp.viewType].add(scrap);
             }
 
             if (mRecyclerListener != null) {
