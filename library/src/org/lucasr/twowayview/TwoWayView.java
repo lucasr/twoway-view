@@ -4622,7 +4622,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     private void updateEmptyStatus() {
-        boolean isEmpty = mAdapter == null || mAdapter.isEmpty();
+        final boolean isEmpty = mAdapter == null || mAdapter.isEmpty();
         if (isEmpty) {
             if (mEmptyView != null) {
                 mEmptyView.setVisibility(View.VISIBLE);
