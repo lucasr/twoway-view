@@ -776,7 +776,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             checkSelectionChanged();
         }
 
-        updateEmptyStatus();
+        if (mEmptyView != null) {
+            updateEmptyStatus();
+        }
+
         requestLayout();
     }
 
@@ -4666,7 +4669,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             } else {
                 rememberSyncState();
             }
-            updateEmptyStatus();
+
+            if (mEmptyView != null) {
+                updateEmptyStatus();
+            }
+
             requestLayout();
         }
 
@@ -4692,7 +4699,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
             mNeedSync = false;
 
-            updateEmptyStatus();
+            if (mEmptyView != null) {
+                updateEmptyStatus();
+            }
+
             requestLayout();
         }
     }
