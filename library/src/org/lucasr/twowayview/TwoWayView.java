@@ -4640,8 +4640,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 this.onLayout(false, getLeft(), getTop(), getRight(), getBottom());
             }
         } else {
-            if (mEmptyView != null)
+            if (mEmptyView != null) {
                 mEmptyView.setVisibility(View.GONE);
+            }
+
             setVisibility(View.VISIBLE);
         }
     }
