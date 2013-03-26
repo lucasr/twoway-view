@@ -33,14 +33,18 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.support.v4.util.LongSparseArray;
 import android.support.v4.util.SparseArrayCompat;
+import android.support.v4.view.AccessibilityDelegateCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.VelocityTrackerCompat;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
+import android.support.v4.view.accessibility.AccessibilityNodeProviderCompat;
 import android.support.v4.widget.EdgeEffectCompat;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -54,6 +58,8 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.ViewTreeObserver;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.AdapterView;
 import android.widget.Checkable;
 import android.widget.ListAdapter;
@@ -219,6 +225,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private int mLastScrollState;
 
     private View mEmptyView;
+
+    private ListItemAccessibilityDelegate mAccessibilityDelegate;
+
+    private int mLastAccessibilityScrollEventFromIndex;
+    private int mLastAccessibilityScrollEventToIndex;
 
     public interface OnScrollListener {
 
@@ -820,6 +831,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     @Override
     public int getLastVisiblePosition() {
         return mFirstPosition + getChildCount() - 1;
+    }
+
+    @Override
+    public int getCount() {
+        return mItemCount;
     }
 
     @Override
@@ -1619,6 +1635,95 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
     }
 
+    @Override
+    public void sendAccessibilityEvent(int eventType) {
+        // Since this class calls onScrollChanged even if the mFirstPosition and the
+        // child count have not changed we will avoid sending duplicate accessibility
+        // events.
+        if (eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+            final int firstVisiblePosition = getFirstVisiblePosition();
+            final int lastVisiblePosition = getLastVisiblePosition();
+
+            if (mLastAccessibilityScrollEventFromIndex == firstVisiblePosition
+                    && mLastAccessibilityScrollEventToIndex == lastVisiblePosition) {
+                return;
+            } else {
+                mLastAccessibilityScrollEventFromIndex = firstVisiblePosition;
+                mLastAccessibilityScrollEventToIndex = lastVisiblePosition;
+            }
+        }
+
+        super.sendAccessibilityEvent(eventType);
+    }
+
+    @Override
+    @TargetApi(14)
+    public void onInitializeAccessibilityEvent(AccessibilityEvent event) {
+        super.onInitializeAccessibilityEvent(event);
+        event.setClassName(TwoWayView.class.getName());
+    }
+
+    @Override
+    @TargetApi(14)
+    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        info.setClassName(TwoWayView.class.getName());
+
+        AccessibilityNodeInfoCompat infoCompat = new AccessibilityNodeInfoCompat(info);
+
+        if (isEnabled()) {
+            if (getFirstVisiblePosition() > 0) {
+                infoCompat.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD);
+            }
+
+            if (getLastVisiblePosition() < getCount() - 1) {
+                infoCompat.addAction(AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD);
+            }
+        }
+    }
+
+    @Override
+    @TargetApi(16)
+    public boolean performAccessibilityAction(int action, Bundle arguments) {
+        if (super.performAccessibilityAction(action, arguments)) {
+            return true;
+        }
+
+        switch (action) {
+        case AccessibilityNodeInfo.ACTION_SCROLL_FORWARD:
+            if (isEnabled() && getLastVisiblePosition() < getCount() - 1) {
+                final int viewportSize;
+                if (mIsVertical) {
+                    viewportSize = getHeight() - getPaddingTop() - getPaddingBottom();
+                } else {
+                    viewportSize = getWidth() - getPaddingLeft() - getPaddingRight();
+                }
+
+                // TODO: Use some form of smooth scroll instead
+                trackMotionScroll(viewportSize);
+                return true;
+            }
+            return false;
+
+        case AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD:
+            if (isEnabled() && mFirstPosition > 0) {
+                final int viewportSize;
+                if (mIsVertical) {
+                    viewportSize = getHeight() - getPaddingTop() - getPaddingBottom();
+                } else {
+                    viewportSize = getWidth() - getPaddingLeft() - getPaddingRight();
+                }
+
+                // TODO: Use some form of smooth scroll instead
+                trackMotionScroll(-viewportSize);
+                return true;
+            }
+            return false;
+        }
+
+        return false;
+    }
+
     private void initOrResetVelocityTracker() {
         if (mVelocityTracker == null) {
             mVelocityTracker = VelocityTracker.obtain();
@@ -2361,6 +2466,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             post(mSelectionNotifier);
         } else {
             fireOnSelected();
+            performAccessibilityActionsOnSelected();
         }
     }
 
@@ -2377,6 +2483,14 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     mAdapter.getItemId(selection));
         } else {
             listener.onNothingSelected(this);
+        }
+    }
+
+    private void performAccessibilityActionsOnSelected() {
+        final int position = getSelectedItemPosition();
+        if (position >= 0) {
+            // We fire selection events here not in View
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED);
         }
     }
 
@@ -2769,6 +2883,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
                 requestFocus();
             }
+
+            // FIXME: We need a way to save current accessibility focus here
+            // so that it can be restored after we re-attach the children on each
+            // layout round.
 
             detachAllViewsFromParent();
 
@@ -3228,7 +3346,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         mSelectorPosition = INVALID_POSITION;
 
         checkSelectionChanged();
-
     }
 
     private int reconcileSelectedPosition() {
@@ -4131,11 +4248,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return INVALID_POSITION;
     }
 
-    View obtainView(int position, boolean[] isScrap) {
+    @TargetApi(16)
+    private View obtainView(int position, boolean[] isScrap) {
         isScrap[0] = false;
-        View scrapView;
 
-        scrapView = mRecycler.getTransientStateView(position);
+        View scrapView = mRecycler.getTransientStateView(position);
         if (scrapView != null) {
             return scrapView;
         }
@@ -4155,6 +4272,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             child = mAdapter.getView(position, null, this);
         }
 
+        if (ViewCompat.getImportantForAccessibility(child) == ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_AUTO) {
+            ViewCompat.setImportantForAccessibility(child, ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        }
+
         if (mHasStableIds) {
             LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
@@ -4168,6 +4289,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
             child.setLayoutParams(lp);
         }
+
+        if (mAccessibilityDelegate == null) {
+            mAccessibilityDelegate = new ListItemAccessibilityDelegate();
+        }
+
+        ViewCompat.setAccessibilityDelegate(child, mAccessibilityDelegate);
 
         return child;
     }
@@ -4705,6 +4832,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             return null;
         }
 
+        @TargetApi(14)
         void addScrapView(View scrap, int position) {
             LayoutParams lp = (LayoutParams) scrap.getLayoutParams();
             if (lp == null) {
@@ -4735,11 +4863,19 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 mScrapViews[viewType].add(scrap);
             }
 
+            // FIXME: Unfortunately, ViewCompat.setAccessibilityDelegate() doesn't accept
+            // null delegates.
+            if (Build.VERSION.SDK_INT >= 14) {
+                scrap.setAccessibilityDelegate(null);
+            }
+
+
             if (mRecyclerListener != null) {
                 mRecyclerListener.onMovedToScrapHeap(scrap);
             }
         }
 
+        @TargetApi(14)
         void scrapActiveViews() {
             final View[] activeViews = mActiveViews;
             final boolean multipleScraps = (mViewTypeCount > 1);
@@ -4776,6 +4912,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
                     lp.scrappedFromPosition = mFirstActivePosition + i;
                     scrapViews.add(victim);
+
+                    // FIXME: Unfortunately, ViewCompat.setAccessibilityDelegate() doesn't accept
+                    // null delegates.
+                    if (Build.VERSION.SDK_INT >= 14) {
+                        victim.setAccessibilityDelegate(null);
+                    }
 
                     if (mRecyclerListener != null) {
                         mRecyclerListener.onMovedToScrapHeap(victim);
@@ -5077,6 +5219,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 }
             } else {
                 fireOnSelected();
+                performAccessibilityActionsOnSelected();
             }
         }
     }
@@ -5190,6 +5333,95 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     mTouchMode = TOUCH_MODE_DONE_WAITING;
                 }
             }
+        }
+    }
+
+    class ListItemAccessibilityDelegate extends AccessibilityDelegateCompat {
+        @Override
+        public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfoCompat info) {
+            super.onInitializeAccessibilityNodeInfo(host, info);
+
+            final int position = getPositionForView(host);
+            final ListAdapter adapter = getAdapter();
+
+            // Cannot perform actions on invalid items
+            if (position == INVALID_POSITION || adapter == null) {
+                return;
+            }
+
+            // Cannot perform actions on disabled items
+            if (!isEnabled() || !adapter.isEnabled(position)) {
+                return;
+            }
+
+            if (position == getSelectedItemPosition()) {
+                info.setSelected(true);
+                info.addAction(AccessibilityNodeInfoCompat.ACTION_CLEAR_SELECTION);
+            } else {
+                info.addAction(AccessibilityNodeInfoCompat.ACTION_SELECT);
+            }
+
+            if (isClickable()) {
+                info.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK);
+                info.setClickable(true);
+            }
+
+            if (isLongClickable()) {
+                info.addAction(AccessibilityNodeInfoCompat.ACTION_LONG_CLICK);
+                info.setLongClickable(true);
+            }
+        }
+
+        @Override
+        public boolean performAccessibilityAction(View host, int action, Bundle arguments) {
+            if (super.performAccessibilityAction(host, action, arguments)) {
+                return true;
+            }
+
+            final int position = getPositionForView(host);
+            final ListAdapter adapter = getAdapter();
+
+            // Cannot perform actions on invalid items
+            if (position == INVALID_POSITION || adapter == null) {
+                return false;
+            }
+
+            // Cannot perform actions on disabled items
+            if (!isEnabled() || !adapter.isEnabled(position)) {
+                return false;
+            }
+
+            final long id = getItemIdAtPosition(position);
+
+            switch (action) {
+            case AccessibilityNodeInfoCompat.ACTION_CLEAR_SELECTION:
+                if (getSelectedItemPosition() == position) {
+                    setSelection(INVALID_POSITION);
+                    return true;
+                }
+                return false;
+
+            case AccessibilityNodeInfoCompat.ACTION_SELECT:
+                if (getSelectedItemPosition() != position) {
+                    setSelection(position);
+                    return true;
+                }
+                return false;
+
+            case AccessibilityNodeInfoCompat.ACTION_CLICK:
+                if (isClickable()) {
+                    return performItemClick(host, position, id);
+                }
+                return false;
+
+            case AccessibilityNodeInfoCompat.ACTION_LONG_CLICK:
+                if (isLongClickable()) {
+                    return performLongPress(host, position, id);
+                }
+                return false;
+            }
+
+            return false;
         }
     }
 }
