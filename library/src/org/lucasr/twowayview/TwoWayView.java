@@ -2077,20 +2077,26 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             if (direction == View.FOCUS_DOWN || direction == View.FOCUS_RIGHT) {
                 final int start = (mIsVertical ? getPaddingTop() : getPaddingLeft());
 
-                if (selectedView != null && selectedView.getTop() > start) {
-                    searchPoint = (mIsVertical ? selectedView.getTop() : selectedView.getLeft());
+                final int selectedStart;
+                if (selectedView != null) {
+                    selectedStart = (mIsVertical ? selectedView.getTop() : selectedView.getLeft());
                 } else {
-                    searchPoint = start;
+                    selectedStart = start;
                 }
+
+                searchPoint = Math.max(selectedStart, start);
             } else {
                 final int end = (mIsVertical ? getHeight() - getPaddingBottom() :
                     getWidth() - getPaddingRight());
 
-                if (selectedView != null && selectedView.getBottom() < end) {
-                    searchPoint = (mIsVertical ? selectedView.getBottom() : selectedView.getRight());
+                final int selectedEnd;
+                if (selectedView != null) {
+                    selectedEnd = (mIsVertical ? selectedView.getBottom() : selectedView.getRight());
                 } else {
-                    searchPoint = end;
+                    selectedEnd = end;
                 }
+
+                searchPoint = Math.min(selectedEnd, end);
             }
 
             final int x = (mIsVertical ? 0 : searchPoint);
