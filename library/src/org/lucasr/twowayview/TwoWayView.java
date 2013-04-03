@@ -1327,6 +1327,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             if (maybeStartScrolling(delta)) {
                 return true;
             }
+            
+            break;
         }
 
         case MotionEvent.ACTION_CANCEL:
