@@ -1729,7 +1729,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 }
 
                 // TODO: Use some form of smooth scroll instead
-                trackMotionScroll(viewportSize);
+                scrollListItemsBy(viewportSize);
                 return true;
             }
             return false;
@@ -1744,7 +1744,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 }
 
                 // TODO: Use some form of smooth scroll instead
-                trackMotionScroll(-viewportSize);
+                scrollListItemsBy(-viewportSize);
                 return true;
             }
             return false;
@@ -2240,7 +2240,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         if (amountToScroll > 0) {
-            trackMotionScroll(direction == View.FOCUS_UP || direction == View.FOCUS_LEFT ?
+            scrollListItemsBy(direction == View.FOCUS_UP || direction == View.FOCUS_LEFT ?
                     amountToScroll : -amountToScroll);
             needToRedraw = true;
         }
@@ -2739,7 +2739,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             motionViewPrevStart = (mIsVertical ? motionView.getTop() : motionView.getLeft());
         }
 
-        boolean atEdge = trackMotionScroll(delta);
+        boolean atEdge = scrollListItemsBy(delta);
 
         motionView = this.getChildAt(motionIndex);
         if (motionView != null) {
@@ -2819,7 +2819,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 ViewCompat.postInvalidateOnAnimation(this);
             }
 
-            trackMotionScroll(delta);
+            scrollListItemsBy(delta);
             mTouchMode = TOUCH_MODE_DRAGGING;
 
             // We did not scroll the full amount. Treat this essentially like the
@@ -2995,7 +2995,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         removeCallbacks(mPendingCheckForLongPress);
     }
 
-    boolean trackMotionScroll(int incrementalDelta) {
+    private boolean scrollListItemsBy(int incrementalDelta) {
         final int childCount = getChildCount();
         if (childCount == 0) {
             return true;
@@ -3161,7 +3161,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int diff = (int) (pos - mLastTouchPos);
         mLastTouchPos = pos;
 
-        final boolean stopped = trackMotionScroll(diff);
+        final boolean stopped = scrollListItemsBy(diff);
 
         if (!stopped && !mScroller.isFinished()) {
             ViewCompat.postInvalidateOnAnimation(this);
