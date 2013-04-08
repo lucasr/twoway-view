@@ -3681,6 +3681,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
     }
 
+    public void scrollBy(int offset) {
+        scrollListItemsBy(offset);
+    }
+
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         // Dispatch in the normal way
