@@ -6122,7 +6122,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             // Force one here to make sure that the state of the list matches
             // the state of the adapter.
             if (mDataChanged) {
-                onLayout(false, getLeft(), getTop(), getRight(), getBottom());
+                layout(getLeft(), getTop(), getRight(), getBottom());
             }
         } else {
             if (mEmptyView != null) {
