@@ -1327,7 +1327,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             if (maybeStartScrolling(delta)) {
                 return true;
             }
-            
+
             break;
         }
 
@@ -1390,7 +1390,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 reportScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
                 motionPosition = findMotionRowOrColumn((int) mLastTouchPos);
                 return true;
-            } else if (mMotionPosition >= 0 && mAdapter.isEnabled(mMotionPosition)) {
+            } else if (mMotionPosition >= 0 && (mAdapter != null && mAdapter.isEnabled(mMotionPosition))) {
                 mTouchMode = TOUCH_MODE_DOWN;
                 triggerCheckForTap();
             }
@@ -2382,7 +2382,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
             if (mFirstPosition == 0) {
                 final View firstChild = getChildAt(0);
-                final int firstChildStart = (mIsVertical ? firstChild.getTop() : firstChild.getLeft()); 
+                final int firstChildStart = (mIsVertical ? firstChild.getTop() : firstChild.getLeft());
 
                 // First is first in list -> make sure we don't scroll past it
                 final int max = start - firstChildStart;
