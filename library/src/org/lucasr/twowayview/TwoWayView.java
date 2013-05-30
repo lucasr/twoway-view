@@ -5737,7 +5737,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             super(other);
 
             if (this.width == MATCH_PARENT) {
-                Log.w(LOGTAG, "Constructing LayoutParams with height MATCH_PARENT - " +
+                Log.w(LOGTAG, "Constructing LayoutParams with width MATCH_PARENT - " +
                         "does not make much sense as the view might change orientation. " +
                         "Falling back to WRAP_CONTENT");
                 this.width = WRAP_CONTENT;
