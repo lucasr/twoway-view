@@ -81,7 +81,7 @@
         <java.version>1.6</java.version>
         <android.version>4.1.2_r4</android.version>
         <android.platform>16</android.platform>
-        <android-support.version>11</android-support.version>
+        <android-support.version>12</android-support.version>
 
         <android-maven.version>3.4.0</android-maven.version>
     </properties>
