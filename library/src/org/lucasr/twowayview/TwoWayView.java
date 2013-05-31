@@ -2716,10 +2716,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
     }
     
-    public void scrollBy(int delta) {
-        handleDragChange(delta);
-    }
-
     private void handleDragChange(int delta) {
         // Time to start stealing events! Once we've stolen them, don't
         // let anyone steal from us.
