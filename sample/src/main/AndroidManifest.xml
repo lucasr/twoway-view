@@ -21,7 +21,7 @@
           android:versionName="Alpha 1" >
 
     <uses-sdk android:minSdkVersion="4"
-              android:targetSdkVersion="14" />
+              android:targetSdkVersion="16" />
 
     <uses-permission android:name="android.permission.INTERNET" />
 
