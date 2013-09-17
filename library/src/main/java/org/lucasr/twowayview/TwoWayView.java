@@ -1340,6 +1340,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             if (maybeStartScrolling(delta)) {
                 return true;
             }
+            
+            break;
         }
 
         case MotionEvent.ACTION_CANCEL:
@@ -1740,7 +1742,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 }
 
                 // TODO: Use some form of smooth scroll instead
-                trackMotionScroll(viewportSize);
+                scrollListItemsBy(viewportSize);
                 return true;
             }
             return false;
@@ -1755,7 +1757,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 }
 
                 // TODO: Use some form of smooth scroll instead
-                trackMotionScroll(-viewportSize);
+                scrollListItemsBy(-viewportSize);
                 return true;
             }
             return false;
@@ -2088,20 +2090,26 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             if (direction == View.FOCUS_DOWN || direction == View.FOCUS_RIGHT) {
                 final int start = (mIsVertical ? getPaddingTop() : getPaddingLeft());
 
-                if (selectedView != null && selectedView.getTop() > start) {
-                    searchPoint = (mIsVertical ? selectedView.getTop() : selectedView.getLeft());
+                final int selectedStart;
+                if (selectedView != null) {
+                    selectedStart = (mIsVertical ? selectedView.getTop() : selectedView.getLeft());
                 } else {
-                    searchPoint = start;
+                    selectedStart = start;
                 }
+
+                searchPoint = Math.max(selectedStart, start);
             } else {
                 final int end = (mIsVertical ? getHeight() - getPaddingBottom() :
                     getWidth() - getPaddingRight());
 
-                if (selectedView != null && selectedView.getBottom() < end) {
-                    searchPoint = (mIsVertical ? selectedView.getBottom() : selectedView.getRight());
+                final int selectedEnd;
+                if (selectedView != null) {
+                    selectedEnd = (mIsVertical ? selectedView.getBottom() : selectedView.getRight());
                 } else {
-                    searchPoint = end;
+                    selectedEnd = end;
                 }
+
+                searchPoint = Math.min(selectedEnd, end);
             }
 
             final int x = (mIsVertical ? 0 : searchPoint);
@@ -2245,7 +2253,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         if (amountToScroll > 0) {
-            trackMotionScroll(direction == View.FOCUS_UP || direction == View.FOCUS_LEFT ?
+            scrollListItemsBy(direction == View.FOCUS_UP || direction == View.FOCUS_LEFT ?
                     amountToScroll : -amountToScroll);
             needToRedraw = true;
         }
@@ -2744,7 +2752,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             motionViewPrevStart = (mIsVertical ? motionView.getTop() : motionView.getLeft());
         }
 
-        boolean atEdge = trackMotionScroll(delta);
+        boolean atEdge = scrollListItemsBy(delta);
 
         motionView = this.getChildAt(motionIndex);
         if (motionView != null) {
@@ -2824,7 +2832,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 ViewCompat.postInvalidateOnAnimation(this);
             }
 
-            trackMotionScroll(delta);
+            scrollListItemsBy(delta);
             mTouchMode = TOUCH_MODE_DRAGGING;
 
             // We did not scroll the full amount. Treat this essentially like the
@@ -3000,7 +3008,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         removeCallbacks(mPendingCheckForLongPress);
     }
 
-    boolean trackMotionScroll(int incrementalDelta) {
+    private boolean scrollListItemsBy(int incrementalDelta) {
         final int childCount = getChildCount();
         if (childCount == 0) {
             return true;
@@ -3166,7 +3174,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int diff = (int) (pos - mLastTouchPos);
         mLastTouchPos = pos;
 
-        final boolean stopped = trackMotionScroll(diff);
+        final boolean stopped = scrollListItemsBy(diff);
 
         if (!stopped && !mScroller.isFinished()) {
             ViewCompat.postInvalidateOnAnimation(this);
@@ -3684,6 +3692,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
             requestLayout();
         }
+    }
+
+    public void scrollBy(int offset) {
+        scrollListItemsBy(offset);
     }
 
     @Override
@@ -5782,7 +5794,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             super(other);
 
             if (this.width == MATCH_PARENT) {
-                Log.w(LOGTAG, "Constructing LayoutParams with height MATCH_PARENT - " +
+                Log.w(LOGTAG, "Constructing LayoutParams with width MATCH_PARENT - " +
                         "does not make much sense as the view might change orientation. " +
                         "Falling back to WRAP_CONTENT");
                 this.width = WRAP_CONTENT;
@@ -6167,7 +6179,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             // Force one here to make sure that the state of the list matches
             // the state of the adapter.
             if (mDataChanged) {
-                onLayout(false, getLeft(), getTop(), getRight(), getBottom());
+                layout(getLeft(), getTop(), getRight(), getBottom());
             }
         } else {
             if (mEmptyView != null) {
