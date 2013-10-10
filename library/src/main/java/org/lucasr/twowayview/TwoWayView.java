@@ -3224,8 +3224,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         final int restoreCount = canvas.save();
-        final int width = getWidth() - getPaddingLeft() - getPaddingRight();
-        final int height = getHeight() - getPaddingTop() - getPaddingBottom();
+        final int width = getWidth();
+        final int height = getHeight();
 
         if (mIsVertical) {
             canvas.translate(-width, height);
