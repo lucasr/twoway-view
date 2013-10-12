@@ -15,3 +15,7 @@ build.xml
 local.properties
 proguard.cfg
 .DS_Store
+.gradle
+build
+library/build
+sample/build

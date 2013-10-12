@@ -5368,6 +5368,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     void resetState() {
+        mScroller.forceFinished(true);
+
         removeAllViewsInLayout();
 
         mSelectedStart = 0;
