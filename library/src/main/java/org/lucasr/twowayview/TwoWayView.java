@@ -385,9 +385,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         ViewCompat.setOverScrollMode(this, ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS);
 
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TwoWayView, defStyle, 0);
-        initializeScrollbars(a);
-
         mDrawSelectorOnTop = a.getBoolean(
                 R.styleable.TwoWayView_android_drawSelectorOnTop, false);
 
