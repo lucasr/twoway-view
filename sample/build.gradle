@@ -6,10 +6,10 @@ repositories {
 
 dependencies {
     compile project(':library')
-    compile 'com.android.support:support-v4:18.0.+'
+    compile 'com.android.support:support-v4:19.0.+'
 }
 
 android {
-    compileSdkVersion 16
-    buildToolsVersion "18.0.1"
+    compileSdkVersion 19
+    buildToolsVersion "19.0.2"
 }
