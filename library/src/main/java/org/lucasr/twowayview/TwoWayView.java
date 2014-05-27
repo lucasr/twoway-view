@@ -264,7 +264,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
          * Callback method to be invoked while the list view or grid view is being scrolled. If the
          * view is being scrolled, this method will be called before the next frame of the scroll is
          * rendered. In particular, it will be called before any calls to
-         * {@link Adapter#getView(int, View, ViewGroup)}.
+         * {@link android.widget.Adapter#getView(int, View, ViewGroup)}.
          *
          * @param view The view whose scroll state is being reported
          *
@@ -479,7 +479,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
      * the recycler for later reuse. This listener can be used to free resources
      * associated to the View.
      *
-     * @param listener The recycler listener to be notified of views set aside
+     * @param l The recycler listener to be notified of views set aside
      *        in the recycler.
      *
      * @see TwoWayView.RecycleBin
@@ -493,8 +493,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
      * Controls whether the selection highlight drawable should be drawn on top of the item or
      * behind it.
      *
-     * @param onTop If true, the selector will be drawn on the item it is highlighting. The default
-     *        is false.
+     * @param drawSelectorOnTop If true, the selector will be drawn on the item it is highlighting.
+     *                          The default is false.
      *
      * @attr ref android.R.styleable#AbsListView_drawSelectorOnTop
      */
@@ -562,7 +562,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     /**
      * Returns the number of items currently selected. This will only be valid
-     * if the choice mode is not {@link #CHOICE_MODE_NONE} (default).
+     * if the choice mode is not {@link ChoiceMode#NONE} (default).
      *
      * <p>To determine the specific items that are currently selected, use one of
      * the <code>getChecked*</code> methods.
@@ -579,14 +579,14 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     /**
      * Returns the checked state of the specified position. The result is only
-     * valid if the choice mode has been set to {@link #CHOICE_MODE_SINGLE}
-     * or {@link #CHOICE_MODE_MULTIPLE}.
+     * valid if the choice mode has been set to {@link ChoiceMode#SINGLE}
+     * or {@link ChoiceMode#MULTIPLE}.
      *
      * @param position The item whose checked state to return
      * @return The item's checked state or <code>false</code> if choice mode
      *         is invalid
      *
-     * @see #setChoiceMode(int)
+     * @see #setChoiceMode(ChoiceMode)
      */
     public boolean isItemChecked(int position) {
         if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0 && mCheckStates != null) {
@@ -598,12 +598,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     /**
      * Returns the currently checked item. The result is only valid if the choice
-     * mode has been set to {@link #CHOICE_MODE_SINGLE}.
+     * mode has been set to {@link ChoiceMode#SINGLE}.
      *
      * @return The position of the currently checked item or
      *         {@link #INVALID_POSITION} if nothing is selected
      *
-     * @see #setChoiceMode(int)
+     * @see #setChoiceMode(ChoiceMode)
      */
     public int getCheckedItemPosition() {
         if (mChoiceMode.compareTo(ChoiceMode.SINGLE) == 0 &&
@@ -616,12 +616,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     /**
      * Returns the set of checked items in the list. The result is only valid if
-     * the choice mode has not been set to {@link #CHOICE_MODE_NONE}.
+     * the choice mode has not been set to {@link ChoiceMode#NONE}.
      *
      * @return  A SparseBooleanArray which will return true for each call to
      *          get(int position) where position is a position in the list,
      *          or <code>null</code> if the choice mode is set to
-     *          {@link #CHOICE_MODE_NONE}.
+     *          {@link ChoiceMode#NONE}.
      */
     public SparseBooleanArray getCheckedItemPositions() {
         if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0) {
@@ -633,7 +633,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     /**
      * Returns the set of checked items ids. The result is only valid if the
-     * choice mode has not been set to {@link #CHOICE_MODE_NONE} and the adapter
+     * choice mode has not been set to {@link ChoiceMode#NONE} and the adapter
      * has stable IDs. ({@link ListAdapter#hasStableIds()} == {@code true})
      *
      * @return A new array which contains the id of each checked item in the
@@ -658,8 +658,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     /**
      * Sets the checked state of the specified position. The is only valid if
-     * the choice mode has been set to {@link #CHOICE_MODE_SINGLE} or
-     * {@link #CHOICE_MODE_MULTIPLE}.
+     * the choice mode has been set to {@link ChoiceMode#SINGLE} or
+     * {@link ChoiceMode#MULTIPLE}.
      *
      * @param position The item whose checked state is to be checked
      * @param value The new checked state for the item
@@ -740,7 +740,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     /**
-     * @see #setChoiceMode(int)
+     * @see #setChoiceMode(ChoiceMode)
      *
      * @return The current choice mode
      */
@@ -750,12 +750,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     /**
      * Defines the choice behavior for the List. By default, Lists do not have any choice behavior
-     * ({@link #CHOICE_MODE_NONE}). By setting the choiceMode to {@link #CHOICE_MODE_SINGLE}, the
+     * ({@link ChoiceMode#NONE}). By setting the choiceMode to {@link ChoiceMode#SINGLE}, the
      * List allows up to one item to  be in a chosen state. By setting the choiceMode to
-     * {@link #CHOICE_MODE_MULTIPLE}, the list allows any number of items to be chosen.
+     * {@link ChoiceMode#MULTIPLE}, the list allows any number of items to be chosen.
      *
-     * @param choiceMode One of {@link #CHOICE_MODE_NONE}, {@link #CHOICE_MODE_SINGLE}, or
-     * {@link #CHOICE_MODE_MULTIPLE}
+     * @param choiceMode One of {@link ChoiceMode#NONE}, {@link ChoiceMode#SINGLE}, or
+     * {@link ChoiceMode#MULTIPLE}
      */
     public void setChoiceMode(ChoiceMode choiceMode) {
         mChoiceMode = choiceMode;
