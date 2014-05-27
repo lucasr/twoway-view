@@ -412,7 +412,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     public void setOrientation(Orientation orientation) {
-        final boolean isVertical = (orientation.compareTo(Orientation.VERTICAL) == 0);
+        final boolean isVertical = (orientation == Orientation.VERTICAL);
         if (mIsVertical == isVertical) {
             return;
         }
@@ -589,7 +589,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
      * @see #setChoiceMode(ChoiceMode)
      */
     public boolean isItemChecked(int position) {
-        if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0 && mCheckStates != null) {
+        if (mChoiceMode == ChoiceMode.NONE && mCheckStates != null) {
             return mCheckStates.get(position);
         }
 
@@ -606,8 +606,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
      * @see #setChoiceMode(ChoiceMode)
      */
     public int getCheckedItemPosition() {
-        if (mChoiceMode.compareTo(ChoiceMode.SINGLE) == 0 &&
-                mCheckStates != null && mCheckStates.size() == 1) {
+        if (mChoiceMode == ChoiceMode.SINGLE && mCheckStates != null && mCheckStates.size() == 1) {
             return mCheckStates.keyAt(0);
         }
 
@@ -624,7 +623,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
      *          {@link ChoiceMode#NONE}.
      */
     public SparseBooleanArray getCheckedItemPositions() {
-        if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0) {
+        if (mChoiceMode != ChoiceMode.NONE) {
             return mCheckStates;
         }
 
@@ -640,8 +639,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
      *         list.
      */
     public long[] getCheckedItemIds() {
-        if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0 ||
-                mCheckedIdStates == null || mAdapter == null) {
+        if (mChoiceMode == ChoiceMode.NONE || mCheckedIdStates == null || mAdapter == null) {
             return new long[0];
         }
 
@@ -665,11 +663,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
      * @param value The new checked state for the item
      */
     public void setItemChecked(int position, boolean value) {
-        if (mChoiceMode.compareTo(ChoiceMode.NONE) == 0) {
+        if (mChoiceMode == ChoiceMode.NONE) {
             return;
         }
 
-        if (mChoiceMode.compareTo(ChoiceMode.MULTIPLE) == 0) {
+        if (mChoiceMode == ChoiceMode.MULTIPLE) {
             boolean oldValue = mCheckStates.get(position);
             mCheckStates.put(position, value);
 
@@ -760,7 +758,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     public void setChoiceMode(ChoiceMode choiceMode) {
         mChoiceMode = choiceMode;
 
-        if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0) {
+        if (mChoiceMode != ChoiceMode.NONE) {
             if (mCheckStates == null) {
                 mCheckStates = new SparseBooleanArray();
             }
@@ -811,8 +809,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             mHasStableIds = adapter.hasStableIds();
             mAreAllItemsSelectable = adapter.areAllItemsEnabled();
 
-            if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0 && mHasStableIds &&
-                    mCheckedIdStates == null) {
+            if (mChoiceMode != ChoiceMode.NONE && mHasStableIds && mCheckedIdStates == null) {
                 mCheckedIdStates = new LongSparseArray<Integer>();
             }
 
@@ -4274,7 +4271,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     private void handleDataChanged() {
-        if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0 && mAdapter != null && mAdapter.hasStableIds()) {
+        if (mChoiceMode != ChoiceMode.NONE && mAdapter != null && mAdapter.hasStableIds()) {
             confirmCheckedPositionsById();
         }
 
@@ -4812,7 +4809,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             child.setPressed(isPressed);
         }
 
-        if (mChoiceMode.compareTo(ChoiceMode.NONE) != 0 && mCheckStates != null) {
+        if (mChoiceMode != ChoiceMode.NONE && mCheckStates != null) {
             if (child instanceof Checkable) {
                 ((Checkable) child).setChecked(mCheckStates.get(position));
             } else if (getContext().getApplicationInfo().targetSdkVersion
@@ -5458,7 +5455,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     public boolean performItemClick(View view, int position, long id) {
         boolean checkedStateChanged = false;
 
-        if (mChoiceMode.compareTo(ChoiceMode.MULTIPLE) == 0) {
+        if (mChoiceMode == ChoiceMode.MULTIPLE) {
             boolean checked = !mCheckStates.get(position, false);
             mCheckStates.put(position, checked);
 
@@ -5477,7 +5474,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             }
 
             checkedStateChanged = true;
-        } else if (mChoiceMode.compareTo(ChoiceMode.SINGLE) == 0) {
+        } else if (mChoiceMode == ChoiceMode.SINGLE) {
             boolean checked = !mCheckStates.get(position, false);
             if (checked) {
                 mCheckStates.clear();
