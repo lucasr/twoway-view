@@ -134,8 +134,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     public static enum Orientation {
         HORIZONTAL,
-        VERTICAL;
-    };
+        VERTICAL
+    }
 
     private ListAdapter mAdapter;
 
