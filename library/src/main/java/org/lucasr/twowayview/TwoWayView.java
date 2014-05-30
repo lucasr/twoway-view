@@ -5793,11 +5793,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             } else {
                 final int typeCount = mViewTypeCount;
                 for (int i = 0; i < typeCount; i++) {
-                    final ArrayList<View> scrap = mScrapViews[i];
-                    final int scrapCount = scrap.size();
-
-                    for (int j = 0; j < scrapCount; j++) {
-                        scrap.get(j).forceLayout();
+                    for (View scrap : mScrapViews[i]) {
+                        scrap.forceLayout();
                     }
                 }
             }
