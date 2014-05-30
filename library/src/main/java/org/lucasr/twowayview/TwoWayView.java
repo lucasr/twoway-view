@@ -3145,11 +3145,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     @TargetApi(5)
     private boolean awakenScrollbarsInternal() {
-        if (Build.VERSION.SDK_INT >= 5) {
-            return super.awakenScrollBars();
-        } else {
-            return false;
-        }
+        return (Build.VERSION.SDK_INT >= 5) && super.awakenScrollBars();
     }
 
     @Override
@@ -6536,16 +6532,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 return false;
 
             case AccessibilityNodeInfoCompat.ACTION_CLICK:
-                if (isClickable()) {
-                    return performItemClick(host, position, id);
-                }
-                return false;
+                return isClickable() && performItemClick(host, position, id);
 
             case AccessibilityNodeInfoCompat.ACTION_LONG_CLICK:
-                if (isLongClickable()) {
-                    return performLongPress(host, position, id);
-                }
-                return false;
+                return isLongClickable() && performLongPress(host, position, id);
             }
 
             return false;
