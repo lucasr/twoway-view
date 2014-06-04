@@ -3069,8 +3069,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         int start = 0;
         int count = 0;
 
-        Log.d(LOGTAG, "BOOM: scrollListItemsBy");
-
         final boolean down = (incrementalDelta < 0);
         if (down) {
             int childrenStart = -incrementalDelta + paddingStart;
@@ -3080,7 +3078,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 final int childEnd = getChildEndEdge(child);
 
                 if (childEnd >= childrenStart) {
-                    Log.d(LOGTAG, "BOOM: child/down is on screen at position = " + (mFirstPosition + i));
                     break;
                 }
 
@@ -3089,7 +3086,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 final int position = firstPosition + i;
                 mRecycler.addScrapView(child, position);
                 mLayout.detachChild(child, position, down);
-                Log.d(LOGTAG, "BOOM: detached/down child at position = " + position);
             }
         } else {
             int childrenEnd = end - incrementalDelta;
@@ -3099,7 +3095,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 final int childStart = getChildStartEdge(child);
 
                 if (childStart <= childrenEnd) {
-                    Log.d(LOGTAG, "BOOM: child/up is on screen at position = " + (mFirstPosition + i));
                     break;
                 }
 
@@ -3109,7 +3104,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 final int position = firstPosition + i;
                 mRecycler.addScrapView(child, position);
                 mLayout.detachChild(child, position, down);
-                Log.d(LOGTAG, "BOOM: detached/up child at position = " + position);
             }
         }
 
@@ -4890,7 +4884,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         mFirstPosition = pos + 1;
-        Log.d(LOGTAG, "BOOM fillBefore, mFirstPosition = " + mFirstPosition);
 
         return selectedView;
     }
@@ -4903,9 +4896,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         while (nextOffset < end && pos < mItemCount) {
             boolean isSelected = (pos == mSelectedPosition);
-            Log.d(LOGTAG, "BOOM fillAfter, pos = " + pos + " -- START");
             View child = makeAndAddView(pos, nextOffset, true, isSelected);
-            Log.d(LOGTAG, "BOOM fillAfter, pos = " + pos + " nextOffset = " + mLayout.getFirstEnd() + "-- END");
             nextOffset = mLayout.getFirstEnd() + mItemMargin;
 
             if (isSelected) {
@@ -4915,7 +4906,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             pos++;
         }
 
-        Log.d(LOGTAG, "BOOM fillAfter, mFirstPosition = " + mFirstPosition);
         return selectedView;
     }
 
@@ -4926,7 +4916,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         View temp = makeAndAddView(position, offset, true, tempIsSelected);
 
         // Possibly changed again in fillBefore if we add rows above this one.
-        Log.d(LOGTAG, "BOOM fillSpecific, mFirstPosition = " + mFirstPosition);
         mFirstPosition = position;
 
         final int offsetBefore = getChildStartEdge(temp) + mItemMargin;
