@@ -1,62 +1,69 @@
 package org.lucasr.twowayview;
 
+import android.content.Context;
 import android.graphics.Rect;
-import android.util.Log;
+import android.util.AttributeSet;
 import android.view.View;
-import android.view.View.MeasureSpec;
 
-import org.lucasr.twowayview.TwoWayView.LayoutParams;
-import org.lucasr.twowayview.TwoWayView.Orientation;
-
-public class TwoWayListLayout extends TwoWayLayout {
+public class TwoWayListView extends TwoWayView {
     private static final String LOGTAG = "TwoWayListLayout";
 
-    private final TwoWayView mView;
-    private final LayoutState mLayoutState;
+    private LayoutState mLayoutState;
     private boolean mIsVertical;
 
-    public TwoWayListLayout(TwoWayView view) {
-        super(view);
-        mView = view;
+    public TwoWayListView(Context context) {
+        this(context, null);
+    }
 
-        final Orientation orientation = view.getOrientation();
+    public TwoWayListView(Context context, AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+
+    public TwoWayListView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
         mLayoutState = new LayoutState(1);
-        setOrientation(orientation);
+        mIsVertical = (getOrientation() == Orientation.VERTICAL);
     }
 
     @Override
-    public void setOrientation(TwoWayView.Orientation orientation) {
+    public void setOrientation(Orientation orientation) {
         super.setOrientation(orientation);
-
-        mLayoutState.setOrientation(orientation);
         mIsVertical = (orientation == Orientation.VERTICAL);
-
-        reset(0);
     }
 
     @Override
-    public void offset(int offset) {
+    public void offsetLayout(int offset) {
         mLayoutState.offset(offset);
     }
 
     @Override
+    public void resetLayout(int offset) {
+        final int l = getPaddingLeft() + (mIsVertical ? 0 : offset);
+        final int t = getPaddingTop() + (mIsVertical ? offset : 0);
+        final int r = (mIsVertical ? getWidth() - getPaddingRight() : l);
+        final int b = (mIsVertical ? t : getHeight() - getPaddingBottom());
+
+        mLayoutState.set(0, l, t, r, b);
+    }
+
+    @Override
     public int getOuterStartEdge() {
-        return mLayoutState.getFirstStart();
+        return mLayoutState.getOuterStartEdge();
     }
 
     @Override
     public int getInnerStartEdge() {
-        return mLayoutState.getLastStart();
+        return mLayoutState.getInnerStartEdge();
     }
 
     @Override
     public int getInnerEndEdge() {
-        return mLayoutState.getFirstEnd();
+        return mLayoutState.getInnerEndEdge();
     }
 
     @Override
     public int getOuterEndEdge() {
-        return mLayoutState.getLastEnd();
+        return mLayoutState.getOuterEndEdge();
     }
 
     @Override
@@ -64,8 +71,7 @@ public class TwoWayListLayout extends TwoWayLayout {
         if (!mIsVertical && lp.width == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (mIsVertical) {
-            final int maxWidth =
-                    mView.getWidth() - mView.getPaddingLeft() - mView.getPaddingRight();
+            final int maxWidth = getWidth() - getPaddingLeft() - getPaddingRight();
             return MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.width, MeasureSpec.EXACTLY);
@@ -77,8 +83,7 @@ public class TwoWayListLayout extends TwoWayLayout {
         if (mIsVertical && lp.height == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (!mIsVertical) {
-            final int maxHeight =
-                    mView.getHeight() - mView.getPaddingTop() - mView.getPaddingBottom();
+            final int maxHeight = getHeight() - getPaddingTop() - getPaddingBottom();
             return MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
@@ -131,15 +136,5 @@ public class TwoWayListLayout extends TwoWayLayout {
         } else {
             mLayoutState.increaseWidthBy(0, childWidth);
         }
-    }
-
-    @Override
-    public void reset(int offset) {
-        final int l = mView.getPaddingLeft() + (mIsVertical ? 0 : offset);
-        final int t = mView.getPaddingTop() + (mIsVertical ? offset : 0);
-        final int r = (mIsVertical ? mView.getWidth() - mView.getPaddingRight() : l);
-        final int b = (mIsVertical ? t : mView.getHeight() - mView.getPaddingBottom());
-
-        mLayoutState.set(0, l, t, r, b);
     }
 }
