@@ -19,7 +19,7 @@
              android:layout_width="70dp"
              android:layout_height="130dp"
              android:background="@drawable/list_selector"
-             android:padding="5dp" >
+             android:padding="1dp" >
 
     <TextView android:id="@+id/title"
               android:layout_width="fill_parent"

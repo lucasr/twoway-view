@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
         mToast.setGravity(Gravity.CENTER, 0, 0);
 
         mListView = (TwoWayView) findViewById(R.id.list);
-        mListView.setItemMargin(10);
+//        mListView.setItemMargin(10);
         mListView.setLongClickable(true);
 
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
