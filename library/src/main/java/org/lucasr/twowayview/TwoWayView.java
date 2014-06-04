@@ -1275,7 +1275,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (!mIsAttached) {
+        if (!mIsAttached || mAdapter == null) {
             return false;
         }
 
@@ -1361,7 +1361,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             return isClickable() || isLongClickable();
         }
 
-        if (!mIsAttached) {
+        if (!mIsAttached || mAdapter == null) {
             return false;
         }
 
