@@ -1484,7 +1484,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 final float x = ev.getX();
                 final float y = ev.getY();
 
-                boolean inList = false;
+                boolean inList;
                 if (mIsVertical) {
                     inList = x > getPaddingLeft() && x < getWidth() - getPaddingRight();
                 } else {
