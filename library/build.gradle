@@ -12,3 +12,5 @@ android {
     compileSdkVersion 19
     buildToolsVersion "19.0.2"
 }
+
+apply from: 'https://raw.github.com/chrisbanes/gradle-mvn-push/master/gradle-mvn-push.gradle'
