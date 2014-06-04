@@ -4723,7 +4723,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 recycleBin.addScrapView(child, -1);
             }
 
-            returnedWidth += child.getMeasuredHeight();
+            returnedWidth += child.getMeasuredWidth();
 
             if (returnedWidth >= maxWidth) {
                 // We went over, figure out which width to return.  If returnedWidth > maxWidth,
