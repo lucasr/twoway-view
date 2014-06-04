@@ -12,6 +12,9 @@ Features
 
 * View recycling while scrolling, just like ListView/GridView.
 * Vertical and horizontal scrolling support.
+* Accessibility support
+* Keyboard events and navigation
+* Focus handling
 
 A lot more to come, stay tuned.
 
@@ -26,22 +29,28 @@ How do I use it?
 
 The sample app uses all features available in the widget.
 
+
+Download
+========
+
+Grab via Maven:
+```xml
+<dependency>
+  <groupId>org.lucasr.twowayview</groupId>
+  <artifactId>twowayview</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+or Gradle:
+```groovy
+compile 'org.lucasr.twowayview:twowayview:0.1.0'
+```
+
 Want to help?
 =============
 
 File new issues to discuss specific aspects of the API and to propose new
-features. Here's a few (definitely not all!) of the upcoming features:
-
-* Accessibility support
-* Keyboard events and navigation
-* Focus handling
-
-Build instructions
-==================
-
-If you use Eclipse, simply import the Android project from existing source.
-If you use Maven, you'll need to deploy the latest Support Library locally
-using the [maven-android-sdk-deployer](https://github.com/mosabua/maven-android-sdk-deployer).
+features.
 
 License
 =======
