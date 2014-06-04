@@ -68,6 +68,8 @@ import android.widget.Checkable;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
 
+import static android.os.Build.VERSION_CODES.HONEYCOMB;
+
 /*
  * Implementation Notes:
  *
@@ -4818,8 +4820,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         if (mChoiceMode != ChoiceMode.NONE && mCheckStates != null) {
             if (child instanceof Checkable) {
                 ((Checkable) child).setChecked(mCheckStates.get(position));
-            } else if (getContext().getApplicationInfo().targetSdkVersion
-                    >= Build.VERSION_CODES.HONEYCOMB) {
+            } else if (Build.VERSION.SDK_INT >= HONEYCOMB) {
                 child.setActivated(mCheckStates.get(position));
             }
         }
@@ -5442,8 +5443,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int firstPos = mFirstPosition;
         final int count = getChildCount();
 
-        final boolean useActivated = getContext().getApplicationInfo().targetSdkVersion
-                >= Build.VERSION_CODES.HONEYCOMB;
+        final boolean useActivated = Build.VERSION.SDK_INT >= HONEYCOMB;
 
         for (int i = 0; i < count; i++) {
             final View child = getChildAt(i);
