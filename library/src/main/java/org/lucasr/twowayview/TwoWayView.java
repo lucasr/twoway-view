@@ -1145,7 +1145,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         int extent = count * 100;
 
         View child = getChildAt(0);
-        final int firstStart = mLayout.getFirstStart();
+        final int firstStart = mLayout.getOuterStartEdge();
 
         int childHeight = child.getHeight();
         if (childHeight > 0) {
@@ -1153,7 +1153,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         child = getChildAt(count - 1);
-        final int lastEnd = mLayout.getLastEnd();
+        final int lastEnd = mLayout.getOuterEndEdge();
 
         childHeight = child.getHeight();
         if (childHeight > 0) {
@@ -1173,7 +1173,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         int extent = count * 100;
 
         View child = getChildAt(0);
-        final int firstStart = mLayout.getFirstStart();
+        final int firstStart = mLayout.getOuterStartEdge();
 
         int childWidth = child.getWidth();
         if (childWidth > 0) {
@@ -1181,7 +1181,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         child = getChildAt(count - 1);
-        final int lastEnd = mLayout.getLastEnd();
+        final int lastEnd = mLayout.getOuterEndEdge();
 
         childWidth = child.getWidth();
         if (childWidth > 0) {
@@ -1201,7 +1201,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         final View child = getChildAt(0);
-        final int firstStart = mLayout.getFirstStart();
+        final int firstStart = mLayout.getOuterStartEdge();
 
         int childHeight = child.getHeight();
         if (childHeight > 0) {
@@ -1221,7 +1221,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         final View child = getChildAt(0);
-        final int firstStart = mLayout.getFirstStart();
+        final int firstStart = mLayout.getOuterStartEdge();
 
         int childWidth = child.getWidth();
         if (childWidth > 0) {
@@ -2978,8 +2978,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             return false;
         }
 
-        return (mLayout.getFirstStart() >= getStartEdge() &&
-                mLayout.getLastEnd() <= getEndEdge());
+        return (mLayout.getOuterStartEdge() >= getStartEdge() &&
+                mLayout.getOuterEndEdge() <= getEndEdge());
     }
 
     private void triggerCheckForTap() {
@@ -3023,18 +3023,18 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             return true;
         }
 
-        final int firstStart = mLayout.getFirstStart();
-        final int lastEnd = mLayout.getLastEnd();
+        final int firstStart = mLayout.getOuterStartEdge();
+        final int lastEnd = mLayout.getOuterEndEdge();
 
         final int paddingTop = getPaddingTop();
         final int paddingBottom = getPaddingBottom();
         final int paddingLeft = getPaddingLeft();
         final int paddingRight = getPaddingRight();
 
-        final int paddingStart = (mIsVertical ? paddingTop : paddingLeft);
-
-        final int spaceBefore = paddingStart - firstStart;
+        final int start = getStartEdge();
         final int end = getEndEdge();
+
+        final int spaceBefore = start - firstStart;
         final int spaceAfter = lastEnd - end;
 
         final int size;
@@ -3053,7 +3053,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int firstPosition = mFirstPosition;
 
         final boolean cannotScrollDown = (firstPosition == 0 &&
-                firstStart >= paddingStart && incrementalDelta >= 0);
+                firstStart >= start && incrementalDelta >= 0);
         final boolean cannotScrollUp = (firstPosition + childCount == mItemCount &&
                 lastEnd <= end && incrementalDelta <= 0);
 
@@ -3066,12 +3066,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             hideSelector();
         }
 
-        int start = 0;
-        int count = 0;
+        int firstDetachedPos = 0;
+        int detachedCount = 0;
 
         final boolean down = (incrementalDelta < 0);
         if (down) {
-            int childrenStart = -incrementalDelta + paddingStart;
+            int childrenStart = -incrementalDelta + start;
 
             for (int i = 0; i < childCount; i++) {
                 final View child = getChildAt(i);
@@ -3081,7 +3081,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     break;
                 }
 
-                count++;
+                detachedCount++;
 
                 final int position = firstPosition + i;
                 mRecycler.addScrapView(child, position);
@@ -3098,8 +3098,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     break;
                 }
 
-                start = i;
-                count++;
+                firstDetachedPos = i;
+                detachedCount++;
 
                 final int position = firstPosition + i;
                 mRecycler.addScrapView(child, position);
@@ -3109,8 +3109,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         mBlockLayoutRequests = true;
 
-        if (count > 0) {
-            detachViewsFromParent(start, count);
+        if (detachedCount > 0) {
+            detachViewsFromParent(firstDetachedPos, detachedCount);
         }
 
         // invalidate before moving the children to avoid unnecessary invalidate
@@ -3122,7 +3122,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         offsetChildren(incrementalDelta);
 
         if (down) {
-            mFirstPosition += count;
+            mFirstPosition += detachedCount;
         }
 
         final int absIncrementalDelta = Math.abs(incrementalDelta);
@@ -3802,10 +3802,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         mInLayout = false;
 
-        final int width = r - l - getPaddingLeft() - getPaddingRight();
-        final int height = b - t - getPaddingTop() - getPaddingBottom();
-
         if (mStartEdge != null && mEndEdge != null) {
+            final int width = r - l;
+            final int height = b - t;
+
             if (mIsVertical) {
                 mStartEdge.setSize(width, height);
                 mEndEdge.setSize(width, height);
@@ -4852,13 +4852,13 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         if (down) {
             final int start = getStartEdge();
-            final int offset = (childCount > 0 ? mLayout.getLastEnd() + mItemMargin : start);
+            final int offset = (childCount > 0 ? mLayout.getOuterEndEdge() + mItemMargin : start);
 
             fillAfter(mFirstPosition + childCount, offset);
             correctTooHigh(childCount);
         } else {
             final int end = getEndEdge();
-            final int offset = (childCount > 0 ? mLayout.getFirstStart() - mItemMargin : end);
+            final int offset = (childCount > 0 ? mLayout.getOuterStartEdge() - mItemMargin : end);
 
             fillBefore(mFirstPosition - 1, offset);
             correctTooLow(childCount);
@@ -4869,12 +4869,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         View selectedView = null;
 
         final int start = getStartEdge();
-        int nextOffset = mLayout.getLastStart();
+        int nextOffset = mLayout.getInnerStartEdge();
 
         while (nextOffset > start && pos >= 0) {
             boolean isSelected = (pos == mSelectedPosition);
             View child = makeAndAddView(pos, nextOffset, false, isSelected);
-            nextOffset = mLayout.getLastStart() - mItemMargin;
+            nextOffset = mLayout.getInnerStartEdge() - mItemMargin;
 
             if (isSelected) {
                 selectedView = child;
@@ -4892,12 +4892,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         View selectedView = null;
 
         final int end = getEndEdge();
-        int nextOffset = mLayout.getFirstEnd();
+        int nextOffset = mLayout.getInnerEndEdge();
 
         while (nextOffset < end && pos < mItemCount) {
             boolean isSelected = (pos == mSelectedPosition);
             View child = makeAndAddView(pos, nextOffset, true, isSelected);
-            nextOffset = mLayout.getFirstEnd() + mItemMargin;
+            nextOffset = mLayout.getInnerEndEdge() + mItemMargin;
 
             if (isSelected) {
                 selectedView = child;
@@ -5042,7 +5042,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         // Get the last end edge
-        final int lastEnd = mLayout.getLastEnd();
+        final int lastEnd = mLayout.getOuterEndEdge();
 
         // This is bottom of our drawable area
         final int start = getStartEdge();
@@ -5052,7 +5052,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         // drawable area
         int endOffset = end - lastEnd;
 
-        int firstStart = mLayout.getFirstStart();
+        int firstStart = mLayout.getOuterStartEdge();
 
         // Make sure we are 1) Too high, and 2) Either there are more rows above the
         // first row or the first row is scrolled off the top of the drawable area
@@ -5066,7 +5066,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             offsetChildren(endOffset);
 
             if (mFirstPosition > 0) {
-                firstStart = mLayout.getFirstStart();
+                firstStart = mLayout.getOuterStartEdge();
 
                 // Fill the gap that was opened above mFirstPosition with more rows, if
                 // possible
@@ -5085,7 +5085,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             return;
         }
 
-        final int firstStart = mLayout.getFirstStart();
+        final int firstStart = mLayout.getOuterStartEdge();
         final int start = getStartEdge();
         final int end = getEndEdge();
 
@@ -5093,7 +5093,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         // drawable area
         int startOffset = firstStart - start;
 
-        int lastEnd = mLayout.getLastEnd();
+        int lastEnd = mLayout.getOuterEndEdge();
         final int lastPosition = mFirstPosition + childCount - 1;
 
         // Make sure we are 1) Too low, and 2) Either there are more columns/rows below the
@@ -5110,7 +5110,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 offsetChildren(-startOffset);
 
                 if (lastPosition < mItemCount - 1) {
-                    lastEnd = mLayout.getLastEnd();
+                    lastEnd = mLayout.getOuterEndEdge();
 
                     // Fill the gap that was opened below the last position with more rows, if
                     // possible
@@ -5130,7 +5130,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             return;
         }
 
-        int delta = mLayout.getFirstStart() -
+        int delta = mLayout.getOuterStartEdge() -
                 (mIsVertical ? getPaddingTop() : getPaddingLeft()) - mItemMargin;
 
         if (delta < 0) {

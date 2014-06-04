@@ -34,10 +34,10 @@ public abstract class TwoWayLayout {
 
     public abstract void offset(int offset);
 
-    public abstract int getFirstStart();
-    public abstract int getLastStart();
-    public abstract int getFirstEnd();
-    public abstract int getLastEnd();
+    public abstract int getOuterStartEdge();
+    public abstract int getInnerStartEdge();
+    public abstract int getInnerEndEdge();
+    public abstract int getOuterEndEdge();
 
     public abstract int getChildWidthMeasureSpec(View child, int position, LayoutParams lp);
     public abstract int getChildHeightMeasureSpec(View child, int position, LayoutParams lp);

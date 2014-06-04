@@ -40,22 +40,22 @@ public class TwoWayListLayout extends TwoWayLayout {
     }
 
     @Override
-    public int getFirstStart() {
+    public int getOuterStartEdge() {
         return mLayoutState.getFirstStart();
     }
 
     @Override
-    public int getLastStart() {
+    public int getInnerStartEdge() {
         return mLayoutState.getLastStart();
     }
 
     @Override
-    public int getFirstEnd() {
+    public int getInnerEndEdge() {
         return mLayoutState.getFirstEnd();
     }
 
     @Override
-    public int getLastEnd() {
+    public int getOuterEndEdge() {
         return mLayoutState.getLastEnd();
     }
 
