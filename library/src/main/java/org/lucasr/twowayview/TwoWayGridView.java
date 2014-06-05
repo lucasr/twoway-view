@@ -3,7 +3,6 @@ package org.lucasr.twowayview;
 import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 public class TwoWayGridView extends TwoWayView {
@@ -129,7 +128,7 @@ public class TwoWayGridView extends TwoWayView {
     }
 
     @Override
-    public void attachChildToLayout(View child, int position, Flow flow, boolean needsLayout) {
+    public void attachChildToLayout(View child, int position, Flow flow, Rect childRect) {
         final int childWidth = child.getMeasuredWidth();
         final int childHeight = child.getMeasuredHeight();
 
@@ -149,12 +148,10 @@ public class TwoWayGridView extends TwoWayView {
             b = laneState.bottom;
         }
 
-        if (needsLayout) {
-            child.layout(l, t, r, b);
-        } else {
-            child.offsetLeftAndRight(l - child.getLeft());
-            child.offsetTopAndBottom(t - child.getTop());
-        }
+        childRect.left = l;
+        childRect.top = t;
+        childRect.right = r;
+        childRect.bottom = b;
 
         if (flow == Flow.BACK) {
             mLayoutState.offset(lane, mIsVertical ? -childHeight : -childWidth);

@@ -4801,7 +4801,14 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
             cleanupLayoutState(child);
         }
 
-        attachChildToLayout(child, position, flow, needToMeasure);
+        attachChildToLayout(child, position, flow, mTempRect);
+
+        if (needToMeasure) {
+            child.layout(mTempRect.left, mTempRect.top, mTempRect.right, mTempRect.bottom);
+        } else {
+            child.offsetLeftAndRight(mTempRect.left - child.getLeft());
+            child.offsetTopAndBottom(mTempRect.top - child.getTop());
+        }
     }
 
     void fillGap(Flow flow) {
@@ -6027,7 +6034,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
     protected abstract void resetLayout(int offset);
 
     protected abstract void detachChildFromLayout(View child, int position, Flow flow);
-    protected abstract void attachChildToLayout(View child, int position, Flow flow, boolean needsLayout);
+    protected abstract void attachChildToLayout(View child, int position, Flow flow, Rect childRect);
 
     private class AdapterDataSetObserver extends DataSetObserver {
         private Parcelable mInstanceState = null;
