@@ -114,10 +114,10 @@ public class TwoWaySpannableGridView extends TwoWayView {
     }
 
     @Override
-    public void detachChildFromLayout(View child, int position, boolean flow) {
+    public void detachChildFromLayout(View child, int position, Flow flow) {
         final int lane = getLaneForPosition(position);
 
-        if (flow) {
+        if (flow == Flow.FORWARD) {
             mLayoutState.offset(lane, mIsVertical ? child.getHeight() : child.getWidth());
         }
 
@@ -129,7 +129,7 @@ public class TwoWaySpannableGridView extends TwoWayView {
     }
 
     @Override
-    public void attachChildToLayout(View child, int position, boolean flow, boolean needsLayout) {
+    public void attachChildToLayout(View child, int position, Flow flow, boolean needsLayout) {
         final int childWidth = child.getMeasuredWidth();
         final int childHeight = child.getMeasuredHeight();
 
@@ -155,7 +155,7 @@ public class TwoWaySpannableGridView extends TwoWayView {
             child.layout(l, t, r, b);
         }
 
-        if (!flow) {
+        if (flow == Flow.BACK) {
             mLayoutState.offset(lane, mIsVertical ? -childHeight : -childWidth);
         }
 

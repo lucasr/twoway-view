@@ -98,8 +98,8 @@ public class TwoWayListView extends TwoWayView {
     }
 
     @Override
-    public void detachChildFromLayout(View child, int position, boolean flow) {
-        if (flow) {
+    public void detachChildFromLayout(View child, int position, Flow flow) {
+        if (flow == Flow.FORWARD) {
             mLayoutState.offset(0, mIsVertical ? child.getHeight() : child.getWidth());
         }
 
@@ -111,7 +111,7 @@ public class TwoWayListView extends TwoWayView {
     }
 
     @Override
-    public void attachChildToLayout(View child, int position, boolean flow, boolean needsLayout) {
+    public void attachChildToLayout(View child, int position, Flow flow, boolean needsLayout) {
         final int childWidth = child.getMeasuredWidth();
         final int childHeight = child.getMeasuredHeight();
 
@@ -120,11 +120,11 @@ public class TwoWayListView extends TwoWayView {
         final Rect state = mLayoutState.get(0);
         if (mIsVertical) {
             l = state.left;
-            t = (flow ? state.bottom : state.top - childHeight);
+            t = (flow == Flow.FORWARD ? state.bottom : state.top - childHeight);
             r = state.right;
             b = t + childHeight;
         } else {
-            l = (flow ? state.right : state.left - childWidth);
+            l = (flow == Flow.FORWARD ? state.right : state.left - childWidth);
             t = state.top;
             r = l + childWidth;
             b = state.bottom;
@@ -137,7 +137,7 @@ public class TwoWayListView extends TwoWayView {
             child.offsetTopAndBottom(t - child.getTop());
         }
 
-        if (!flow) {
+        if (flow == Flow.BACK) {
             mLayoutState.offset(0, mIsVertical ? -childHeight : -childWidth);
         }
 

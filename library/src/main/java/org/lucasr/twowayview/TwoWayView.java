@@ -139,6 +139,11 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         VERTICAL
     }
 
+    protected static enum Flow {
+        BACK,
+        FORWARD
+    }
+
     private ListAdapter mAdapter;
 
     private boolean mIsVertical;
@@ -3047,8 +3052,8 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         int firstDetachedPos = 0;
         int detachedCount = 0;
 
-        final boolean down = (incrementalDelta < 0);
-        if (down) {
+        final Flow flow = (incrementalDelta < 0 ? Flow.FORWARD : Flow.BACK);
+        if (flow == Flow.FORWARD) {
             int childrenStart = -incrementalDelta + start;
 
             for (int i = 0; i < childCount; i++) {
@@ -3063,7 +3068,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
                 final int position = firstPosition + i;
                 mRecycler.addScrapView(child, position);
-                detachChildFromLayout(child, position, down);
+                detachChildFromLayout(child, position, flow);
             }
         } else {
             int childrenEnd = end - incrementalDelta;
@@ -3081,7 +3086,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
                 final int position = firstPosition + i;
                 mRecycler.addScrapView(child, position);
-                detachChildFromLayout(child, position, down);
+                detachChildFromLayout(child, position, flow);
             }
         }
 
@@ -3099,13 +3104,13 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
         offsetChildren(incrementalDelta);
 
-        if (down) {
+        if (flow == Flow.FORWARD) {
             mFirstPosition += detachedCount;
         }
 
         final int absIncrementalDelta = Math.abs(incrementalDelta);
         if (spaceBefore < absIncrementalDelta || spaceAfter < absIncrementalDelta) {
-            fillGap(down);
+            fillGap(flow);
         }
 
         if (!inTouchMode && mSelectedPosition != INVALID_POSITION) {
@@ -3944,7 +3949,8 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
                 break;
 
             case LAYOUT_FORCE_BOTTOM:
-                selected = fillBefore(mItemCount - 1, end);
+                resetLayout(end);
+                selected = fillBefore(mItemCount - 1);
                 adjustViewsStartOrEnd();
                 break;
 
@@ -4112,12 +4118,12 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
              */
 
             // Put oldSelected (A) where it belongs
-            oldSelected = makeAndAddView(selectedPosition - 1, true, false);
+            oldSelected = makeAndAddView(selectedPosition - 1, Flow.FORWARD, false);
 
             final int itemMargin = mItemMargin;
 
             // Now put the new selection (B) below that
-            selected = makeAndAddView(selectedPosition, true, true);
+            selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
 
             final int selectedStart = getChildStartEdge(selected);
             final int selectedEnd = getChildEndEdge(selected);
@@ -4145,9 +4151,13 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
             }
 
             // Fill in views before and after
-            fillBefore(mSelectedPosition - 2, selectedStart - itemMargin);
+            // TODO: reset layout here?
+//            fillBefore(mSelectedPosition - 2, selectedStart - itemMargin);
+            fillBefore(mSelectedPosition - 2);
             adjustViewsStartOrEnd();
-            fillAfter(mSelectedPosition + 1, selectedEnd + itemMargin);
+            // TODO reset layout here?
+//            fillAfter(mSelectedPosition + 1, selectedEnd + itemMargin);
+            fillAfter(mSelectedPosition + 1);
         } else if (delta < 0) {
             /*
              * Case 2: Scrolling up.
@@ -4172,11 +4182,11 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
             if (newSelected != null) {
                 // Try to position the top of newSel (A) where it was before it was selected
                 final int newSelectedStart = (mIsVertical ? newSelected.getTop() : newSelected.getLeft());
-                selected = makeAndAddView(selectedPosition, true, true);
+                selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
             } else {
                 // If (A) was not on screen and so did not have a view, position
                 // it above the oldSelected (B)
-                selected = makeAndAddView(selectedPosition, false, true);
+                selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
             }
 
             final int selectedStart = getChildStartEdge(selected);
@@ -4209,7 +4219,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
              * Case 3: Staying still
              */
 
-            selected = makeAndAddView(selectedPosition, true, true);
+            selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
 
             final int selectedStart = getChildStartEdge(selected);
             final int selectedEnd = getChildEndEdge(selected);
@@ -4719,7 +4729,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         return returnedWidth;
     }
 
-    private View makeAndAddView(int position, boolean flow, boolean selected) {
+    private View makeAndAddView(int position, Flow flow, boolean selected) {
         if (!mDataChanged) {
             // Try to use an existing view for this position
             final View activeChild = mRecycler.getActiveView(position);
@@ -4742,7 +4752,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     @TargetApi(11)
-    private void setupChild(View child, int position, boolean flow, boolean selected,
+    private void setupChild(View child, int position, Flow flow, boolean selected,
                             boolean recycled) {
         final boolean isSelected = selected && shouldShowSelector();
         final boolean updateChildSelected = isSelected != child.isSelected();
@@ -4763,10 +4773,10 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         lp.viewType = mAdapter.getItemViewType(position);
 
         if (recycled && !lp.forceAdd) {
-            attachViewToParent(child, (flow ? -1 : 0), lp);
+            attachViewToParent(child, (flow == Flow.FORWARD ? -1 : 0), lp);
         } else {
             lp.forceAdd = false;
-            addViewInLayout(child, (flow ? -1 : 0), lp, true);
+            addViewInLayout(child, (flow == Flow.FORWARD ? -1 : 0), lp, true);
         }
 
         if (updateChildSelected) {
@@ -4794,25 +4804,19 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         attachChildToLayout(child, position, flow, needToMeasure);
     }
 
-    void fillGap(boolean down) {
+    void fillGap(Flow flow) {
         final int childCount = getChildCount();
 
-        if (down) {
-            final int start = getStartEdge();
-            final int offset = (childCount > 0 ? getOuterEndEdge() + mItemMargin : start);
-
-            fillAfter(mFirstPosition + childCount, offset);
+        if (flow == Flow.FORWARD) {
+            fillAfter(mFirstPosition + childCount);
             correctTooHigh(childCount);
         } else {
-            final int end = getEndEdge();
-            final int offset = (childCount > 0 ? getOuterStartEdge() - mItemMargin : end);
-
-            fillBefore(mFirstPosition - 1, offset);
+            fillBefore(mFirstPosition - 1);
             correctTooLow(childCount);
         }
     }
 
-    private View fillBefore(int pos, int offset) {
+    private View fillBefore(int pos) {
         View selectedView = null;
 
         final int start = getStartEdge();
@@ -4820,7 +4824,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
         while (nextOffset > start && pos >= 0) {
             boolean isSelected = (pos == mSelectedPosition);
-            View child = makeAndAddView(pos, false, isSelected);
+            View child = makeAndAddView(pos, Flow.BACK, isSelected);
             nextOffset = getInnerStartEdge() - mItemMargin;
 
             if (isSelected) {
@@ -4835,7 +4839,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         return selectedView;
     }
 
-    private View fillAfter(int pos, int offset) {
+    private View fillAfter(int pos) {
         View selectedView = null;
 
         final int end = getEndEdge();
@@ -4843,7 +4847,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
         while (nextOffset < end && pos < mItemCount) {
             boolean isSelected = (pos == mSelectedPosition);
-            View child = makeAndAddView(pos, true, isSelected);
+            View child = makeAndAddView(pos, Flow.FORWARD, isSelected);
             nextOffset = getInnerEndEdge() + mItemMargin;
 
             if (isSelected) {
@@ -4860,19 +4864,17 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         resetLayout(offset);
 
         final boolean tempIsSelected = (position == mSelectedPosition);
-        View temp = makeAndAddView(position, true, tempIsSelected);
+        View temp = makeAndAddView(position, Flow.FORWARD, tempIsSelected);
 
         // Possibly changed again in fillBefore if we add rows above this one.
         mFirstPosition = position;
 
-        final int offsetBefore = getChildStartEdge(temp) + mItemMargin;
-        final View before = fillBefore(position - 1, offsetBefore);
+        final View before = fillBefore(position - 1);
 
         // This will correct for the top of the first view not touching the top of the list
         adjustViewsStartOrEnd();
 
-        final int offsetAfter = getChildEndEdge(temp) + mItemMargin;
-        final View after = fillAfter(position + 1, offsetAfter);
+        final View after = fillAfter(position + 1);
 
         final int childCount = getChildCount();
         if (childCount > 0) {
@@ -4898,14 +4900,14 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
             mFirstPosition = 0;
         }
 
-        return fillAfter(mFirstPosition, offset);
+        return fillAfter(mFirstPosition);
     }
 
     private View fillFromMiddle(int start, int end) {
         final int size = end - start;
         int position = reconcileSelectedPosition();
 
-        View selected = makeAndAddView(position, true, true);
+        View selected = makeAndAddView(position, Flow.FORWARD, true);
         mFirstPosition = position;
 
         if (mIsVertical) {
@@ -4927,19 +4929,20 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     private void fillBeforeAndAfter(View selected, int position) {
-        final int offsetBefore = getChildStartEdge(selected) + mItemMargin;
-        fillBefore(position - 1, offsetBefore);
+//        TODO: reset layout here?
+//        final int offsetBefore = getChildStartEdge(selected) - mItemMargin;
+        fillBefore(position - 1);
 
         adjustViewsStartOrEnd();
 
-        final int offsetAfter = getChildEndEdge(selected) + mItemMargin;
-        fillAfter(position + 1, offsetAfter);
+//        final int offsetAfter = getChildEndEdge(selected) + mItemMargin;
+        fillAfter(position + 1);
     }
 
     private View fillFromSelection(int selectedTop, int start, int end) {
         final int selectedPosition = mSelectedPosition;
 
-        View selected = makeAndAddView(selectedPosition, true, true);
+        View selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
 
         final int selectedStart = getChildStartEdge(selected);
         final int selectedEnd = getChildEndEdge(selected);
@@ -5017,7 +5020,9 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
                 // Fill the gap that was opened above mFirstPosition with more rows, if
                 // possible
-                fillBefore(mFirstPosition - 1, firstStart - mItemMargin);
+                // TODO: reset layout here?
+//                fillBefore(mFirstPosition - 1, firstStart - mItemMargin);
+                fillBefore(mFirstPosition - 1);
 
                 // Close up the remaining gap
                 adjustViewsStartOrEnd();
@@ -5061,7 +5066,9 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
                     // Fill the gap that was opened below the last position with more rows, if
                     // possible
-                    fillAfter(lastPosition + 1, lastEnd + mItemMargin);
+                    // TODO: reset layout here?
+//                    fillAfter(lastPosition + 1, lastEnd + mItemMargin);
+                    fillAfter(lastPosition + 1);
 
                     // Close up the remaining gap
                     adjustViewsStartOrEnd();
@@ -6019,8 +6026,8 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
     protected abstract void offsetLayout(int offset);
     protected abstract void resetLayout(int offset);
 
-    protected abstract void detachChildFromLayout(View child, int position, boolean flow);
-    protected abstract void attachChildToLayout(View child, int position, boolean flow, boolean needsLayout);
+    protected abstract void detachChildFromLayout(View child, int position, Flow flow);
+    protected abstract void attachChildToLayout(View child, int position, Flow flow, boolean needsLayout);
 
     private class AdapterDataSetObserver extends DataSetObserver {
         private Parcelable mInstanceState = null;
