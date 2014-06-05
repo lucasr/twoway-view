@@ -6,23 +6,23 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
-public class TwoWayGridView extends TwoWayView {
-    private static final String LOGTAG = "TwoWayGridView";
+public class TwoWaySpannableGridView extends TwoWayView {
+    private static final String LOGTAG = "TwoWaySpannableGridView";
 
     private LayoutState mLayoutState;
     private int mLaneSize;
     private int mLaneCount;
     private boolean mIsVertical;
 
-    public TwoWayGridView(Context context) {
+    public TwoWaySpannableGridView(Context context) {
         this(context, null);
     }
 
-    public TwoWayGridView(Context context, AttributeSet attrs) {
+    public TwoWaySpannableGridView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TwoWayGridView(Context context, AttributeSet attrs, int defStyle) {
+    public TwoWaySpannableGridView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         mLaneSize = 0;
@@ -62,10 +62,10 @@ public class TwoWayGridView extends TwoWayView {
         }
 
         for (int i = 0; i < mLaneCount; i++) {
-            final int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
-            final int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
-            final int r = (mIsVertical ? l + mLaneSize : l);
-            final int b = (mIsVertical ? t : t + mLaneSize);
+            int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
+            int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
+            int r = (mIsVertical ? l + mLaneSize : l);
+            int b = (mIsVertical ? t : t + mLaneSize);
 
             mLayoutState.set(i, l, t, r, b);
         }
@@ -139,21 +139,20 @@ public class TwoWayGridView extends TwoWayView {
         final int l, t, r, b;
         if (mIsVertical) {
             l = laneState.left;
-            t = (flow ? laneState.bottom : laneState.top - childHeight);
+            t = laneState.bottom;
             r = laneState.right;
             b = t + childHeight;
         } else {
-            l = (flow ? laneState.right : laneState.left - childWidth);
+            l = laneState.right;
             t = laneState.top;
             r = l + childWidth;
             b = laneState.bottom;
         }
 
+        Log.d("BOOM", "Child layout, position = " + position + ", col = " + lane + " rect = " + new Rect(l, t, r, b));
+
         if (needsLayout) {
             child.layout(l, t, r, b);
-        } else {
-            child.offsetLeftAndRight(l - child.getLeft());
-            child.offsetTopAndBottom(t - child.getTop());
         }
 
         if (!flow) {

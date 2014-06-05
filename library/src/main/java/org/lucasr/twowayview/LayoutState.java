@@ -1,6 +1,7 @@
 package org.lucasr.twowayview;
 
 import android.graphics.Rect;
+import android.util.Log;
 
 import org.lucasr.twowayview.TwoWayView.Orientation;
 
@@ -8,7 +9,8 @@ class LayoutState {
     private boolean mIsVertical;
     private Rect[] mRects;
 
-    public LayoutState(int count) {
+    public LayoutState(Orientation orientation, int count) {
+        setOrientation(orientation);
         mRects = new Rect[count];
         for (int i = 0; i < count; i++) {
             mRects[i] = new Rect();
@@ -69,42 +71,42 @@ class LayoutState {
 
     public int getOuterStartEdge() {
         // TODO: make this a lot more performant/efficient
-        int firstStart = Integer.MAX_VALUE;
+        int outerState = Integer.MAX_VALUE;
         for (int i = 0; i < mRects.length; i++) {
             final Rect rect = mRects[i];
-            firstStart = Math.min(firstStart, mIsVertical ? rect.top : rect.left);
+            outerState = Math.min(outerState, mIsVertical ? rect.top : rect.left);
         }
 
-        return firstStart;
+        return outerState;
     }
 
     public int getInnerStartEdge() {
-        int lastStart = 0;
+        int innerStart = 0;
         for (int i = 0; i < mRects.length; i++) {
             final Rect rect = mRects[i];
-            lastStart = Math.max(lastStart, mIsVertical ? rect.top : rect.left);
+            innerStart = Math.max(innerStart, mIsVertical ? rect.top : rect.left);
         }
 
-        return lastStart;
+        return innerStart;
     }
 
     public int getInnerEndEdge() {
-        int firstEnd = Integer.MAX_VALUE;
+        int innerEnd = Integer.MAX_VALUE;
         for (int i = 0; i < mRects.length; i++) {
             final Rect rect = mRects[i];
-            firstEnd = Math.min(firstEnd, mIsVertical ? rect.bottom : rect.right);
+            innerEnd = Math.min(innerEnd, mIsVertical ? rect.bottom : rect.right);
         }
 
-        return firstEnd;
+        return innerEnd;
     }
 
     public int getOuterEndEdge() {
-        int lastEnd = 0;
+        int outerEnd = 0;
         for (int i = 0; i < mRects.length; i++) {
             final Rect rect = mRects[i];
-            lastEnd = Math.max(lastEnd, mIsVertical ? rect.bottom : rect.right);
+            outerEnd = Math.max(outerEnd, mIsVertical ? rect.bottom : rect.right);
         }
 
-        return lastEnd;
+        return outerEnd;
     }
 }
