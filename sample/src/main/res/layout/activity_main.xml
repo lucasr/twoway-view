@@ -15,10 +15,9 @@
    limitations under the License.
 -->
 
-<org.lucasr.twowayview.TWGridView
+<org.lucasr.twowayview.TWStaggeredGridView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/list"
     style="@style/TwoWayView"
     android:layout_width="fill_parent"

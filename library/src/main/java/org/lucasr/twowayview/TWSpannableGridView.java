@@ -153,7 +153,7 @@ public class TWSpannableGridView extends TWView {
         childRect.right = r;
         childRect.bottom = b;
 
-        if (flow == Flow.BACK) {
+        if (flow == Flow.BACKWARD) {
             mLayoutState.offset(lane, mIsVertical ? -childHeight : -childWidth);
         }
 

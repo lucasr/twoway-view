@@ -3,12 +3,16 @@ package org.lucasr.twowayview;
 import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.SparseIntArray;
 import android.view.View;
 
 public class TWStaggeredGridView extends TWView {
     private static final String LOGTAG = "TwoWayStaggeredGridView";
 
+    private static final int NO_LANE = -1;
+
     private TWLayoutState mLayoutState;
+    private SparseIntArray mItemLanes;
     private int mLaneSize;
     private int mLaneCount;
     private boolean mIsVertical;
@@ -29,11 +33,36 @@ public class TWStaggeredGridView extends TWView {
 
         Orientation orientation = getOrientation();
         mLayoutState = new TWLayoutState(orientation, mLaneCount);
+        mItemLanes = new SparseIntArray(10);
         mIsVertical = (orientation == Orientation.VERTICAL);
     }
 
-    private int getLaneForPosition(int position) {
-        return (position % mLaneCount);
+    private int getLaneForPosition(int position, Flow flow) {
+        int lane = mItemLanes.get(position, NO_LANE);
+        if (lane != NO_LANE) {
+            return lane;
+        }
+
+        int pos = (flow == Flow.FORWARD ? Integer.MAX_VALUE : Integer.MIN_VALUE);
+        for (int i = 0; i < mLaneCount; i++) {
+            final Rect laneState = mLayoutState.get(i);
+
+            final int lanePos;
+            if (mIsVertical) {
+                lanePos = (flow == Flow.FORWARD ? laneState.bottom : laneState.top);
+            } else {
+                lanePos = (flow == Flow.FORWARD ? laneState.right : laneState.left);
+            }
+
+            if ((flow == Flow.FORWARD && lanePos < pos) ||
+                (flow == Flow.BACKWARD && lanePos > pos)) {
+                pos = lanePos;
+                lane = i;
+            }
+        }
+
+        mItemLanes.put(position, lane);
+        return lane;
     }
 
     @Override
@@ -61,10 +90,10 @@ public class TWStaggeredGridView extends TWView {
         }
 
         for (int i = 0; i < mLaneCount; i++) {
-            int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
-            int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
-            int r = (mIsVertical ? l + mLaneSize : l);
-            int b = (mIsVertical ? t : t + mLaneSize);
+            final int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
+            final int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
+            final int r = (mIsVertical ? l + mLaneSize : l);
+            final int b = (mIsVertical ? t : t + mLaneSize);
 
             mLayoutState.set(i, l, t, r, b);
         }
@@ -114,7 +143,10 @@ public class TWStaggeredGridView extends TWView {
 
     @Override
     public void detachChildFromLayout(View child, int position, Flow flow) {
-        final int lane = getLaneForPosition(position);
+        final int lane = mItemLanes.get(position, NO_LANE);
+        if (lane == NO_LANE) {
+            return;
+        }
 
         if (flow == Flow.FORWARD) {
             mLayoutState.offset(lane, mIsVertical ? child.getHeight() : child.getWidth());
@@ -132,17 +164,17 @@ public class TWStaggeredGridView extends TWView {
         final int childWidth = child.getMeasuredWidth();
         final int childHeight = child.getMeasuredHeight();
 
-        final int lane = getLaneForPosition(position);
+        final int lane = getLaneForPosition(position, flow);
         final Rect laneState = mLayoutState.get(lane);
 
         final int l, t, r, b;
         if (mIsVertical) {
             l = laneState.left;
-            t = laneState.bottom;
+            t = (flow == Flow.FORWARD ? laneState.bottom : laneState.top - childHeight);
             r = laneState.right;
             b = t + childHeight;
         } else {
-            l = laneState.right;
+            l = (flow == Flow.FORWARD ? laneState.right : laneState.left - childWidth);
             t = laneState.top;
             r = l + childWidth;
             b = laneState.bottom;
@@ -153,7 +185,7 @@ public class TWStaggeredGridView extends TWView {
         childRect.right = r;
         childRect.bottom = b;
 
-        if (flow == Flow.BACK) {
+        if (flow == Flow.BACKWARD) {
             mLayoutState.offset(lane, mIsVertical ? -childHeight : -childWidth);
         }
 

@@ -60,7 +60,17 @@ public class SimpleListAdapter extends BaseAdapter {
 		    holder = (ViewHolder) convertView.getTag();
 		}
 
-        holder.title.setText("Item: " + position);
+        holder.title.setText(String.valueOf(position));
+
+        ViewGroup.LayoutParams lp = convertView.getLayoutParams();
+        if (position % 3 == 0) {
+            lp.height = 300;
+        } else if (position % 5 == 0) {
+            lp.height = 520;
+        } else {
+            lp.height = 160;
+        }
+        convertView.setLayoutParams(lp);
 
 		return convertView;
 	}

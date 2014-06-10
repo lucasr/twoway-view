@@ -140,7 +140,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     protected static enum Flow {
-        BACK,
+        BACKWARD,
         FORWARD
     }
 
@@ -3052,7 +3052,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         int firstDetachedPos = 0;
         int detachedCount = 0;
 
-        final Flow flow = (incrementalDelta < 0 ? Flow.FORWARD : Flow.BACK);
+        final Flow flow = (incrementalDelta < 0 ? Flow.FORWARD : Flow.BACKWARD);
         if (flow == Flow.FORWARD) {
             int childrenStart = -incrementalDelta + start;
 
@@ -4831,7 +4831,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         while (nextOffset > start && pos >= 0) {
             boolean isSelected = (pos == mSelectedPosition);
-            View child = makeAndAddView(pos, Flow.BACK, isSelected);
+            View child = makeAndAddView(pos, Flow.BACKWARD, isSelected);
             nextOffset = getInnerStartEdge() - mItemMargin;
 
             if (isSelected) {

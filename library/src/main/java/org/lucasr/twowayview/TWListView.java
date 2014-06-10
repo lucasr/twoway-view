@@ -98,14 +98,17 @@ public class TWListView extends TWView {
 
     @Override
     public void detachChildFromLayout(View child, int position, Flow flow) {
+        final int childWidth = child.getWidth();
+        final int childHeight = child.getHeight();
+
         if (flow == Flow.FORWARD) {
-            mLayoutState.offset(0, mIsVertical ? child.getHeight() : child.getWidth());
+            mLayoutState.offset(0, mIsVertical ? childHeight : childWidth);
         }
 
         if (mIsVertical) {
-            mLayoutState.reduceHeightBy(0, child.getHeight());
+            mLayoutState.reduceHeightBy(0, childHeight);
         } else {
-            mLayoutState.reduceWidthBy(0, child.getWidth());
+            mLayoutState.reduceWidthBy(0, childWidth);
         }
     }
 
@@ -134,7 +137,7 @@ public class TWListView extends TWView {
         childRect.right = r;
         childRect.bottom = b;
 
-        if (flow == Flow.BACK) {
+        if (flow == Flow.BACKWARD) {
             mLayoutState.offset(0, mIsVertical ? -childHeight : -childWidth);
         }
 

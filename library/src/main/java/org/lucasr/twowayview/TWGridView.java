@@ -116,14 +116,17 @@ public class TWGridView extends TWView {
     public void detachChildFromLayout(View child, int position, Flow flow) {
         final int lane = getLaneForPosition(position);
 
+        final int childWidth = child.getWidth();
+        final int childHeight = child.getHeight();
+
         if (flow == Flow.FORWARD) {
-            mLayoutState.offset(lane, mIsVertical ? child.getHeight() : child.getWidth());
+            mLayoutState.offset(lane, mIsVertical ? childHeight : childWidth);
         }
 
         if (mIsVertical) {
-            mLayoutState.reduceHeightBy(lane, child.getHeight());
+            mLayoutState.reduceHeightBy(lane, childHeight);
         } else {
-            mLayoutState.reduceWidthBy(lane, child.getWidth());
+            mLayoutState.reduceWidthBy(lane, childWidth);
         }
     }
 
@@ -153,7 +156,7 @@ public class TWGridView extends TWView {
         childRect.right = r;
         childRect.bottom = b;
 
-        if (flow == Flow.BACK) {
+        if (flow == Flow.BACKWARD) {
             mLayoutState.offset(lane, mIsVertical ? -childHeight : -childWidth);
         }
 
