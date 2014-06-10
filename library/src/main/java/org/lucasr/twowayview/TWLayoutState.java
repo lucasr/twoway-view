@@ -1,15 +1,14 @@
 package org.lucasr.twowayview;
 
 import android.graphics.Rect;
-import android.util.Log;
 
-import org.lucasr.twowayview.TwoWayView.Orientation;
+import org.lucasr.twowayview.TWView.Orientation;
 
-class LayoutState {
+class TWLayoutState {
     private boolean mIsVertical;
     private Rect[] mRects;
 
-    public LayoutState(Orientation orientation, int count) {
+    public TWLayoutState(Orientation orientation, int count) {
         setOrientation(orientation);
         mRects = new Rect[count];
         for (int i = 0; i < count; i++) {

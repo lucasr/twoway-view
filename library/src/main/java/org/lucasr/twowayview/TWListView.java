@@ -5,35 +5,26 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class TwoWayStaggeredGridView extends TwoWayView {
-    private static final String LOGTAG = "TwoWayStaggeredGridView";
+public class TWListView extends TWView {
+    private static final String LOGTAG = "TwoWayListView";
 
-    private LayoutState mLayoutState;
-    private int mLaneSize;
-    private int mLaneCount;
+    private TWLayoutState mLayoutState;
     private boolean mIsVertical;
 
-    public TwoWayStaggeredGridView(Context context) {
+    public TWListView(Context context) {
         this(context, null);
     }
 
-    public TwoWayStaggeredGridView(Context context, AttributeSet attrs) {
+    public TWListView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TwoWayStaggeredGridView(Context context, AttributeSet attrs, int defStyle) {
+    public TWListView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        mLaneSize = 0;
-        mLaneCount = 3;
-
         Orientation orientation = getOrientation();
-        mLayoutState = new LayoutState(orientation, mLaneCount);
+        mLayoutState = new TWLayoutState(orientation, 1);
         mIsVertical = (orientation == Orientation.VERTICAL);
-    }
-
-    private int getLaneForPosition(int position) {
-        return (position % mLaneCount);
     }
 
     @Override
@@ -49,45 +40,36 @@ public class TwoWayStaggeredGridView extends TwoWayView {
 
     @Override
     public void resetLayout(int offset) {
-        final int paddingLeft = getPaddingLeft();
-        final int paddingTop = getPaddingTop();
-        final int paddingRight = getPaddingRight();
-        final int paddingBottom = getPaddingBottom();
+        final int l = getPaddingLeft() + (mIsVertical ? 0 : offset);
+        final int t = getPaddingTop() + (mIsVertical ? offset : 0);
+        final int r = (mIsVertical ? getWidth() - getPaddingRight() : l);
+        final int b = (mIsVertical ? t : getHeight() - getPaddingBottom());
 
-        if (mIsVertical) {
-            mLaneSize = (getWidth() - paddingLeft - paddingRight) / mLaneCount;
-        } else {
-            mLaneSize = (getHeight() - paddingTop - paddingBottom) / mLaneCount;
-        }
-
-        for (int i = 0; i < mLaneCount; i++) {
-            int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
-            int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
-            int r = (mIsVertical ? l + mLaneSize : l);
-            int b = (mIsVertical ? t : t + mLaneSize);
-
-            mLayoutState.set(i, l, t, r, b);
-        }
+        mLayoutState.set(0, l, t, r, b);
     }
 
     @Override
     public int getOuterStartEdge() {
-        return mLayoutState.getOuterStartEdge();
+        final Rect state = mLayoutState.get(0);
+        return (mIsVertical ? state.top : state.left);
     }
 
     @Override
     public int getInnerStartEdge() {
-        return mLayoutState.getInnerStartEdge();
+        // Inner and outer edges are always the same in a list
+        return getOuterStartEdge();
     }
 
     @Override
     public int getInnerEndEdge() {
-        return mLayoutState.getInnerEndEdge();
+        // Inner and outer edges are always the same in a list
+        return getOuterEndEdge();
     }
 
     @Override
     public int getOuterEndEdge() {
-        return mLayoutState.getOuterEndEdge();
+        final Rect state = mLayoutState.get(0);
+        return (mIsVertical ? state.bottom : state.right);
     }
 
     @Override
@@ -95,7 +77,8 @@ public class TwoWayStaggeredGridView extends TwoWayView {
         if (!mIsVertical && lp.width == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (mIsVertical) {
-            return MeasureSpec.makeMeasureSpec(mLaneSize, MeasureSpec.EXACTLY);
+            final int maxWidth = getWidth() - getPaddingLeft() - getPaddingRight();
+            return MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.width, MeasureSpec.EXACTLY);
         }
@@ -106,7 +89,8 @@ public class TwoWayStaggeredGridView extends TwoWayView {
         if (mIsVertical && lp.height == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (!mIsVertical) {
-            return MeasureSpec.makeMeasureSpec(mLaneSize, MeasureSpec.EXACTLY);
+            final int maxHeight = getHeight() - getPaddingTop() - getPaddingBottom();
+            return MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
         }
@@ -114,16 +98,14 @@ public class TwoWayStaggeredGridView extends TwoWayView {
 
     @Override
     public void detachChildFromLayout(View child, int position, Flow flow) {
-        final int lane = getLaneForPosition(position);
-
         if (flow == Flow.FORWARD) {
-            mLayoutState.offset(lane, mIsVertical ? child.getHeight() : child.getWidth());
+            mLayoutState.offset(0, mIsVertical ? child.getHeight() : child.getWidth());
         }
 
         if (mIsVertical) {
-            mLayoutState.reduceHeightBy(lane, child.getHeight());
+            mLayoutState.reduceHeightBy(0, child.getHeight());
         } else {
-            mLayoutState.reduceWidthBy(lane, child.getWidth());
+            mLayoutState.reduceWidthBy(0, child.getWidth());
         }
     }
 
@@ -132,20 +114,19 @@ public class TwoWayStaggeredGridView extends TwoWayView {
         final int childWidth = child.getMeasuredWidth();
         final int childHeight = child.getMeasuredHeight();
 
-        final int lane = getLaneForPosition(position);
-        final Rect laneState = mLayoutState.get(lane);
-
         final int l, t, r, b;
+
+        final Rect state = mLayoutState.get(0);
         if (mIsVertical) {
-            l = laneState.left;
-            t = laneState.bottom;
-            r = laneState.right;
+            l = state.left;
+            t = (flow == Flow.FORWARD ? state.bottom : state.top - childHeight);
+            r = state.right;
             b = t + childHeight;
         } else {
-            l = laneState.right;
-            t = laneState.top;
+            l = (flow == Flow.FORWARD ? state.right : state.left - childWidth);
+            t = state.top;
             r = l + childWidth;
-            b = laneState.bottom;
+            b = state.bottom;
         }
 
         childRect.left = l;
@@ -154,13 +135,13 @@ public class TwoWayStaggeredGridView extends TwoWayView {
         childRect.bottom = b;
 
         if (flow == Flow.BACK) {
-            mLayoutState.offset(lane, mIsVertical ? -childHeight : -childWidth);
+            mLayoutState.offset(0, mIsVertical ? -childHeight : -childWidth);
         }
 
         if (mIsVertical) {
-            mLayoutState.increaseHeightBy(lane, childHeight);
+            mLayoutState.increaseHeightBy(0, childHeight);
         } else {
-            mLayoutState.increaseWidthBy(lane, childWidth);
+            mLayoutState.increaseWidthBy(0, childWidth);
         }
     }
 }

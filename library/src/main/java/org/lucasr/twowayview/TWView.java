@@ -88,7 +88,7 @@ import static android.os.Build.VERSION_CODES.HONEYCOMB;
  * A view that shows items in a vertical or horizontal scrolling list.
  * The items come from the {@link ListAdapter} associated with this view.
  */
-public abstract class TwoWayView extends AdapterView<ListAdapter> implements
+public abstract class TWView extends AdapterView<ListAdapter> implements
         ViewTreeObserver.OnTouchModeChangeListener {
     private static final String LOGTAG = "TwoWayView";
 
@@ -278,7 +278,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
          * @param scrollState The current scroll state. One of {@link #SCROLL_STATE_IDLE},
          * {@link #SCROLL_STATE_TOUCH_SCROLL} or {@link #SCROLL_STATE_IDLE}.
          */
-        public void onScrollStateChanged(TwoWayView view, int scrollState);
+        public void onScrollStateChanged(TWView view, int scrollState);
 
         /**
          * Callback method to be invoked when the list or grid has been scrolled. This will be
@@ -289,7 +289,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
          * @param visibleItemCount the number of visible cells
          * @param totalItemCount the number of items in the list adaptor
          */
-        public void onScroll(TwoWayView view, int firstVisibleItem, int visibleItemCount,
+        public void onScroll(TWView view, int firstVisibleItem, int visibleItemCount,
                 int totalItemCount);
     }
 
@@ -298,8 +298,8 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
      * inside the RecycleBin's scrap heap. This listener is used to free resources
      * associated to Views placed in the RecycleBin.
      *
-     * @see TwoWayView.RecycleBin
-     * @see TwoWayView#setRecyclerListener(TwoWayView.RecyclerListener)
+     * @see TWView.RecycleBin
+     * @see TWView#setRecyclerListener(TWView.RecyclerListener)
      */
     public static interface RecyclerListener {
         /**
@@ -312,15 +312,15 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         void onMovedToScrapHeap(View view);
     }
 
-    public TwoWayView(Context context) {
+    public TWView(Context context) {
         this(context, null);
     }
 
-    public TwoWayView(Context context, AttributeSet attrs) {
+    public TWView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TwoWayView(Context context, AttributeSet attrs, int defStyle) {
+    public TWView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         mNeedSync = false;
@@ -392,22 +392,22 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
         ViewCompat.setOverScrollMode(this, ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS);
 
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TwoWayView, defStyle, 0);
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TWView, defStyle, 0);
 
         mDrawSelectorOnTop = a.getBoolean(
-                R.styleable.TwoWayView_android_drawSelectorOnTop, false);
+                R.styleable.TWView_android_drawSelectorOnTop, false);
 
-        Drawable d = a.getDrawable(R.styleable.TwoWayView_android_listSelector);
+        Drawable d = a.getDrawable(R.styleable.TWView_android_listSelector);
         if (d != null) {
             setSelector(d);
         }
 
-        int orientation = a.getInt(R.styleable.TwoWayView_android_orientation, -1);
+        int orientation = a.getInt(R.styleable.TWView_android_orientation, -1);
         if (orientation >= 0) {
             setOrientation(Orientation.values()[orientation]);
         }
 
-        int choiceMode = a.getInt(R.styleable.TwoWayView_android_choiceMode, -1);
+        int choiceMode = a.getInt(R.styleable.TWView_android_choiceMode, -1);
         if (choiceMode >= 0) {
             setChoiceMode(ChoiceMode.values()[choiceMode]);
         }
@@ -488,8 +488,8 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
      * @param l The recycler listener to be notified of views set aside
      *        in the recycler.
      *
-     * @see TwoWayView.RecycleBin
-     * @see TwoWayView.RecyclerListener
+     * @see TWView.RecycleBin
+     * @see TWView.RecyclerListener
      */
     public void setRecyclerListener(RecyclerListener l) {
         mRecycler.mRecyclerListener = l;
@@ -1247,7 +1247,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
             OnItemLongClickListener listener = getOnItemLongClickListener();
             if (listener != null) {
-                handled = listener.onItemLongClick(TwoWayView.this, originalView,
+                handled = listener.onItemLongClick(TWView.this, originalView,
                         longPressPosition, longPressId);
             }
 
@@ -1699,14 +1699,14 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
     @TargetApi(14)
     public void onInitializeAccessibilityEvent(AccessibilityEvent event) {
         super.onInitializeAccessibilityEvent(event);
-        event.setClassName(TwoWayView.class.getName());
+        event.setClassName(TWView.class.getName());
     }
 
     @Override
     @TargetApi(14)
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
-        info.setClassName(TwoWayView.class.getName());
+        info.setClassName(TWView.class.getName());
 
         AccessibilityNodeInfoCompat infoCompat = new AccessibilityNodeInfoCompat(info);
 
@@ -5400,13 +5400,13 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
         OnItemLongClickListener listener = getOnItemLongClickListener();
         if (listener != null) {
-            handled = listener.onItemLongClick(TwoWayView.this, child,
+            handled = listener.onItemLongClick(TWView.this, child,
                     longPressPosition, longPressId);
         }
 
         if (!handled) {
             mContextMenuInfo = createContextMenuInfo(child, longPressPosition, longPressId);
-            handled = super.showContextMenuForChild(TwoWayView.this);
+            handled = super.showContextMenuForChild(TWView.this);
         }
 
         if (handled) {
@@ -6047,9 +6047,9 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
 
             // Detect the case where a cursor that was previously invalidated has
             // been re-populated with new data.
-            if (TwoWayView.this.mHasStableIds && mInstanceState != null
+            if (TWView.this.mHasStableIds && mInstanceState != null
                     && mOldItemCount == 0 && mItemCount > 0) {
-                TwoWayView.this.onRestoreInstanceState(mInstanceState);
+                TWView.this.onRestoreInstanceState(mInstanceState);
                 mInstanceState = null;
             } else {
                 rememberSyncState();
@@ -6063,10 +6063,10 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         public void onInvalidated() {
             mDataChanged = true;
 
-            if (TwoWayView.this.mHasStableIds) {
+            if (TWView.this.mHasStableIds) {
                 // Remember the current state for the case where our hosting activity is being
                 // stopped and later restarted
-                mInstanceState = TwoWayView.this.onSaveInstanceState();
+                mInstanceState = TWView.this.onSaveInstanceState();
             }
 
             // Data is invalid so we should reset our state
@@ -6097,7 +6097,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         LongSparseArray<Integer> checkIdState;
 
         /**
-         * Constructor called from {@link TwoWayView#onSaveInstanceState()}
+         * Constructor called from {@link TWView#onSaveInstanceState()}
          */
         SavedState(Parcelable superState) {
             super(superState);
@@ -6341,7 +6341,7 @@ public abstract class TwoWayView extends AdapterView<ListAdapter> implements
         private int mAmountToScroll;
 
         /**
-         * How {@link TwoWayView#arrowScrollFocused} returns its values.
+         * How {@link TWView#arrowScrollFocused} returns its values.
          */
         void populate(int selectedPosition, int amountToScroll) {
             mSelectedPosition = selectedPosition;

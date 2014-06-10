@@ -17,7 +17,7 @@
 
 <resources>
 
-    <declare-styleable name="TwoWayView">
+    <declare-styleable name="TWView">
         <attr name="android:orientation"/>
         <attr name="android:choiceMode"/>
         <attr name="android:listSelector"/>

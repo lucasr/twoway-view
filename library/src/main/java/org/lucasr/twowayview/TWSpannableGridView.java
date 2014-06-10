@@ -5,30 +5,30 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class TwoWayGridView extends TwoWayView {
-    private static final String LOGTAG = "TwoWayGridView";
+public class TWSpannableGridView extends TWView {
+    private static final String LOGTAG = "TwoWaySpannableGridView";
 
-    private LayoutState mLayoutState;
+    private TWLayoutState mLayoutState;
     private int mLaneSize;
     private int mLaneCount;
     private boolean mIsVertical;
 
-    public TwoWayGridView(Context context) {
+    public TWSpannableGridView(Context context) {
         this(context, null);
     }
 
-    public TwoWayGridView(Context context, AttributeSet attrs) {
+    public TWSpannableGridView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TwoWayGridView(Context context, AttributeSet attrs, int defStyle) {
+    public TWSpannableGridView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         mLaneSize = 0;
         mLaneCount = 3;
 
         Orientation orientation = getOrientation();
-        mLayoutState = new LayoutState(orientation, mLaneCount);
+        mLayoutState = new TWLayoutState(orientation, mLaneCount);
         mIsVertical = (orientation == Orientation.VERTICAL);
     }
 
@@ -61,10 +61,10 @@ public class TwoWayGridView extends TwoWayView {
         }
 
         for (int i = 0; i < mLaneCount; i++) {
-            final int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
-            final int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
-            final int r = (mIsVertical ? l + mLaneSize : l);
-            final int b = (mIsVertical ? t : t + mLaneSize);
+            int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
+            int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
+            int r = (mIsVertical ? l + mLaneSize : l);
+            int b = (mIsVertical ? t : t + mLaneSize);
 
             mLayoutState.set(i, l, t, r, b);
         }
@@ -138,11 +138,11 @@ public class TwoWayGridView extends TwoWayView {
         final int l, t, r, b;
         if (mIsVertical) {
             l = laneState.left;
-            t = (flow == Flow.FORWARD ? laneState.bottom : laneState.top - childHeight);
+            t = laneState.bottom;
             r = laneState.right;
             b = t + childHeight;
         } else {
-            l = (flow == Flow.FORWARD ? laneState.right : laneState.left - childWidth);
+            l = laneState.right;
             t = laneState.top;
             r = l + childWidth;
             b = laneState.bottom;

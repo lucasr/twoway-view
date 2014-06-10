@@ -5,30 +5,30 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class TwoWaySpannableGridView extends TwoWayView {
-    private static final String LOGTAG = "TwoWaySpannableGridView";
+public class TWGridView extends TWView {
+    private static final String LOGTAG = "TwoWayGridView";
 
-    private LayoutState mLayoutState;
+    private TWLayoutState mLayoutState;
     private int mLaneSize;
     private int mLaneCount;
     private boolean mIsVertical;
 
-    public TwoWaySpannableGridView(Context context) {
+    public TWGridView(Context context) {
         this(context, null);
     }
 
-    public TwoWaySpannableGridView(Context context, AttributeSet attrs) {
+    public TWGridView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TwoWaySpannableGridView(Context context, AttributeSet attrs, int defStyle) {
+    public TWGridView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         mLaneSize = 0;
         mLaneCount = 3;
 
         Orientation orientation = getOrientation();
-        mLayoutState = new LayoutState(orientation, mLaneCount);
+        mLayoutState = new TWLayoutState(orientation, mLaneCount);
         mIsVertical = (orientation == Orientation.VERTICAL);
     }
 
@@ -61,10 +61,10 @@ public class TwoWaySpannableGridView extends TwoWayView {
         }
 
         for (int i = 0; i < mLaneCount; i++) {
-            int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
-            int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
-            int r = (mIsVertical ? l + mLaneSize : l);
-            int b = (mIsVertical ? t : t + mLaneSize);
+            final int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
+            final int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
+            final int r = (mIsVertical ? l + mLaneSize : l);
+            final int b = (mIsVertical ? t : t + mLaneSize);
 
             mLayoutState.set(i, l, t, r, b);
         }
@@ -138,11 +138,11 @@ public class TwoWaySpannableGridView extends TwoWayView {
         final int l, t, r, b;
         if (mIsVertical) {
             l = laneState.left;
-            t = laneState.bottom;
+            t = (flow == Flow.FORWARD ? laneState.bottom : laneState.top - childHeight);
             r = laneState.right;
             b = t + childHeight;
         } else {
-            l = laneState.right;
+            l = (flow == Flow.FORWARD ? laneState.right : laneState.left - childWidth);
             t = laneState.top;
             r = l + childWidth;
             b = laneState.bottom;

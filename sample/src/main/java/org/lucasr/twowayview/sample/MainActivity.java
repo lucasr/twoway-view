@@ -16,7 +16,7 @@
 
 package org.lucasr.twowayview.sample;
 
-import org.lucasr.twowayview.TwoWayView;
+import org.lucasr.twowayview.TWView;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -31,7 +31,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     private static final String LOGTAG = "TwoWayViewSample";
 
-    private TwoWayView mListView;
+    private TWView mListView;
 
     private Toast mToast;
     private String mClickMessage;
@@ -52,7 +52,7 @@ public class MainActivity extends Activity {
         mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
         mToast.setGravity(Gravity.CENTER, 0, 0);
 
-        mListView = (TwoWayView) findViewById(R.id.list);
+        mListView = (TWView) findViewById(R.id.list);
 //        mListView.setItemMargin(10);
         mListView.setLongClickable(true);
 
@@ -75,9 +75,9 @@ public class MainActivity extends Activity {
             }
         });
 
-        mListView.setOnScrollListener(new TwoWayView.OnScrollListener() {
+        mListView.setOnScrollListener(new TWView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(TwoWayView view, int scrollState) {
+            public void onScrollStateChanged(TWView view, int scrollState) {
                 String stateName = "Undefined";
                 switch(scrollState) {
                 case SCROLL_STATE_IDLE:
@@ -98,14 +98,14 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onScroll(TwoWayView view, int firstVisibleItem,
+            public void onScroll(TWView view, int firstVisibleItem,
                     int visibleItemCount, int totalItemCount) {
                 mScrollMessage = "Scroll (first: " + firstVisibleItem + ", count = " + visibleItemCount + ")";
                 refreshToast();
             }
         });
 
-        mListView.setRecyclerListener(new TwoWayView.RecyclerListener() {
+        mListView.setRecyclerListener(new TWView.RecyclerListener() {
             @Override
             public void onMovedToScrapHeap(View view) {
                 Log.d(LOGTAG, "View moved to scrap heap");
