@@ -3006,8 +3006,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             return true;
         }
 
-        final int firstStart = getOuterStartEdge();
-        final int lastEnd = getOuterEndEdge();
+        final int outerStart = getOuterStartEdge();
+        final int outerEnd = getOuterEndEdge();
+        final int innerStart = getInnerStartEdge();
+        final int innerEnd = getInnerEndEdge();
 
         final int paddingLeft = getPaddingLeft();
         final int paddingTop = getPaddingTop();
@@ -3017,8 +3019,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         final int start = getStartEdge();
         final int end = getEndEdge();
 
-        final int spaceBefore = start - firstStart;
-        final int spaceAfter = lastEnd - end;
+        final int spaceBefore = start - innerStart;
+        final int spaceAfter = innerEnd - end;
 
         final int size;
         if (mIsVertical) {
@@ -3036,9 +3038,9 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         final int firstPosition = mFirstPosition;
 
         final boolean cannotScrollDown = (firstPosition == 0 &&
-                firstStart >= start && incrementalDelta >= 0);
+                outerStart >= start && incrementalDelta >= 0);
         final boolean cannotScrollUp = (firstPosition + childCount == mItemCount &&
-                lastEnd <= end && incrementalDelta <= 0);
+                outerEnd <= end && incrementalDelta <= 0);
 
         if (cannotScrollDown || cannotScrollUp) {
             return incrementalDelta != 0;
