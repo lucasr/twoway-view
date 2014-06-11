@@ -13,10 +13,14 @@ public class TWStaggeredGridView extends TWView {
     private static final int NO_LANE = -1;
 
     private TWLayoutState mLayoutState;
+
     private SparseIntArray mItemLanes;
     private int mLaneSize;
     private int mLaneCount;
+
     private boolean mIsVertical;
+
+    private final Rect mTempRect = new Rect();
 
     public TWStaggeredGridView(Context context) {
         this(context, null);
@@ -46,13 +50,13 @@ public class TWStaggeredGridView extends TWView {
 
         int targetEdge = (flow == Flow.FORWARD ? Integer.MAX_VALUE : Integer.MIN_VALUE);
         for (int i = 0; i < mLaneCount; i++) {
-            final Rect laneState = mLayoutState.get(i);
+            mLayoutState.get(i, mTempRect);
 
             final int laneEdge;
             if (mIsVertical) {
-                laneEdge = (flow == Flow.FORWARD ? laneState.bottom : laneState.top);
+                laneEdge = (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top);
             } else {
-                laneEdge = (flow == Flow.FORWARD ? laneState.right : laneState.left);
+                laneEdge = (flow == Flow.FORWARD ? mTempRect.right : mTempRect.left);
             }
 
             if ((flow == Flow.FORWARD && laneEdge < targetEdge) ||
@@ -166,19 +170,19 @@ public class TWStaggeredGridView extends TWView {
         final int childHeight = child.getMeasuredHeight();
 
         final int lane = getLaneForPosition(position, flow);
-        final Rect laneState = mLayoutState.get(lane);
+        mLayoutState.get(lane, mTempRect);
 
         final int l, t, r, b;
         if (mIsVertical) {
-            l = laneState.left;
-            t = (flow == Flow.FORWARD ? laneState.bottom : laneState.top - childHeight);
-            r = laneState.right;
+            l = mTempRect.left;
+            t = (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top - childHeight);
+            r = mTempRect.right;
             b = t + childHeight;
         } else {
-            l = (flow == Flow.FORWARD ? laneState.right : laneState.left - childWidth);
-            t = laneState.top;
+            l = (flow == Flow.FORWARD ? mTempRect.right : mTempRect.left - childWidth);
+            t = mTempRect.top;
             r = l + childWidth;
-            b = laneState.bottom;
+            b = mTempRect.bottom;
         }
 
         childRect.left = l;

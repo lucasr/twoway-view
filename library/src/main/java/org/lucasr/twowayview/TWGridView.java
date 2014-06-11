@@ -11,7 +11,10 @@ public class TWGridView extends TWView {
     private TWLayoutState mLayoutState;
     private int mLaneSize;
     private int mLaneCount;
+
     private boolean mIsVertical;
+
+    private final Rect mTempRect = new Rect();
 
     public TWGridView(Context context) {
         this(context, null);
@@ -136,19 +139,19 @@ public class TWGridView extends TWView {
         final int childHeight = child.getMeasuredHeight();
 
         final int lane = getLaneForPosition(position);
-        final Rect laneState = mLayoutState.get(lane);
+        mLayoutState.get(lane, mTempRect);
 
         final int l, t, r, b;
         if (mIsVertical) {
-            l = laneState.left;
-            t = (flow == Flow.FORWARD ? laneState.bottom : laneState.top - childHeight);
-            r = laneState.right;
+            l = mTempRect.left;
+            t = (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top - childHeight);
+            r = mTempRect.right;
             b = t + childHeight;
         } else {
-            l = (flow == Flow.FORWARD ? laneState.right : laneState.left - childWidth);
-            t = laneState.top;
+            l = (flow == Flow.FORWARD ? mTempRect.right : mTempRect.left - childWidth);
+            t = mTempRect.top;
             r = l + childWidth;
-            b = laneState.bottom;
+            b = mTempRect.bottom;
         }
 
         childRect.left = l;

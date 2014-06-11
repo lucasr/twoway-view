@@ -11,6 +11,8 @@ public class TWListView extends TWView {
     private TWLayoutState mLayoutState;
     private boolean mIsVertical;
 
+    private final Rect mTempRect = new Rect();
+
     public TWListView(Context context) {
         this(context, null);
     }
@@ -50,8 +52,8 @@ public class TWListView extends TWView {
 
     @Override
     public int getOuterStartEdge() {
-        final Rect state = mLayoutState.get(0);
-        return (mIsVertical ? state.top : state.left);
+        mLayoutState.get(0, mTempRect);
+        return (mIsVertical ? mTempRect.top : mTempRect.left);
     }
 
     @Override
@@ -68,8 +70,8 @@ public class TWListView extends TWView {
 
     @Override
     public int getOuterEndEdge() {
-        final Rect state = mLayoutState.get(0);
-        return (mIsVertical ? state.bottom : state.right);
+        mLayoutState.get(0, mTempRect);
+        return (mIsVertical ? mTempRect.bottom : mTempRect.right);
     }
 
     @Override
@@ -117,19 +119,19 @@ public class TWListView extends TWView {
         final int childWidth = child.getMeasuredWidth();
         final int childHeight = child.getMeasuredHeight();
 
-        final int l, t, r, b;
+        mLayoutState.get(0, mTempRect);
 
-        final Rect state = mLayoutState.get(0);
+        final int l, t, r, b;
         if (mIsVertical) {
-            l = state.left;
-            t = (flow == Flow.FORWARD ? state.bottom : state.top - childHeight);
-            r = state.right;
+            l = mTempRect.left;
+            t = (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top - childHeight);
+            r = mTempRect.right;
             b = t + childHeight;
         } else {
-            l = (flow == Flow.FORWARD ? state.right : state.left - childWidth);
-            t = state.top;
+            l = (flow == Flow.FORWARD ? mTempRect.right : mTempRect.left - childWidth);
+            t = mTempRect.top;
             r = l + childWidth;
-            b = state.bottom;
+            b = mTempRect.bottom;
         }
 
         childRect.left = l;

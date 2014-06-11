@@ -36,8 +36,8 @@ class TWLayoutState {
         return mRects.length;
     }
 
-    public Rect get(int index) {
-        return mRects[index];
+    public void get(int index, Rect dest) {
+        dest.set(mRects[index]);
     }
 
     public void set(int index, int l, int t, int r, int b) {

@@ -22,7 +22,7 @@ public class TWSpannableGridView extends TWView {
 
     private boolean mIsVertical;
 
-    private Rect mTempRect;
+    private final Rect mTempRect = new Rect();
 
     public TWSpannableGridView(Context context) {
         this(context, null);
@@ -39,8 +39,6 @@ public class TWSpannableGridView extends TWView {
         mCellSize = 0;
         mLaneCount = 3;
 
-        mTempRect = new Rect();
-
         Orientation orientation = getOrientation();
         mLayoutState = new TWLayoutState(orientation, mLaneCount);
         mItemLanes = new SparseIntArray(10);
@@ -54,15 +52,15 @@ public class TWSpannableGridView extends TWView {
 
         int lane = mItemLanes.get(position, NO_LANE);
         if (lane != NO_LANE) {
-            final Rect targetLane = mLayoutState.get(lane);
+            mLayoutState.get(lane, mTempRect);
 
             // TODO: consolidate this code
             if (mIsVertical) {
-                childRect.left = targetLane.left;
-                childRect.top = (flow == Flow.FORWARD ? targetLane.bottom : targetLane.top - childHeight);
+                childRect.left = mTempRect.left;
+                childRect.top = (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top - childHeight);
             } else {
-                childRect.left = (flow == Flow.FORWARD ? targetLane.left : targetLane.left - childWidth);
-                childRect.top = targetLane.top;
+                childRect.left = (flow == Flow.FORWARD ? mTempRect.left : mTempRect.left - childWidth);
+                childRect.top = mTempRect.top;
             }
 
             childRect.right = childRect.left + childWidth;
@@ -71,29 +69,31 @@ public class TWSpannableGridView extends TWView {
             return lane;
         }
 
+        final Rect targetLane = new Rect();
+
         int targetEdge = (flow == Flow.FORWARD ? Integer.MAX_VALUE : Integer.MIN_VALUE);
         for (int i = 0; i < mLaneCount; i++) {
-            final Rect laneState = mLayoutState.get(i);
+            mLayoutState.get(i, mTempRect);
 
             final int laneEdge;
             if (mIsVertical) {
-                laneEdge = (flow == Flow.FORWARD ? laneState.bottom : laneState.top);
+                laneEdge = (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top);
             } else {
-                laneEdge = (flow == Flow.FORWARD ? laneState.right : laneState.left);
+                laneEdge = (flow == Flow.FORWARD ? mTempRect.right : mTempRect.left);
             }
 
             if ((flow == Flow.FORWARD && laneEdge < targetEdge) ||
                 (flow == Flow.BACKWARD && laneEdge > targetEdge)) {
 
                 for (int j = 0; j < mLaneCount - laneSpan + 1; j++) {
-                    final Rect targetLane = mLayoutState.get(j);
-                    final int l, t, r, b;
+                    mLayoutState.get(j, targetLane);
 
+                    final int l, t, r, b;
                     if (mIsVertical) {
                         l = targetLane.left;
-                        t = (flow == Flow.FORWARD ? laneState.bottom : targetLane.top - childHeight);
+                        t = (flow == Flow.FORWARD ? mTempRect.bottom : targetLane.top - childHeight);
                     } else {
-                        l = (flow == Flow.FORWARD ? laneState.left : targetLane.left - childWidth);
+                        l = (flow == Flow.FORWARD ? mTempRect.left : targetLane.left - childWidth);
                         t = targetLane.top;
                     }
                     r = l + childWidth;
@@ -198,19 +198,19 @@ public class TWSpannableGridView extends TWView {
         final int childHeight = child.getHeight();
 
         for (int i = lane; i < lane + laneSpan; i++) {
-            final Rect laneState = mLayoutState.get(i);
-            final int l, t, r, b;
+            mLayoutState.get(i, mTempRect);
 
+            final int l, t, r, b;
             if (mIsVertical) {
-                l = laneState.left;
-                t = laneState.top + (flow == Flow.FORWARD ? childHeight : 0);
-                r = laneState.right;
-                b = laneState.bottom - (flow == Flow.FORWARD ? 0 : childHeight);
+                l = mTempRect.left;
+                t = mTempRect.top + (flow == Flow.FORWARD ? childHeight : 0);
+                r = mTempRect.right;
+                b = mTempRect.bottom - (flow == Flow.FORWARD ? 0 : childHeight);
             } else {
-                l = laneState.left + (flow == Flow.FORWARD ? childWidth : 0);
-                t = laneState.top;
-                r = laneState.right - (flow == Flow.FORWARD ? 0 : childWidth);
-                b = laneState.bottom;
+                l = mTempRect.left + (flow == Flow.FORWARD ? childWidth : 0);
+                t = mTempRect.top;
+                r = mTempRect.right - (flow == Flow.FORWARD ? 0 : childWidth);
+                b = mTempRect.bottom;
             }
             mLayoutState.set(i, l, t, r, b);
         }
@@ -224,19 +224,19 @@ public class TWSpannableGridView extends TWView {
         final int lane = getChildLaneAndBounds(child, position, flow, laneSpan, childRect);
 
         for (int i = lane; i < lane + laneSpan; i++) {
-            final Rect laneState = mLayoutState.get(i);
-            final int l, t, r, b;
+            mLayoutState.get(i, mTempRect);
 
+            final int l, t, r, b;
             if (mIsVertical) {
-                l = laneState.left;
-                t = (flow == Flow.FORWARD ? laneState.top : childRect.top);
-                r = laneState.right;
-                b = (flow == Flow.FORWARD ? childRect.bottom : laneState.bottom);
+                l = mTempRect.left;
+                t = (flow == Flow.FORWARD ? mTempRect.top : childRect.top);
+                r = mTempRect.right;
+                b = (flow == Flow.FORWARD ? childRect.bottom : mTempRect.bottom);
             } else {
-                l = (flow == Flow.FORWARD ? laneState.left : childRect.left);
-                t = laneState.top;
-                r = (flow == Flow.FORWARD ? childRect.right : laneState.right);
-                b = laneState.bottom;
+                l = (flow == Flow.FORWARD ? mTempRect.left : childRect.left);
+                t = mTempRect.top;
+                r = (flow == Flow.FORWARD ? childRect.right : mTempRect.right);
+                b = mTempRect.bottom;
             }
             mLayoutState.set(i, l, t, r, b);
         }
