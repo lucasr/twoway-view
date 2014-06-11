@@ -4117,8 +4117,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // Put oldSelected (A) where it belongs
             oldSelected = makeAndAddView(selectedPosition - 1, Flow.FORWARD, false);
 
-            final int itemMargin = mItemMargin;
-
             // Now put the new selection (B) below that
             selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
 
@@ -4583,7 +4581,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         // Include the padding of the list
         int returnedHeight = paddingTop + paddingBottom;
-        final int itemMargin = mItemMargin;
 
         // The previous height value that was less than maxHeight and contained
         // no partial children
@@ -4604,7 +4601,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             if (i > 0) {
                 // Count the item margin for all but one child
-                returnedHeight += itemMargin;
+                returnedHeight += mItemMargin;
             }
 
             // Recycle the view before we possibly return from the method
@@ -4674,7 +4671,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         // Include the padding of the list
         int returnedWidth = paddingLeft + paddingRight;
-        final int itemMargin = mItemMargin;
 
         // The previous height value that was less than maxHeight and contained
         // no partial children
@@ -4695,7 +4691,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             if (i > 0) {
                 // Count the item margin for all but one child
-                returnedWidth += itemMargin;
+                returnedWidth += mItemMargin;
             }
 
             // Recycle the view before we possibly return from the method
@@ -4829,7 +4825,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         while (nextOffset > start && pos >= 0) {
             boolean isSelected = (pos == mSelectedPosition);
             View child = makeAndAddView(pos, Flow.BACKWARD, isSelected);
-            nextOffset = getInnerStartEdge() - mItemMargin;
+            nextOffset = getInnerStartEdge();
 
             if (isSelected) {
                 selectedView = child;
@@ -4852,7 +4848,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         while (nextOffset < end && pos < mItemCount) {
             boolean isSelected = (pos == mSelectedPosition);
             View child = makeAndAddView(pos, Flow.FORWARD, isSelected);
-            nextOffset = getInnerEndEdge() + mItemMargin;
+            nextOffset = getInnerEndEdge();
 
             if (isSelected) {
                 selectedView = child;
@@ -5088,7 +5084,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             return;
         }
 
-        int delta = getOuterStartEdge() - getStartEdge() - mItemMargin;
+        int delta = getOuterStartEdge() - getStartEdge();
 
         if (delta < 0) {
             // We only are looking to see if we are too low, not too high
