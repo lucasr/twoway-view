@@ -44,20 +44,20 @@ public class TWStaggeredGridView extends TWView {
             return lane;
         }
 
-        int pos = (flow == Flow.FORWARD ? Integer.MAX_VALUE : Integer.MIN_VALUE);
+        int targetEdge = (flow == Flow.FORWARD ? Integer.MAX_VALUE : Integer.MIN_VALUE);
         for (int i = 0; i < mLaneCount; i++) {
             final Rect laneState = mLayoutState.get(i);
 
-            final int lanePos;
+            final int laneEdge;
             if (mIsVertical) {
-                lanePos = (flow == Flow.FORWARD ? laneState.bottom : laneState.top);
+                laneEdge = (flow == Flow.FORWARD ? laneState.bottom : laneState.top);
             } else {
-                lanePos = (flow == Flow.FORWARD ? laneState.right : laneState.left);
+                laneEdge = (flow == Flow.FORWARD ? laneState.right : laneState.left);
             }
 
-            if ((flow == Flow.FORWARD && lanePos < pos) ||
-                (flow == Flow.BACKWARD && lanePos > pos)) {
-                pos = lanePos;
+            if ((flow == Flow.FORWARD && laneEdge < targetEdge) ||
+                (flow == Flow.BACKWARD && laneEdge > targetEdge)) {
+                targetEdge = laneEdge;
                 lane = i;
             }
         }

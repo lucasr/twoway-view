@@ -23,6 +23,8 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import org.lucasr.twowayview.TWSpannableGridView;
+
 public class SimpleListAdapter extends BaseAdapter {
 	private final Context mContext;
 
@@ -62,22 +64,34 @@ public class SimpleListAdapter extends BaseAdapter {
 
         holder.title.setText(String.valueOf(position));
 
-        final int size;
-        if (position % 3 == 0) {
-            size = 300;
-        } else if (position % 5 == 0) {
-            size = 520;
-        } else if (position % 7 == 0) {
-            size = 700;
-        } else {
-            size = 160;
-        }
+        TWSpannableGridView.LayoutParams lp =
+                (TWSpannableGridView.LayoutParams) convertView.getLayoutParams();
 
-        ViewGroup.LayoutParams lp = convertView.getLayoutParams();
-        if (lp.width != size) {
-            lp.width = size;
+        final int rowSpan = (position == 0 || position == 3 ? 2 : 1);
+        final int colSpan = (position == 0 ? 2 : (position == 3 ? 3 : 1));
+
+        if (lp.rowSpan != rowSpan || lp.colSpan != colSpan) {
+            lp.rowSpan = rowSpan;
+            lp.colSpan = colSpan;
             convertView.setLayoutParams(lp);
         }
+
+//        final int size;
+//        if (position % 3 == 0) {
+//            size = 300;
+//        } else if (position % 5 == 0) {
+//            size = 520;
+//        } else if (position % 7 == 0) {
+//            size = 700;
+//        } else {
+//            size = 160;
+//        }
+//
+//        ViewGroup.LayoutParams lp = convertView.getLayoutParams();
+//        if (lp.width != size) {
+//            lp.width = size;
+//            convertView.setLayoutParams(lp);
+//        }
 
 		return convertView;
 	}

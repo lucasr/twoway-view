@@ -108,4 +108,14 @@ class TWLayoutState {
 
         return outerEnd;
     }
+
+    public boolean intersects(int from, int l, int t, int r, int b) {
+        for (int i = from; i < mRects.length; i++) {
+            if (mRects[i].intersects(l, t, r, b)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

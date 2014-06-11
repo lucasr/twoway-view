@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 
-<org.lucasr.twowayview.TWStaggeredGridView
+<org.lucasr.twowayview.TWSpannableGridView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/list"
