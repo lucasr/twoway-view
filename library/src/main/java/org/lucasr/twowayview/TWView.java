@@ -3670,12 +3670,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         if (position >= 0) {
             mLayoutMode = LAYOUT_SPECIFIC;
-
-            if (mIsVertical) {
-                mSpecificStart = getPaddingTop() + offset;
-            } else {
-                mSpecificStart = getPaddingLeft() + offset;
-            }
+            mSpecificStart = getStartEdge() + offset;
 
             if (mNeedSync) {
                 mSyncPosition = position;
@@ -5093,8 +5088,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             return;
         }
 
-        int delta = getOuterStartEdge() -
-                (mIsVertical ? getPaddingTop() : getPaddingLeft()) - mItemMargin;
+        int delta = getOuterStartEdge() - getStartEdge() - mItemMargin;
 
         if (delta < 0) {
             // We only are looking to see if we are too low, not too high
