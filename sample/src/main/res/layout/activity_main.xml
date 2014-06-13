@@ -18,9 +18,14 @@
 <org.lucasr.twowayview.TWSpannableGridView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/list"
     style="@style/TwoWayView"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:drawSelectorOnTop="false"
+    android:verticalSpacing="1dp"
+    android:horizontalSpacing="1dp"
+    app:numColumns="3"
+    app:numRows="3"
     tools:context=".MainActivity" />

@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,18 +34,6 @@ public class TWSpannableGridView extends TWView {
     private static final int NO_LANE = -1;
 
     private TWLayoutState mLayoutState;
-
-//    private static class ItemLayout {
-//        public final int lane;
-//        private final int colsPan;
-//        private final int rowSpan;
-//
-//        public ItemLayout(int lane, int colSpan, int rowSpan) {
-//            this.lane = lane;
-//            this.colsPan = colSpan;
-//            this.rowSpan = rowSpan;
-//        }
-//    }
 
     private SparseIntArray mItemLanes;
     private int mNumColumns;
@@ -82,40 +71,61 @@ public class TWSpannableGridView extends TWView {
         return (mIsVertical ? mNumColumns : mNumRows);
     }
 
-    private int getChildStartInLane(int lane, Flow flow, int childWidth, int childHeight) {
+    private int getChildStartInLane(View child, int lane, Flow flow) {
+        getChildFrame(child, lane, flow, mTempRect);
+        return (mIsVertical ? mTempRect.top : mTempRect.left);
+    }
+
+    private int getChildFrame(View child, int lane, Flow flow, Rect frame) {
         mLayoutState.get(lane, mTempRect);
 
-        if (mIsVertical) {
-            return (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top - childHeight);
-        } else {
-            return (flow == Flow.FORWARD ? mTempRect.right : mTempRect.left - childWidth);
-        }
-    }
+        final int childWidth = child.getMeasuredWidth();
+        final int childHeight = child.getMeasuredHeight();
 
-    private void getChildFrameForLane(int targetLane, int anchorLane, Flow flow, int childWidth,
-                                      int childHeight, Rect frame) {
-
-        final int anchorEdge = getChildStartInLane(anchorLane, flow, childWidth, childHeight);
-        mLayoutState.get(targetLane, mTempRect);
-
+        final int delta;
         if (mIsVertical) {
             frame.left = mTempRect.left;
-            frame.top = anchorEdge;
+            frame.right = mTempRect.left + childWidth;
+
+            final boolean hasSpacing = (mTempRect.top != mTempRect.bottom);
+            if (flow == Flow.FORWARD) {
+                frame.top = mTempRect.bottom + (hasSpacing ? getVerticalSpacing() : 0);
+                frame.bottom = frame.top + childHeight;
+                delta = frame.bottom - mTempRect.bottom;
+            } else {
+                frame.top = mTempRect.top - childHeight - (hasSpacing ? getVerticalSpacing() : 0);
+                frame.bottom = frame.top + childHeight;
+                delta = mTempRect.top - frame.top;
+            }
         } else {
-            frame.left = anchorEdge;
             frame.top = mTempRect.top;
+            frame.bottom = mTempRect.top + childHeight;
+
+            final boolean hasSpacing = (mTempRect.left != mTempRect.right);
+            if (flow == Flow.FORWARD) {
+                frame.left = mTempRect.right + (hasSpacing ? getHorizontalSpacing() : 0);
+                frame.right = frame.left + childWidth;
+                delta = frame.right - mTempRect.right;
+            } else {
+                frame.left = mTempRect.left - childWidth - (hasSpacing ? getHorizontalSpacing() : 0);
+                frame.right = frame.left + childWidth;
+                delta = mTempRect.left - frame.left;
+            }
         }
 
-        frame.right = frame.left + childWidth;
-        frame.bottom = frame.top + childHeight;
+        return delta;
     }
 
-    private int getLaneThatFitsFrame(int anchorLane, Flow flow, int laneSpan, int childWidth,
-                                     int childHeight, Rect frame) {
+    private int getLaneThatFitsFrame(View child, int anchor, Flow flow,
+                                     int laneSpan, Rect frame) {
         final int count = getLaneCount() - laneSpan + 1;
         for (int l = 0; l < count; l++) {
-            getChildFrameForLane(l, anchorLane, flow, childWidth, childHeight, frame);
-            if (!mLayoutState.intersects(l, frame)) {
+            getChildFrame(child, l, flow, frame);
+
+            frame.offsetTo(mIsVertical ? frame.left : anchor,
+                           mIsVertical ? anchor : frame.top);
+
+            if (!mLayoutState.intersects(l, laneSpan, frame)) {
                 return l;
             }
         }
@@ -125,12 +135,9 @@ public class TWSpannableGridView extends TWView {
 
     private int getChildLaneAndFrame(View child, int position, Flow flow,
                                      int laneSpan, Rect frame) {
-        final int childWidth = child.getMeasuredWidth();
-        final int childHeight = child.getMeasuredHeight();
-
         int lane = mItemLanes.get(position, NO_LANE);
         if (lane != NO_LANE) {
-            getChildFrameForLane(lane, lane, flow, childWidth, childHeight, frame);
+            getChildFrame(child, lane, flow, frame);
             return lane;
         }
 
@@ -138,13 +145,13 @@ public class TWSpannableGridView extends TWView {
 
         final int count = getLaneCount() - laneSpan + 1;
         for (int l = 0; l < count; l++) {
-            final int childStart = getChildStartInLane(l, flow, childWidth, childHeight);
+            final int childStart = getChildStartInLane(child, l, flow);
 
             if ((flow == Flow.FORWARD && childStart < targetEdge) ||
                 (flow == Flow.BACKWARD && childStart > targetEdge)) {
 
                 final int targetLane =
-                        getLaneThatFitsFrame(l, flow, laneSpan, childWidth, childHeight, frame);
+                        getLaneThatFitsFrame(child, childStart, flow, laneSpan, frame);
 
                 if (targetLane != NO_LANE) {
                     targetEdge = childStart;
@@ -153,13 +160,15 @@ public class TWSpannableGridView extends TWView {
             }
         }
 
-        mItemLanes.put(position, Math.max(0, lane));
+        if (lane != NO_LANE) {
+            mItemLanes.put(position, lane);
+        }
+
         return lane;
     }
 
     private void clearLayout() {
         mLayoutState = new TWLayoutState(getOrientation(), getLaneCount());
-        // mItemLanes != null && mItemLanes.size() != mResolution
         if (mItemLanes != null) {
             mItemLanes.clear();
         }
@@ -239,16 +248,25 @@ public class TWSpannableGridView extends TWView {
         final int paddingBottom = getPaddingBottom();
 
         final int laneCount = getLaneCount();
+        final int verticalSpacing = getVerticalSpacing();
+        final int horizontalSpacing = getHorizontalSpacing();
 
         if (mIsVertical) {
-            mLaneSize = (getWidth() - paddingLeft - paddingRight) / laneCount;
+            final int width = getWidth() - paddingLeft - paddingRight;
+            final int spacing = horizontalSpacing * (laneCount - 1);
+            mLaneSize = (width - spacing) / laneCount;
         } else {
-            mLaneSize = (getHeight() - paddingTop - paddingBottom) / laneCount;
+            final int height = getHeight() - paddingTop - paddingBottom;
+            final int spacing = verticalSpacing * (laneCount - 1);
+            mLaneSize = (height - spacing) / laneCount;
         }
 
         for (int i = 0; i < laneCount; i++) {
-            final int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
-            final int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
+            final int spacing = i * (mIsVertical ? horizontalSpacing : verticalSpacing);
+            final int start = (i * mLaneSize) + spacing;
+
+            final int l = paddingLeft + (mIsVertical ? start : offset);
+            final int t = paddingTop + (mIsVertical ? offset : start);
             final int r = (mIsVertical ? l + mLaneSize : l);
             final int b = (mIsVertical ? t : t + mLaneSize);
 
@@ -279,16 +297,18 @@ public class TWSpannableGridView extends TWView {
     @Override
     protected int getChildWidthMeasureSpec(View child, int position, TWView.LayoutParams lp) {
         final LayoutParams spannableLp = (LayoutParams) lp;
-        // TODO: account for item margin
-        final int width = mLaneSize * spannableLp.colSpan;
+        final int span = spannableLp.colSpan;
+
+        final int width = mLaneSize * span + getHorizontalSpacing() * (span - 1);
         return MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
     }
 
     @Override
     protected int getChildHeightMeasureSpec(View child, int position, TWView.LayoutParams lp) {
         final LayoutParams spannableLp = (LayoutParams) lp;
-        // TODO: account for item margin
-        final int height = mLaneSize * spannableLp.rowSpan;
+        final int span = spannableLp.rowSpan;
+
+        final int height = mLaneSize * span + getVerticalSpacing() * (span - 1);
         return MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
     }
 
@@ -302,25 +322,11 @@ public class TWSpannableGridView extends TWView {
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         final int laneSpan = (mIsVertical ? lp.colSpan : lp.rowSpan);
 
-        final int childWidth = child.getWidth();
-        final int childHeight = child.getHeight();
+        final int spacing = (mIsVertical ? getVerticalSpacing() : getHorizontalSpacing());
+        final int dimension = (mIsVertical ? child.getHeight() : child.getWidth());
 
         for (int i = lane; i < lane + laneSpan; i++) {
-            mLayoutState.get(i, mTempRect);
-
-            final int l, t, r, b;
-            if (mIsVertical) {
-                l = mTempRect.left;
-                t = mTempRect.top + (flow == Flow.FORWARD ? childHeight : 0);
-                r = mTempRect.right;
-                b = mTempRect.bottom - (flow == Flow.FORWARD ? 0 : childHeight);
-            } else {
-                l = mTempRect.left + (flow == Flow.FORWARD ? childWidth : 0);
-                t = mTempRect.top;
-                r = mTempRect.right - (flow == Flow.FORWARD ? 0 : childWidth);
-                b = mTempRect.bottom;
-            }
-            mLayoutState.set(i, l, t, r, b);
+            mLayoutState.remove(i, flow, dimension + spacing);
         }
     }
 
@@ -330,7 +336,6 @@ public class TWSpannableGridView extends TWView {
         final int laneSpan = (mIsVertical ? lp.colSpan : lp.rowSpan);
 
         final int lane = getChildLaneAndFrame(child, position, flow, laneSpan, childRect);
-
         for (int i = lane; i < lane + laneSpan; i++) {
             mLayoutState.get(i, mTempRect);
 

@@ -24,6 +24,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import org.lucasr.twowayview.TWSpannableGridView;
+import org.lucasr.twowayview.TWView;
 
 public class SimpleListAdapter extends BaseAdapter {
 	private final Context mContext;
@@ -87,9 +88,14 @@ public class SimpleListAdapter extends BaseAdapter {
 //            size = 160;
 //        }
 //
+//        TWView twView = (TWView) parent;
+//
 //        ViewGroup.LayoutParams lp = convertView.getLayoutParams();
-//        if (lp.width != size) {
+//        if (twView.getOrientation() == TWView.Orientation.HORIZONTAL && lp.width != size) {
 //            lp.width = size;
+//            convertView.setLayoutParams(lp);
+//        } else if (twView.getOrientation() == TWView.Orientation.VERTICAL && lp.height != size) {
+//            lp.height = size;
 //            convertView.setLayoutParams(lp);
 //        }
 

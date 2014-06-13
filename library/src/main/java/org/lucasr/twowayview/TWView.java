@@ -24,6 +24,8 @@ package org.lucasr.twowayview;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lucasr.twowayview.R;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -148,7 +150,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     private boolean mIsVertical;
 
-    private int mItemMargin;
+    private int mHorizontalSpacing;
+    private int mVerticalSpacing;
 
     private boolean mInLayout;
     private boolean mBlockLayoutRequests;
@@ -398,39 +401,40 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         for (int i = 0; i < indexCount; i++) {
             final int attr = a.getIndex(i);
 
-            switch (attr) {
-                case R.styleable.TWView_android_drawSelectorOnTop:
-                    mDrawSelectorOnTop = a.getBoolean(attr, false);
-                    break;
+            if (attr == R.styleable.TWView_android_drawSelectorOnTop) {
+                mDrawSelectorOnTop = a.getBoolean(attr, false);
 
-                case R.styleable.TWView_android_listSelector:
-                    final Drawable selector = a.getDrawable(attr);
-                    if (selector != null) {
-                        setSelector(selector);
-                    }
-                    break;
+            } else if (attr == R.styleable.TWView_android_listSelector) {
+                final Drawable selector = a.getDrawable(attr);
+                if (selector != null) {
+                    setSelector(selector);
+                }
 
-                case R.styleable.TWView_android_orientation:
-                    final int orientation = a.getInt(attr, -1);
-                    if (orientation >= 0) {
-                        setOrientation(Orientation.values()[orientation]);
-                    }
-                    break;
+            } else if (attr == R.styleable.TWView_android_orientation) {
+                final int orientation = a.getInt(attr, -1);
+                if (orientation >= 0) {
+                    setOrientation(Orientation.values()[orientation]);
+                }
 
-                case R.styleable.TWView_android_choiceMode:
-                    final int itemM = a.getInt(attr, -1);
-                    if (itemM >= 0) {
-                        setChoiceMode(ChoiceMode.values()[itemM]);
-                    }
-                    break;
+            } else if (attr == R.styleable.TWView_android_choiceMode) {
+                final int itemM = a.getInt(attr, -1);
+                if (itemM >= 0) {
+                    setChoiceMode(ChoiceMode.values()[itemM]);
+                }
+
+            } else if (attr == R.styleable.TWView_android_horizontalSpacing) {
+                final int spacing = a.getDimensionPixelSize(attr, -1);
+                if (spacing >= 0) {
+                    setHorizontalSpacing(spacing);
+                }
+
+            } else if (attr == R.styleable.TWView_android_verticalSpacing) {
+                final int spacing = a.getDimensionPixelSize(attr, -1);
+                if (spacing >= 0) {
+                    setVerticalSpacing(spacing);
+                }
             }
         }
-
-        final int itemMargin = a.getDimensionPixelSize(R.styleable.TWView_itemMargin, -1);
-        if (itemMargin >= 0) {
-            setItemMargin(itemMargin);
-        }
-
         a.recycle();
     }
 
@@ -452,18 +456,34 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         return (mIsVertical ? Orientation.VERTICAL : Orientation.HORIZONTAL);
     }
 
-    public void setItemMargin(int itemMargin) {
-        if (mItemMargin == itemMargin) {
+    @SuppressWarnings("unused")
+    public void setHorizontalSpacing(int horizontalSpacing) {
+        if (mHorizontalSpacing == horizontalSpacing) {
             return;
         }
 
-        mItemMargin = itemMargin;
+        mHorizontalSpacing = horizontalSpacing;
         requestLayout();
     }
 
     @SuppressWarnings("unused")
-    public int getItemMargin() {
-        return mItemMargin;
+    public int getHorizontalSpacing() {
+        return mHorizontalSpacing;
+    }
+
+    @SuppressWarnings("unused")
+    public void setVerticalSpacing(int verticalSpacing) {
+        if (mVerticalSpacing == verticalSpacing) {
+            return;
+        }
+
+        mVerticalSpacing = verticalSpacing;
+        requestLayout();
+    }
+
+    @SuppressWarnings("unused")
+    public int getVerticalSpacing() {
+        return mVerticalSpacing;
     }
 
     /**
@@ -2193,7 +2213,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         int fadingEdgeLength =
                 (mIsVertical ? getVerticalFadingEdgeLength() : getHorizontalFadingEdgeLength());
 
-        return mItemMargin + Math.max(MIN_SCROLL_PREVIEW_PIXELS, fadingEdgeLength);
+        final int spacing = (mIsVertical ? mVerticalSpacing : mHorizontalSpacing);
+        return spacing + Math.max(MIN_SCROLL_PREVIEW_PIXELS, fadingEdgeLength);
     }
 
     /**
@@ -4620,7 +4641,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             if (i > 0) {
                 // Count the item margin for all but one child
-                returnedHeight += mItemMargin;
+                returnedHeight += mVerticalSpacing;
             }
 
             // Recycle the view before we possibly return from the method
@@ -4710,7 +4731,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             if (i > 0) {
                 // Count the item margin for all but one child
-                returnedWidth += mItemMargin;
+                returnedWidth += mHorizontalSpacing;
             }
 
             // Recycle the view before we possibly return from the method

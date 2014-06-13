@@ -99,6 +99,47 @@ public class TWStaggeredGridView extends TWView {
         return lane;
     }
 
+    private int getChildFrame(View child, int lane, Flow flow, Rect frame) {
+        mLayoutState.get(lane, mTempRect);
+
+        final int childWidth = child.getMeasuredWidth();
+        final int childHeight = child.getMeasuredHeight();
+
+        final int delta;
+
+        if (mIsVertical) {
+            frame.left = mTempRect.left;
+            frame.right = mTempRect.right;
+
+            final boolean hasSpacing = (mTempRect.top != mTempRect.bottom);
+            if (flow == Flow.FORWARD) {
+                frame.top = mTempRect.bottom + (hasSpacing ? getVerticalSpacing() : 0);
+                frame.bottom = frame.top + childHeight;
+                delta = frame.bottom - mTempRect.bottom;
+            } else {
+                frame.top = mTempRect.top - childHeight - (hasSpacing ? getVerticalSpacing() : 0);
+                frame.bottom = frame.top + childHeight;
+                delta = mTempRect.top - frame.top;
+            }
+        } else {
+            frame.top = mTempRect.top;
+            frame.bottom = mTempRect.bottom;
+
+            final boolean hasSpacing = (mTempRect.left != mTempRect.right);
+            if (flow == Flow.FORWARD) {
+                frame.left = mTempRect.right + (hasSpacing ? getHorizontalSpacing() : 0);
+                frame.right = frame.left + childWidth;
+                delta = frame.right - mTempRect.right;
+            } else {
+                frame.left = mTempRect.left - childWidth - (hasSpacing ? getHorizontalSpacing() : 0);
+                frame.right = frame.left + childWidth;
+                delta = mTempRect.left - frame.left;
+            }
+        }
+
+        return delta;
+    }
+
     private void clearLayout() {
         mLayoutState = new TWLayoutState(getOrientation(), getLaneCount());
         if (mItemLanes != null) {
@@ -180,16 +221,25 @@ public class TWStaggeredGridView extends TWView {
         final int paddingBottom = getPaddingBottom();
 
         final int laneCount = getLaneCount();
+        final int verticalSpacing = getVerticalSpacing();
+        final int horizontalSpacing = getHorizontalSpacing();
 
         if (mIsVertical) {
-            mLaneSize = (getWidth() - paddingLeft - paddingRight) / laneCount;
+            final int width = getWidth() - paddingLeft - paddingRight;
+            final int spacing = horizontalSpacing * (laneCount - 1);
+            mLaneSize = (width - spacing) / laneCount;
         } else {
-            mLaneSize = (getHeight() - paddingTop - paddingBottom) / laneCount;
+            final int height = getHeight() - paddingTop - paddingBottom;
+            final int spacing = verticalSpacing * (laneCount - 1);
+            mLaneSize = (height - spacing) / laneCount;
         }
 
         for (int i = 0; i < laneCount; i++) {
-            final int l = paddingLeft + (mIsVertical ? i * mLaneSize : offset);
-            final int t = paddingTop + (mIsVertical ? offset : i * mLaneSize);
+            final int spacing = i * (mIsVertical ? horizontalSpacing : verticalSpacing);
+            final int start = (i * mLaneSize) + spacing;
+
+            final int l = paddingLeft + (mIsVertical ? start : offset);
+            final int t = paddingTop + (mIsVertical ? offset : start);
             final int r = (mIsVertical ? l + mLaneSize : l);
             final int b = (mIsVertical ? t : t + mLaneSize);
 
@@ -246,51 +296,14 @@ public class TWStaggeredGridView extends TWView {
             return;
         }
 
-        if (flow == Flow.FORWARD) {
-            mLayoutState.offset(lane, mIsVertical ? child.getHeight() : child.getWidth());
-        }
-
-        if (mIsVertical) {
-            mLayoutState.reduceHeightBy(lane, child.getHeight());
-        } else {
-            mLayoutState.reduceWidthBy(lane, child.getWidth());
-        }
+        final int spacing = (mIsVertical ? getVerticalSpacing() : getHorizontalSpacing());
+        final int dimension = (mIsVertical ? child.getHeight() : child.getWidth());
+        mLayoutState.remove(lane, flow, dimension + spacing);
     }
 
     @Override
     protected void attachChildToLayout(View child, int position, Flow flow, Rect childRect) {
-        final int childWidth = child.getMeasuredWidth();
-        final int childHeight = child.getMeasuredHeight();
-
         final int lane = getLaneForPosition(position, flow);
-        mLayoutState.get(lane, mTempRect);
-
-        final int l, t, r, b;
-        if (mIsVertical) {
-            l = mTempRect.left;
-            t = (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top - childHeight);
-            r = mTempRect.right;
-            b = t + childHeight;
-        } else {
-            l = (flow == Flow.FORWARD ? mTempRect.right : mTempRect.left - childWidth);
-            t = mTempRect.top;
-            r = l + childWidth;
-            b = mTempRect.bottom;
-        }
-
-        childRect.left = l;
-        childRect.top = t;
-        childRect.right = r;
-        childRect.bottom = b;
-
-        if (flow == Flow.BACKWARD) {
-            mLayoutState.offset(lane, mIsVertical ? -childHeight : -childWidth);
-        }
-
-        if (mIsVertical) {
-            mLayoutState.increaseHeightBy(lane, childHeight);
-        } else {
-            mLayoutState.increaseWidthBy(lane, childWidth);
-        }
+        mLayoutState.add(lane, flow, getChildFrame(child, lane, flow, childRect));
     }
 }

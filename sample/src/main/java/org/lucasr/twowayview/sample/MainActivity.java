@@ -53,7 +53,6 @@ public class MainActivity extends Activity {
         mToast.setGravity(Gravity.CENTER, 0, 0);
 
         mListView = (TWView) findViewById(R.id.list);
-//        mListView.setItemMargin(10);
         mListView.setLongClickable(true);
 
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -102,13 +101,6 @@ public class MainActivity extends Activity {
                     int visibleItemCount, int totalItemCount) {
                 mScrollMessage = "Scroll (first: " + firstVisibleItem + ", count = " + visibleItemCount + ")";
                 refreshToast();
-            }
-        });
-
-        mListView.setRecyclerListener(new TWView.RecyclerListener() {
-            @Override
-            public void onMovedToScrapHeap(View view) {
-                Log.d(LOGTAG, "View moved to scrap heap");
             }
         });
 

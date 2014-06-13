@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.Adapter;
 
 public class TWListView extends TWView {
     private static final String LOGTAG = "TwoWayListView";
@@ -43,6 +44,47 @@ public class TWListView extends TWView {
         Orientation orientation = getOrientation();
         mLayoutState = new TWLayoutState(orientation, 1);
         mIsVertical = (orientation == Orientation.VERTICAL);
+    }
+
+    private int getChildFrame(View child, int lane, Flow flow, Rect frame) {
+        mLayoutState.get(lane, mTempRect);
+
+        final int childWidth = child.getMeasuredWidth();
+        final int childHeight = child.getMeasuredHeight();
+
+        final int delta;
+
+        if (mIsVertical) {
+            frame.left = mTempRect.left;
+            frame.right = mTempRect.right;
+
+            final boolean hasSpacing = (mTempRect.top != mTempRect.bottom);
+            if (flow == Flow.FORWARD) {
+                frame.top = mTempRect.bottom + (hasSpacing ? getVerticalSpacing() : 0);
+                frame.bottom = frame.top + childHeight;
+                delta = frame.bottom - mTempRect.bottom;
+            } else {
+                frame.top = mTempRect.top - childHeight - (hasSpacing ? getVerticalSpacing() : 0);
+                frame.bottom = frame.top + childHeight;
+                delta = mTempRect.top - frame.top;
+            }
+        } else {
+            frame.top = mTempRect.top;
+            frame.bottom = mTempRect.bottom;
+
+            final boolean hasSpacing = (mTempRect.left != mTempRect.right);
+            if (flow == Flow.FORWARD) {
+                frame.left = mTempRect.right + (hasSpacing ? getHorizontalSpacing() : 0);
+                frame.right = frame.left + childWidth;
+                delta = frame.right - mTempRect.right;
+            } else {
+                frame.left = mTempRect.left - childWidth - (hasSpacing ? getHorizontalSpacing() : 0);
+                frame.right = frame.left + childWidth;
+                delta = mTempRect.left - frame.left;
+            }
+        }
+
+        return delta;
     }
 
     @Override
@@ -116,53 +158,13 @@ public class TWListView extends TWView {
 
     @Override
     protected void detachChildFromLayout(View child, int position, Flow flow) {
-        final int childWidth = child.getWidth();
-        final int childHeight = child.getHeight();
-
-        if (flow == Flow.FORWARD) {
-            mLayoutState.offset(0, mIsVertical ? childHeight : childWidth);
-        }
-
-        if (mIsVertical) {
-            mLayoutState.reduceHeightBy(0, childHeight);
-        } else {
-            mLayoutState.reduceWidthBy(0, childWidth);
-        }
+        final int spacing = (mIsVertical ? getVerticalSpacing() : getHorizontalSpacing());
+        final int dimension = (mIsVertical ? child.getHeight() : child.getWidth());
+        mLayoutState.remove(0, flow, dimension + spacing);
     }
 
     @Override
     protected void attachChildToLayout(View child, int position, Flow flow, Rect childRect) {
-        final int childWidth = child.getMeasuredWidth();
-        final int childHeight = child.getMeasuredHeight();
-
-        mLayoutState.get(0, mTempRect);
-
-        final int l, t, r, b;
-        if (mIsVertical) {
-            l = mTempRect.left;
-            t = (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top - childHeight);
-            r = mTempRect.right;
-            b = t + childHeight;
-        } else {
-            l = (flow == Flow.FORWARD ? mTempRect.right : mTempRect.left - childWidth);
-            t = mTempRect.top;
-            r = l + childWidth;
-            b = mTempRect.bottom;
-        }
-
-        childRect.left = l;
-        childRect.top = t;
-        childRect.right = r;
-        childRect.bottom = b;
-
-        if (flow == Flow.BACKWARD) {
-            mLayoutState.offset(0, mIsVertical ? -childHeight : -childWidth);
-        }
-
-        if (mIsVertical) {
-            mLayoutState.increaseHeightBy(0, childHeight);
-        } else {
-            mLayoutState.increaseWidthBy(0, childWidth);
-        }
+        mLayoutState.add(0, flow, getChildFrame(child, 0, flow, childRect));
     }
 }

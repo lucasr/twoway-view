@@ -22,9 +22,8 @@
         <attr name="android:choiceMode"/>
         <attr name="android:listSelector"/>
         <attr name="android:drawSelectorOnTop"/>
-
-        <!-- TWView-specific -->
-        <attr name="itemMargin" format="dimension"/>
+        <attr name="android:horizontalSpacing"/>
+        <attr name="android:verticalSpacing"/>
     </declare-styleable>
 
     <declare-styleable name="TWGridView">

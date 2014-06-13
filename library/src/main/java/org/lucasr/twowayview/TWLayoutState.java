@@ -19,6 +19,8 @@ package org.lucasr.twowayview;
 import android.graphics.Rect;
 import android.util.Log;
 
+import org.lucasr.twowayview.TWView.Flow;
+
 import org.lucasr.twowayview.TWView.Orientation;
 
 class TWLayoutState {
@@ -57,6 +59,10 @@ class TWLayoutState {
         dest.set(mRects[index]);
     }
 
+    public void set(int index, Rect state) {
+        set(index, state.left, state.top, state.right, state.bottom);
+    }
+
     public void set(int index, int l, int t, int r, int b) {
         final Rect rect = mRects[index];
         rect.left = l;
@@ -65,24 +71,40 @@ class TWLayoutState {
         rect.bottom = b;
     }
 
-    public void increaseWidthBy(int index, int addedWidth) {
+    public void add(int index, Flow flow, int dimension) {
         final Rect rect = mRects[index];
-        rect.right += addedWidth;
+
+        if (flow == Flow.FORWARD) {
+            if (mIsVertical) {
+                rect.bottom += dimension;
+            } else {
+                rect.right += dimension;
+            }
+        } else {
+            if (mIsVertical) {
+                rect.top -= dimension;
+            } else {
+                rect.left -= dimension;
+            }
+        }
     }
 
-    public void increaseHeightBy(int index, int addedHeight) {
+    public void remove(int index, Flow flow, int dimension) {
         final Rect rect = mRects[index];
-        rect.bottom += addedHeight;
-    }
 
-    public void reduceWidthBy(int index, int removedWidth) {
-        final Rect rect = mRects[index];
-        rect.right -= Math.min(rect.right - rect.left, removedWidth);
-    }
-
-    public void reduceHeightBy(int index, int removedHeight) {
-        final Rect rect = mRects[index];
-        rect.bottom -= Math.min(rect.bottom - rect.top, removedHeight);
+        if (flow == Flow.FORWARD) {
+            if (mIsVertical) {
+                rect.top += dimension;
+            } else {
+                rect.left += dimension;
+            }
+        } else {
+            if (mIsVertical) {
+                rect.bottom -= dimension;
+            } else {
+                rect.right -= dimension;
+            }
+        }
     }
 
     public int getOuterStartEdge() {
@@ -126,8 +148,8 @@ class TWLayoutState {
         return outerEnd;
     }
 
-    public boolean intersects(int start, Rect r) {
-        for (int i = start; i < mRects.length; i++) {
+    public boolean intersects(int start, int count, Rect r) {
+        for (int i = start; i < start + count; i++) {
             if (Rect.intersects(mRects[i], r)) {
                 return true;
             }
