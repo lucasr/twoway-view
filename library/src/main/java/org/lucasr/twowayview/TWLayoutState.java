@@ -128,8 +128,6 @@ class TWLayoutState {
 
     public boolean intersects(int start, Rect r) {
         for (int i = start; i < mRects.length; i++) {
-            Log.d("BOOM", "Lane = " + i + " with state = " + mRects[i] + " intersects " + r);
-
             if (Rect.intersects(mRects[i], r)) {
                 return true;
             }
