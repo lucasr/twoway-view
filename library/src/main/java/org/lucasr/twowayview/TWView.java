@@ -387,29 +387,48 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         setFocusableInTouchMode(true);
         setWillNotDraw(false);
         setAlwaysDrawnWithCacheEnabled(false);
-        setWillNotDraw(false);
         setClipToPadding(false);
+        setWillNotDraw(false);
 
         ViewCompat.setOverScrollMode(this, ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TWView, defStyle, 0);
 
-        mDrawSelectorOnTop = a.getBoolean(
-                R.styleable.TWView_android_drawSelectorOnTop, false);
+        final int indexCount = a.getIndexCount();
+        for (int i = 0; i < indexCount; i++) {
+            final int attr = a.getIndex(i);
 
-        Drawable d = a.getDrawable(R.styleable.TWView_android_listSelector);
-        if (d != null) {
-            setSelector(d);
+            switch (attr) {
+                case R.styleable.TWView_android_drawSelectorOnTop:
+                    mDrawSelectorOnTop = a.getBoolean(attr, false);
+                    break;
+
+                case R.styleable.TWView_android_listSelector:
+                    final Drawable selector = a.getDrawable(attr);
+                    if (selector != null) {
+                        setSelector(selector);
+                    }
+                    break;
+
+                case R.styleable.TWView_android_orientation:
+                    final int orientation = a.getInt(attr, -1);
+                    if (orientation >= 0) {
+                        setOrientation(Orientation.values()[orientation]);
+                    }
+                    break;
+
+                case R.styleable.TWView_android_choiceMode:
+                    final int itemM = a.getInt(attr, -1);
+                    if (itemM >= 0) {
+                        setChoiceMode(ChoiceMode.values()[itemM]);
+                    }
+                    break;
+            }
         }
 
-        int orientation = a.getInt(R.styleable.TWView_android_orientation, -1);
-        if (orientation >= 0) {
-            setOrientation(Orientation.values()[orientation]);
-        }
-
-        int choiceMode = a.getInt(R.styleable.TWView_android_choiceMode, -1);
-        if (choiceMode >= 0) {
-            setChoiceMode(ChoiceMode.values()[choiceMode]);
+        final int itemMargin = a.getDimensionPixelSize(R.styleable.TWView_itemMargin, -1);
+        if (itemMargin >= 0) {
+            setItemMargin(itemMargin);
         }
 
         a.recycle();
@@ -5248,7 +5267,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         return child;
     }
 
-    void resetState() {
+    protected void resetState() {
         mScroller.forceFinished(true);
 
         removeAllViewsInLayout();

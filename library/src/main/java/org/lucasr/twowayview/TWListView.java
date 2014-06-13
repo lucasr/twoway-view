@@ -52,12 +52,12 @@ public class TWListView extends TWView {
     }
 
     @Override
-    public void offsetLayout(int offset) {
+    protected void offsetLayout(int offset) {
         mLayoutState.offset(offset);
     }
 
     @Override
-    public void resetLayout(int offset) {
+    protected void resetLayout(int offset) {
         final int l = getPaddingLeft() + (mIsVertical ? 0 : offset);
         final int t = getPaddingTop() + (mIsVertical ? offset : 0);
         final int r = (mIsVertical ? getWidth() - getPaddingRight() : l);
@@ -67,31 +67,31 @@ public class TWListView extends TWView {
     }
 
     @Override
-    public int getOuterStartEdge() {
+    protected int getOuterStartEdge() {
         mLayoutState.get(0, mTempRect);
         return (mIsVertical ? mTempRect.top : mTempRect.left);
     }
 
     @Override
-    public int getInnerStartEdge() {
+    protected int getInnerStartEdge() {
         // Inner and outer edges are always the same in a list
         return getOuterStartEdge();
     }
 
     @Override
-    public int getInnerEndEdge() {
+    protected int getInnerEndEdge() {
         // Inner and outer edges are always the same in a list
         return getOuterEndEdge();
     }
 
     @Override
-    public int getOuterEndEdge() {
+    protected int getOuterEndEdge() {
         mLayoutState.get(0, mTempRect);
         return (mIsVertical ? mTempRect.bottom : mTempRect.right);
     }
 
     @Override
-    public int getChildWidthMeasureSpec(View child, int position, LayoutParams lp) {
+    protected int getChildWidthMeasureSpec(View child, int position, LayoutParams lp) {
         if (!mIsVertical && lp.width == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (mIsVertical) {
@@ -103,7 +103,7 @@ public class TWListView extends TWView {
     }
 
     @Override
-    public int getChildHeightMeasureSpec(View child, int position, LayoutParams lp) {
+    protected int getChildHeightMeasureSpec(View child, int position, LayoutParams lp) {
         if (mIsVertical && lp.height == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (!mIsVertical) {
@@ -115,7 +115,7 @@ public class TWListView extends TWView {
     }
 
     @Override
-    public void detachChildFromLayout(View child, int position, Flow flow) {
+    protected void detachChildFromLayout(View child, int position, Flow flow) {
         final int childWidth = child.getWidth();
         final int childHeight = child.getHeight();
 
@@ -131,7 +131,7 @@ public class TWListView extends TWView {
     }
 
     @Override
-    public void attachChildToLayout(View child, int position, Flow flow, Rect childRect) {
+    protected void attachChildToLayout(View child, int position, Flow flow, Rect childRect) {
         final int childWidth = child.getMeasuredWidth();
         final int childHeight = child.getMeasuredHeight();
 

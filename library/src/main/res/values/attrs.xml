@@ -22,6 +22,19 @@
         <attr name="android:choiceMode"/>
         <attr name="android:listSelector"/>
         <attr name="android:drawSelectorOnTop"/>
+
+        <!-- TWView-specific -->
+        <attr name="itemMargin" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="TWGridView">
+        <attr name="numColumns" format="integer"/>
+        <attr name="numRows" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="TWSpannableGridViewChild">
+        <attr name="colSpan" format="integer"/>
+        <attr name="rowSpan" format="integer"/>
     </declare-styleable>
 
 </resources>

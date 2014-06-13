@@ -17,6 +17,7 @@
 package org.lucasr.twowayview;
 
 import android.graphics.Rect;
+import android.util.Log;
 
 import org.lucasr.twowayview.TWView.Orientation;
 
@@ -125,9 +126,11 @@ class TWLayoutState {
         return outerEnd;
     }
 
-    public boolean intersects(int from, int l, int t, int r, int b) {
-        for (int i = from; i < mRects.length; i++) {
-            if (mRects[i].intersects(l, t, r, b)) {
+    public boolean intersects(int start, Rect r) {
+        for (int i = start; i < mRects.length; i++) {
+            Log.d("BOOM", "Lane = " + i + " with state = " + mRects[i] + " intersects " + r);
+
+            if (Rect.intersects(mRects[i], r)) {
                 return true;
             }
         }
