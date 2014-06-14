@@ -41,14 +41,9 @@ class TWLayoutState {
 
     public void offset(int offset) {
         for (int i = 0; i < mRects.length; i++) {
-            offset(i, offset);
+            mRects[i].offset(mIsVertical ? 0 : offset,
+                    mIsVertical ? offset : 0);
         }
-    }
-
-    public void offset(int index, int offset) {
-        final Rect rect = mRects[index];
-        rect.offset(mIsVertical ? 0 : offset,
-                mIsVertical ? offset : 0);
     }
 
     public int getCount() {
@@ -109,17 +104,17 @@ class TWLayoutState {
 
     public int getOuterStartEdge() {
         // TODO: make this a lot more performant/efficient
-        int outerState = Integer.MAX_VALUE;
+        int outerStart = Integer.MAX_VALUE;
         for (int i = 0; i < mRects.length; i++) {
             final Rect rect = mRects[i];
-            outerState = Math.min(outerState, mIsVertical ? rect.top : rect.left);
+            outerStart = Math.min(outerStart, mIsVertical ? rect.top : rect.left);
         }
 
-        return outerState;
+        return outerStart;
     }
 
     public int getInnerStartEdge() {
-        int innerStart = 0;
+        int innerStart = Integer.MIN_VALUE;
         for (int i = 0; i < mRects.length; i++) {
             final Rect rect = mRects[i];
             innerStart = Math.max(innerStart, mIsVertical ? rect.top : rect.left);
@@ -139,7 +134,7 @@ class TWLayoutState {
     }
 
     public int getOuterEndEdge() {
-        int outerEnd = 0;
+        int outerEnd = Integer.MIN_VALUE;
         for (int i = 0; i < mRects.length; i++) {
             final Rect rect = mRects[i];
             outerEnd = Math.max(outerEnd, mIsVertical ? rect.bottom : rect.right);
