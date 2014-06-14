@@ -16,9 +16,14 @@
 
 <resources>
 
-    <color name="actionbar_color">#3FBA91</color>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    </style>
 
-    <color name="titlestrip_background_color">#DEDEDE</color>
-    <color name="titlestrip_text_color">#999999</color>
+    <style name="TwoWayViewBase">
+        <item name="android:background">#999999</item>
+        <item name="android:drawSelectorOnTop">false</item>
+        <item name="android:verticalSpacing">1dp</item>
+        <item name="android:horizontalSpacing">1dp</item>
+    </style>
 
 </resources>

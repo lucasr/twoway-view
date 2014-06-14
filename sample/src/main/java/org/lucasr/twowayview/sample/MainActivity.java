@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Lucas Rocha
+ * Copyright (C) 2014 Lucas Rocha
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,121 +16,76 @@
 
 package org.lucasr.twowayview.sample;
 
-import org.lucasr.twowayview.TWView;
-
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.Gravity;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Toast;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 
-public class MainActivity extends Activity {
-    private static final String LOGTAG = "TwoWayViewSample";
-
-    private TWView mListView;
-
-    private Toast mToast;
-    private String mClickMessage;
-    private String mScrollMessage;
-    private String mStateMessage;
-
-    @SuppressLint("ShowToast")
+public class MainActivity extends ActionBarActivity {
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
 
-        mClickMessage = "";
-        mScrollMessage = "";
-        mStateMessage = "";
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowHomeEnabled(false);
 
-        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-        mToast.setGravity(Gravity.CENTER, 0, 0);
+        ActionBar.Tab tab = actionBar.newTab()
+                .setText("").setIcon(R.drawable.ic_list)
+                .setTabListener(new TabListener<LayoutFragment>(
+                        R.layout.layout_list, "list"));
+        actionBar.addTab(tab);
 
-        mListView = (TWView) findViewById(R.id.list);
-        mListView.setLongClickable(true);
+        tab = actionBar.newTab()
+                .setText("").setIcon(R.drawable.ic_grid)
+                .setTabListener(new TabListener<LayoutFragment>(
+                        R.layout.layout_grid, "grid"));
+        actionBar.addTab(tab);
 
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View child, int position,
-                    long id) {
-                mClickMessage = "Item clicked: " + position;
-                refreshToast();
-            }
-        });
+        tab = actionBar.newTab()
+                .setText("").setIcon(R.drawable.ic_staggered)
+                .setTabListener(new TabListener<LayoutFragment>(
+                        R.layout.layout_staggered_grid, "staggered"));
+        actionBar.addTab(tab);
 
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View child,
-                    int position, long id) {
-                mClickMessage = "Item long pressed: " + position;
-                refreshToast();
-                return true;
-            }
-        });
-
-        mListView.setOnScrollListener(new TWView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(TWView view, int scrollState) {
-                String stateName = "Undefined";
-                switch(scrollState) {
-                case SCROLL_STATE_IDLE:
-                    stateName = "Idle";
-                    break;
-
-                case SCROLL_STATE_TOUCH_SCROLL:
-                    stateName = "Dragging";
-                    break;
-
-                case SCROLL_STATE_FLING:
-                    stateName = "Flinging";
-                    break;
-                }
-
-                mStateMessage = "Scroll state changed: " + stateName;
-                refreshToast();
-            }
-
-            @Override
-            public void onScroll(TWView view, int firstVisibleItem,
-                    int visibleItemCount, int totalItemCount) {
-                mScrollMessage = "Scroll (first: " + firstVisibleItem + ", count = " + visibleItemCount + ")";
-                refreshToast();
-            }
-        });
-
-        mListView.setAdapter(new SimpleListAdapter(MainActivity.this));
+        tab = actionBar.newTab()
+                .setText("").setIcon(R.drawable.ic_spannable)
+                .setTabListener(new TabListener<LayoutFragment>(
+                        R.layout.layout_spannable_grid, "spannable"));
+        actionBar.addTab(tab);
     }
 
-    private void refreshToast() {
-        StringBuffer buffer = new StringBuffer();
+    public static class TabListener<T extends Fragment> implements ActionBar.TabListener {
+        private Fragment mFragment;
+        private final int mLayoutId;
+        private final String mTag;
 
-        if (!TextUtils.isEmpty(mClickMessage)) {
-            buffer.append(mClickMessage);
+        public TabListener(int layoutId, String tag) {
+            mLayoutId = layoutId;
+            mTag = tag;
         }
 
-        if (!TextUtils.isEmpty(mScrollMessage)) {
-            if (buffer.length() != 0) {
-                buffer.append("\n");
+        public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+            if (mFragment == null) {
+                mFragment = (Fragment) LayoutFragment.newInstance(mLayoutId);
+                ft.add(R.id.content, mFragment, mTag);
+            } else {
+                ft.attach(mFragment);
             }
-
-            buffer.append(mScrollMessage);
         }
 
-        if (!TextUtils.isEmpty(mStateMessage)) {
-            if (buffer.length() != 0) {
-                buffer.append("\n");
+        public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+            if (mFragment != null) {
+                ft.detach(mFragment);
             }
-
-            buffer.append(mStateMessage);
         }
 
-        mToast.setText(buffer.toString());
-        mToast.show();
+        @Override
+        public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
+
+        }
     }
 }
