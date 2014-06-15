@@ -6283,9 +6283,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                     positionSelector(mMotionPosition, child);
                     refreshDrawableState();
 
-                    positionSelector(mMotionPosition, child);
-                    refreshDrawableState();
-
                     final boolean longClickable = isLongClickable();
 
                     if (mSelector != null) {
