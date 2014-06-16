@@ -20,7 +20,6 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.Adapter;
 
 public class TWListView extends TWView {
     private static final String LOGTAG = "TwoWayListView";
@@ -40,57 +39,37 @@ public class TWListView extends TWView {
 
     public TWListView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
-        Orientation orientation = getOrientation();
-        mLayoutState = new TWLayoutState(orientation, 1);
-        mIsVertical = (orientation == Orientation.VERTICAL);
+        mIsVertical = (getOrientation() == Orientation.VERTICAL);
     }
 
-    private int getChildFrame(View child, int lane, Flow flow, Rect frame) {
-        mLayoutState.get(lane, mTempRect);
-
-        final int childWidth = child.getMeasuredWidth();
-        final int childHeight = child.getMeasuredHeight();
-
-        final int delta;
-
-        if (mIsVertical) {
-            frame.left = mTempRect.left;
-            frame.right = mTempRect.right;
-
-            final boolean hasSpacing = (mTempRect.top != mTempRect.bottom);
-            if (flow == Flow.FORWARD) {
-                frame.top = mTempRect.bottom + (hasSpacing ? getVerticalSpacing() : 0);
-                frame.bottom = frame.top + childHeight;
-                delta = frame.bottom - mTempRect.bottom;
-            } else {
-                frame.top = mTempRect.top - childHeight - (hasSpacing ? getVerticalSpacing() : 0);
-                frame.bottom = frame.top + childHeight;
-                delta = mTempRect.top - frame.top;
-            }
-        } else {
-            frame.top = mTempRect.top;
-            frame.bottom = mTempRect.bottom;
-
-            final boolean hasSpacing = (mTempRect.left != mTempRect.right);
-            if (flow == Flow.FORWARD) {
-                frame.left = mTempRect.right + (hasSpacing ? getHorizontalSpacing() : 0);
-                frame.right = frame.left + childWidth;
-                delta = frame.right - mTempRect.right;
-            } else {
-                frame.left = mTempRect.left - childWidth - (hasSpacing ? getHorizontalSpacing() : 0);
-                frame.right = frame.left + childWidth;
-                delta = mTempRect.left - frame.left;
-            }
+    private void ensureLayoutState() {
+        if (mLayoutState != null) {
+            return;
         }
 
-        return delta;
+        mLayoutState = new TWLayoutState(this, 1);
+    }
+
+    private void recreateLayoutState() {
+        mLayoutState = null;
+        ensureLayoutState();
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        recreateLayoutState();
     }
 
     @Override
     public void setOrientation(Orientation orientation) {
+        final boolean changed = (getOrientation() != orientation);
         super.setOrientation(orientation);
-        mIsVertical = (orientation == Orientation.VERTICAL);
+
+        if (changed) {
+            mIsVertical = (orientation == Orientation.VERTICAL);
+            recreateLayoutState();
+        }
     }
 
     @Override
@@ -100,17 +79,14 @@ public class TWListView extends TWView {
 
     @Override
     protected void resetLayout(int offset) {
-        final int l = getPaddingLeft() + (mIsVertical ? 0 : offset);
-        final int t = getPaddingTop() + (mIsVertical ? offset : 0);
-        final int r = (mIsVertical ? getWidth() - getPaddingRight() : l);
-        final int b = (mIsVertical ? t : getHeight() - getPaddingBottom());
-
-        mLayoutState.set(0, l, t, r, b);
+        if (mLayoutState != null) {
+            mLayoutState.resetEndEdges();
+        }
     }
 
     @Override
     protected int getOuterStartEdge() {
-        mLayoutState.get(0, mTempRect);
+        mLayoutState.getLane(0, mTempRect);
         return (mIsVertical ? mTempRect.top : mTempRect.left);
     }
 
@@ -128,7 +104,7 @@ public class TWListView extends TWView {
 
     @Override
     protected int getOuterEndEdge() {
-        mLayoutState.get(0, mTempRect);
+        mLayoutState.getLane(0, mTempRect);
         return (mIsVertical ? mTempRect.bottom : mTempRect.right);
     }
 
@@ -137,8 +113,7 @@ public class TWListView extends TWView {
         if (!mIsVertical && lp.width == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (mIsVertical) {
-            final int maxWidth = getWidth() - getPaddingLeft() - getPaddingRight();
-            return MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.EXACTLY);
+            return MeasureSpec.makeMeasureSpec(mLayoutState.getLaneSize(), MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.width, MeasureSpec.EXACTLY);
         }
@@ -149,8 +124,7 @@ public class TWListView extends TWView {
         if (mIsVertical && lp.height == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (!mIsVertical) {
-            final int maxHeight = getHeight() - getPaddingTop() - getPaddingBottom();
-            return MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.EXACTLY);
+            return MeasureSpec.makeMeasureSpec(mLayoutState.getLaneSize(), MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
         }
@@ -160,11 +134,12 @@ public class TWListView extends TWView {
     protected void detachChildFromLayout(View child, int position, Flow flow) {
         final int spacing = (mIsVertical ? getVerticalSpacing() : getHorizontalSpacing());
         final int dimension = (mIsVertical ? child.getHeight() : child.getWidth());
-        mLayoutState.remove(0, flow, dimension + spacing);
+        mLayoutState.removeFromLane(0, flow, dimension + spacing);
     }
 
     @Override
-    protected void attachChildToLayout(View child, int position, Flow flow, Rect childRect) {
-        mLayoutState.add(0, flow, getChildFrame(child, 0, flow, childRect));
+    protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
+        final int dimension = mLayoutState.getChildFrame(child, 0, flow, childFrame);
+        mLayoutState.addToLane(0, flow, dimension);
     }
 }

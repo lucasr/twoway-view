@@ -32,7 +32,6 @@ public class TWGridView extends TWView {
 
     private int mNumColumns;
     private int mNumRows;
-    private int mLaneSize;
 
     private boolean mIsVertical;
 
@@ -54,9 +53,7 @@ public class TWGridView extends TWView {
         mNumRows = Math.max(NUM_ROWS, a.getInt(R.styleable.TWGridView_numRows, -1));
         a.recycle();
 
-        Orientation orientation = getOrientation();
-        mLayoutState = new TWLayoutState(orientation, getLaneCount());
-        mIsVertical = (orientation == Orientation.VERTICAL);
+        mIsVertical = (getOrientation() == Orientation.VERTICAL);
     }
 
     private int getLaneCount() {
@@ -67,49 +64,26 @@ public class TWGridView extends TWView {
         return (position % getLaneCount());
     }
 
-    private int getChildFrame(View child, int lane, Flow flow, Rect frame) {
-        mLayoutState.get(lane, mTempRect);
-
-        final int childWidth = child.getMeasuredWidth();
-        final int childHeight = child.getMeasuredHeight();
-
-        final int delta;
-
-        if (mIsVertical) {
-            frame.left = mTempRect.left;
-            frame.right = mTempRect.right;
-
-            final boolean hasSpacing = (mTempRect.top != mTempRect.bottom);
-            if (flow == Flow.FORWARD) {
-                frame.top = mTempRect.bottom + (hasSpacing ? getVerticalSpacing() : 0);
-                frame.bottom = frame.top + childHeight;
-                delta = frame.bottom - mTempRect.bottom;
-            } else {
-                frame.top = mTempRect.top - childHeight - (hasSpacing ? getVerticalSpacing() : 0);
-                frame.bottom = frame.top + childHeight;
-                delta = mTempRect.top - frame.top;
-            }
-        } else {
-            frame.top = mTempRect.top;
-            frame.bottom = mTempRect.bottom;
-
-            final boolean hasSpacing = (mTempRect.left != mTempRect.right);
-            if (flow == Flow.FORWARD) {
-                frame.left = mTempRect.right + (hasSpacing ? getHorizontalSpacing() : 0);
-                frame.right = frame.left + childWidth;
-                delta = frame.right - mTempRect.right;
-            } else {
-                frame.left = mTempRect.left - childWidth - (hasSpacing ? getHorizontalSpacing() : 0);
-                frame.right = frame.left + childWidth;
-                delta = mTempRect.left - frame.left;
-            }
+    private void ensureLayoutState() {
+        final int laneCount = getLaneCount();
+        if (mLayoutState != null && mLayoutState.getLaneCount() == laneCount) {
+            return;
         }
 
-        return delta;
+        mLayoutState = new TWLayoutState(this, laneCount);
     }
 
-    private void clearLayout() {
-        mLayoutState = new TWLayoutState(getOrientation(), getLaneCount());
+    private void recreateLayoutState() {
+        if (mNumColumns > 0 && mNumRows > 0) {
+            mLayoutState = null;
+            ensureLayoutState();
+        }
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        recreateLayoutState();
     }
 
     @Override
@@ -119,7 +93,7 @@ public class TWGridView extends TWView {
 
         if (changed) {
             mIsVertical = (orientation == Orientation.VERTICAL);
-            clearLayout();
+            recreateLayoutState();
         }
     }
 
@@ -134,7 +108,7 @@ public class TWGridView extends TWView {
 
         mNumColumns = numColumns;
         if (mIsVertical) {
-            clearLayout();
+            recreateLayoutState();
         }
     }
 
@@ -149,7 +123,7 @@ public class TWGridView extends TWView {
 
         mNumRows = numRows;
         if (!mIsVertical) {
-            clearLayout();
+            recreateLayoutState();
         }
     }
 
@@ -160,35 +134,8 @@ public class TWGridView extends TWView {
 
     @Override
     protected void resetLayout(int offset) {
-        final int paddingLeft = getPaddingLeft();
-        final int paddingTop = getPaddingTop();
-        final int paddingRight = getPaddingRight();
-        final int paddingBottom = getPaddingBottom();
-
-        final int laneCount = getLaneCount();
-        final int verticalSpacing = getVerticalSpacing();
-        final int horizontalSpacing = getHorizontalSpacing();
-
-        if (mIsVertical) {
-            final int width = getWidth() - paddingLeft - paddingRight;
-            final int spacing = horizontalSpacing * (laneCount - 1);
-            mLaneSize = (width - spacing) / laneCount;
-        } else {
-            final int height = getHeight() - paddingTop - paddingBottom;
-            final int spacing = verticalSpacing * (laneCount - 1);
-            mLaneSize = (height - spacing) / laneCount;
-        }
-
-        for (int i = 0; i < laneCount; i++) {
-            final int spacing = i * (mIsVertical ? horizontalSpacing : verticalSpacing);
-            final int start = (i * mLaneSize) + spacing;
-
-            final int l = paddingLeft + (mIsVertical ? start : offset);
-            final int t = paddingTop + (mIsVertical ? offset : start);
-            final int r = (mIsVertical ? l + mLaneSize : l);
-            final int b = (mIsVertical ? t : t + mLaneSize);
-
-            mLayoutState.set(i, l, t, r, b);
+        if (mLayoutState != null) {
+            mLayoutState.resetEndEdges();
         }
     }
 
@@ -217,7 +164,7 @@ public class TWGridView extends TWView {
         if (!mIsVertical && lp.width == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (mIsVertical) {
-            return MeasureSpec.makeMeasureSpec(mLaneSize, MeasureSpec.EXACTLY);
+            return MeasureSpec.makeMeasureSpec(mLayoutState.getLaneSize(), MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.width, MeasureSpec.EXACTLY);
         }
@@ -228,7 +175,7 @@ public class TWGridView extends TWView {
         if (mIsVertical && lp.height == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (!mIsVertical) {
-            return MeasureSpec.makeMeasureSpec(mLaneSize, MeasureSpec.EXACTLY);
+            return MeasureSpec.makeMeasureSpec(mLayoutState.getLaneSize(), MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
         }
@@ -238,13 +185,15 @@ public class TWGridView extends TWView {
     protected void detachChildFromLayout(View child, int position, Flow flow) {
         final int spacing = (mIsVertical ? getVerticalSpacing() : getHorizontalSpacing());
         final int dimension = (mIsVertical ? child.getHeight() : child.getWidth());
+
         final int lane = getLaneForPosition(position);
-        mLayoutState.remove(lane, flow, dimension + spacing);
+        mLayoutState.removeFromLane(lane, flow, dimension + spacing);
     }
 
     @Override
-    protected void attachChildToLayout(View child, int position, Flow flow, Rect childRect) {
+    protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
         final int lane = getLaneForPosition(position);
-        mLayoutState.add(lane, flow, getChildFrame(child, lane, flow, childRect));
+        final int dimension = mLayoutState.getChildFrame(child, lane, flow, childFrame);
+        mLayoutState.addToLane(lane, flow, dimension);
     }
 }

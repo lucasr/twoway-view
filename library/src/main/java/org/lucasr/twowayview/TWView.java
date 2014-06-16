@@ -24,8 +24,6 @@ package org.lucasr.twowayview;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.lucasr.twowayview.R;
-
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -92,7 +90,7 @@ import static android.os.Build.VERSION_CODES.HONEYCOMB;
  */
 public abstract class TWView extends AdapterView<ListAdapter> implements
         ViewTreeObserver.OnTouchModeChangeListener {
-    private static final String LOGTAG = "TwoWayView";
+    private static final String LOGTAG = "TWView";
 
     private static final int NO_POSITION = -1;
     private static final int INVALID_POINTER = -1;
@@ -520,11 +518,11 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     /**
-     * Sets the recycler listener to be notified whenever a View is set aside in
+     * Sets the recycler listener to be notified whenever a View is setLane aside in
      * the recycler for later reuse. This listener can be used to free resources
      * associated to the View.
      *
-     * @param l The recycler listener to be notified of views set aside
+     * @param l The recycler listener to be notified of views setLane aside
      *        in the recycler.
      *
      * @see TWView.RecycleBin
@@ -628,7 +626,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     /**
      * Returns the checked state of the specified position. The result is only
-     * valid if the choice mode has been set to {@link ChoiceMode#SINGLE}
+     * valid if the choice mode has been setLane to {@link ChoiceMode#SINGLE}
      * or {@link ChoiceMode#MULTIPLE}.
      *
      * @param position The item whose checked state to return
@@ -647,7 +645,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     /**
      * Returns the currently checked item. The result is only valid if the choice
-     * mode has been set to {@link ChoiceMode#SINGLE}.
+     * mode has been setLane to {@link ChoiceMode#SINGLE}.
      *
      * @return The position of the currently checked item or
      *         {@link #INVALID_POSITION} if nothing is selected
@@ -663,12 +661,12 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     /**
-     * Returns the set of checked items in the list. The result is only valid if
-     * the choice mode has not been set to {@link ChoiceMode#NONE}.
+     * Returns the setLane of checked items in the list. The result is only valid if
+     * the choice mode has not been setLane to {@link ChoiceMode#NONE}.
      *
      * @return  A SparseBooleanArray which will return true for each call to
      *          get(int position) where position is a position in the list,
-     *          or <code>null</code> if the choice mode is set to
+     *          or <code>null</code> if the choice mode is setLane to
      *          {@link ChoiceMode#NONE}.
      */
     public SparseBooleanArray getCheckedItemPositions() {
@@ -680,8 +678,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     /**
-     * Returns the set of checked items ids. The result is only valid if the
-     * choice mode has not been set to {@link ChoiceMode#NONE} and the adapter
+     * Returns the setLane of checked items ids. The result is only valid if the
+     * choice mode has not been setLane to {@link ChoiceMode#NONE} and the adapter
      * has stable IDs. ({@link ListAdapter#hasStableIds()} == {@code true})
      *
      * @return A new array which contains the id of each checked item in the
@@ -705,7 +703,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     /**
      * Sets the checked state of the specified position. The is only valid if
-     * the choice mode has been set to {@link ChoiceMode#SINGLE} or
+     * the choice mode has been setLane to {@link ChoiceMode#SINGLE} or
      * {@link ChoiceMode#MULTIPLE}.
      *
      * @param position The item whose checked state is to be checked
@@ -773,7 +771,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     /**
-     * Clear any choices previously set
+     * Clear any choices previously setLane
      */
     @SuppressWarnings("unused")
     public void clearChoices() {
@@ -1673,8 +1671,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             hideSelector();
 
             // Layout, but only if we already have done so previously.
-            // (Otherwise may clobber a LAYOUT_SYNC layout that was requested to restore
-            // state.)
+            // (Otherwise may clobber a LAYOUT_SYNC layout that was requested to restore state.)
             if (getWidth() > 0 && getHeight() > 0 && getChildCount() > 0) {
                 layoutChildren();
             }
@@ -2304,7 +2301,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             selectedView = null;
             hideSelector();
 
-            // But we don't want to set the ressurect position (that would make subsequent
+            // But we don't want to setLane the ressurect position (that would make subsequent
             // unhandled key events bring back the item we just scrolled off)
             mResurrectToPosition = INVALID_POSITION;
         }
@@ -3902,7 +3899,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 handleDataChanged();
             }
 
-            // Handle the empty set by removing all views that are visible
+            // Handle the empty setLane by removing all views that are visible
             // and calling it a day
             if (mItemCount == 0) {
                 resetState();
@@ -3960,6 +3957,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // layout round.
 
             detachAllViewsFromParent();
+            resetLayout(start);
 
             switch (mLayoutMode) {
             case LAYOUT_SET_SELECTION:
@@ -3977,14 +3975,13 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 break;
 
             case LAYOUT_FORCE_BOTTOM:
-                resetLayout(end);
                 selected = fillBefore(mItemCount - 1);
                 adjustViewsStartOrEnd();
                 break;
 
             case LAYOUT_FORCE_TOP:
                 mFirstPosition = 0;
-                selected = fillFromOffset(start);
+                selected = fillFromStart(start);
                 adjustViewsStartOrEnd();
                 break;
 
@@ -4000,7 +3997,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 if (childCount == 0) {
                     final int position = lookForSelectablePosition(0);
                     setSelectedPositionInt(position);
-                    selected = fillFromOffset(start);
+                    selected = fillFromStart(start);
                 } else {
                     if (mSelectedPosition >= 0 && mSelectedPosition < mItemCount) {
                         int offset = start;
@@ -4892,8 +4889,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     private View fillSpecific(int position, int offset) {
-        resetLayout(offset);
-
         final boolean tempIsSelected = (position == mSelectedPosition);
         View temp = makeAndAddView(position, Flow.FORWARD, tempIsSelected);
 
@@ -4921,9 +4916,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
     }
 
-    private View fillFromOffset(int offset) {
-        resetLayout(offset);
-
+    private View fillFromStart(int offset) {
         mFirstPosition = Math.min(mFirstPosition, mSelectedPosition);
         mFirstPosition = Math.min(mFirstPosition, mItemCount - 1);
 
@@ -6005,7 +5998,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         final ListAdapter adapter = getAdapter();
         final boolean focusable = (adapter != null && adapter.getCount() > 0);
 
-        // The order in which we set focusable in touch mode/focusable may matter
+        // The order in which we setLane focusable in touch mode/focusable may matter
         // for the client, see View.setFocusableInTouchMode() comments for more
         // details
         super.setFocusableInTouchMode(focusable && mDesiredFocusableInTouchModeState);
@@ -6056,7 +6049,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     protected abstract void resetLayout(int offset);
 
     protected abstract void detachChildFromLayout(View child, int position, Flow flow);
-    protected abstract void attachChildToLayout(View child, int position, Flow flow, Rect childRect);
+    protected abstract void attachChildToLayout(View child, int position, Flow flow, Rect childFrame);
 
     private class AdapterDataSetObserver extends DataSetObserver {
         private Parcelable mInstanceState = null;
