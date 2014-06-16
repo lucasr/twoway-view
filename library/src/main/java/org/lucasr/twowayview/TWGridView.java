@@ -81,6 +81,21 @@ public class TWGridView extends TWView {
     }
 
     @Override
+    protected void layoutChildren() {
+        if (mLayoutState != null) {
+            mLayoutState.resetEndEdges();
+        }
+
+        super.layoutChildren();
+    }
+
+    @Override
+    protected void resetState() {
+        super.resetState();
+        recreateLayoutState();
+    }
+
+    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         recreateLayoutState();
@@ -130,13 +145,6 @@ public class TWGridView extends TWView {
     @Override
     protected void offsetLayout(int offset) {
         mLayoutState.offset(offset);
-    }
-
-    @Override
-    protected void resetLayout(int offset) {
-        if (mLayoutState != null) {
-            mLayoutState.resetEndEdges();
-        }
     }
 
     @Override

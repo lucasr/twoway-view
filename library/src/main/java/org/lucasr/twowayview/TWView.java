@@ -1133,7 +1133,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         super.setOverScrollMode(mode);
     }
 
-    public int pointToPosition(int x, int y) {
+    private int pointToPosition(int x, int y) {
         Rect frame = mTouchFrame;
         if (frame == null) {
             mTouchFrame = new Rect();
@@ -1889,7 +1889,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
      *
      * @return whether selection was moved
      */
-    boolean fullScroll(int direction) {
+    private boolean fullScroll(int direction) {
         forceValidFocusDirection(direction);
 
         boolean moved = false;
@@ -3826,7 +3826,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
     }
 
-    private void layoutChildren() {
+    protected void layoutChildren() {
         if (getWidth() == 0 || getHeight() == 0) {
             return;
         }
@@ -3957,7 +3957,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // layout round.
 
             detachAllViewsFromParent();
-            resetLayout(start);
 
             switch (mLayoutMode) {
             case LAYOUT_SET_SELECTION:
@@ -4112,8 +4111,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         offsetLayout(offset);
     }
 
-    private View moveSelection(View oldSelected, View newSelected, int delta, int start,
-            int end) {
+    private View moveSelection(View oldSelected, View newSelected, int delta,
+                               int start, int end) {
         final int selectedPosition = mSelectedPosition;
 
         final int oldSelectedStart = getChildStartEdge(oldSelected);
@@ -4431,7 +4430,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         return position;
     }
 
-    boolean resurrectSelection() {
+    private boolean resurrectSelection() {
         final int childCount = getChildCount();
         if (childCount <= 0) {
             return false;
@@ -4516,7 +4515,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
      * If there is a selection returns false.
      * Otherwise resurrects the selection and returns true if resurrected.
      */
-    boolean resurrectSelectionIfNeeded() {
+    private boolean resurrectSelectionIfNeeded() {
         if (mSelectedPosition < 0 && resurrectSelection()) {
             updateSelectorState();
             return true;
@@ -4832,7 +4831,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
     }
 
-    void fillGap(Flow flow) {
+    private void fillGap(Flow flow) {
         final int childCount = getChildCount();
 
         if (flow == Flow.FORWARD) {
@@ -5293,10 +5292,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         mSelectorPosition = INVALID_POSITION;
         mSelectorRect.setEmpty();
 
-        if (mIsAttached) {
-            resetLayout(0);
-        }
-
         invalidate();
     }
 
@@ -5576,391 +5571,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         requestLayout();
     }
 
-    public static class LayoutParams extends ViewGroup.LayoutParams {
-        /**
-         * Type of this view as reported by the adapter
-         */
-        int viewType;
-
-        /**
-         * The stable ID of the item this view displays
-         */
-        long id = -1;
-
-        /**
-         * The position the view was removed from when pulled out of the
-         * scrap heap.
-         * @hide
-         */
-        int scrappedFromPosition;
-
-        /**
-         * When a TwoWayView is measured with an AT_MOST measure spec, it needs
-         * to obtain children views to measure itself. When doing so, the children
-         * are not attached to the window, but put in the recycler which assumes
-         * they've been attached before. Setting this flag will force the reused
-         * view to be attached to the window rather than just attached to the
-         * parent.
-         */
-        boolean forceAdd;
-
-        public LayoutParams(int width, int height) {
-            super(width, height);
-
-            if (this.width == MATCH_PARENT) {
-                Log.w(LOGTAG, "Constructing LayoutParams with width FILL_PARENT " +
-                        "does not make much sense as the view might change orientation. " +
-                        "Falling back to WRAP_CONTENT");
-                this.width = WRAP_CONTENT;
-            }
-
-            if (this.height == MATCH_PARENT) {
-                Log.w(LOGTAG, "Constructing LayoutParams with height FILL_PARENT " +
-                        "does not make much sense as the view might change orientation. " +
-                        "Falling back to WRAP_CONTENT");
-                this.height = WRAP_CONTENT;
-            }
-        }
-
-        public LayoutParams(Context c, AttributeSet attrs) {
-            super(c, attrs);
-
-            if (this.width == MATCH_PARENT) {
-                Log.w(LOGTAG, "Inflation setting LayoutParams width to MATCH_PARENT - " +
-                        "does not make much sense as the view might change orientation. " +
-                        "Falling back to WRAP_CONTENT");
-                this.width = MATCH_PARENT;
-            }
-
-            if (this.height == MATCH_PARENT) {
-                Log.w(LOGTAG, "Inflation setting LayoutParams height to MATCH_PARENT - " +
-                        "does not make much sense as the view might change orientation. " +
-                        "Falling back to WRAP_CONTENT");
-                this.height = WRAP_CONTENT;
-            }
-        }
-
-        public LayoutParams(ViewGroup.LayoutParams other) {
-            super(other);
-
-            if (this.width == MATCH_PARENT) {
-                Log.w(LOGTAG, "Constructing LayoutParams with width MATCH_PARENT - " +
-                        "does not make much sense as the view might change orientation. " +
-                        "Falling back to WRAP_CONTENT");
-                this.width = WRAP_CONTENT;
-            }
-
-            if (this.height == MATCH_PARENT) {
-                Log.w(LOGTAG, "Constructing LayoutParams with height MATCH_PARENT - " +
-                        "does not make much sense as the view might change orientation. " +
-                        "Falling back to WRAP_CONTENT");
-                this.height = WRAP_CONTENT;
-            }
-        }
-    }
-
-    class RecycleBin {
-        private RecyclerListener mRecyclerListener;
-        private int mFirstActivePosition;
-        private View[] mActiveViews = new View[0];
-        private ArrayList<View>[] mScrapViews;
-        private int mViewTypeCount;
-        private ArrayList<View> mCurrentScrap;
-        private SparseArrayCompat<View> mTransientStateViews;
-
-        public void setViewTypeCount(int viewTypeCount) {
-            if (viewTypeCount < 1) {
-                throw new IllegalArgumentException("Can't have a viewTypeCount < 1");
-            }
-
-            @SuppressWarnings("unchecked")
-            ArrayList<View>[] scrapViews = new ArrayList[viewTypeCount];
-            for (int i = 0; i < viewTypeCount; i++) {
-                scrapViews[i] = new ArrayList<View>();
-            }
-
-            mViewTypeCount = viewTypeCount;
-            mCurrentScrap = scrapViews[0];
-            mScrapViews = scrapViews;
-        }
-
-        public void markChildrenDirty() {
-            if (mViewTypeCount == 1) {
-                final ArrayList<View> scrap = mCurrentScrap;
-                final int scrapCount = scrap.size();
-
-                for (int i = 0; i < scrapCount; i++) {
-                    scrap.get(i).forceLayout();
-                }
-            } else {
-                final int typeCount = mViewTypeCount;
-                for (int i = 0; i < typeCount; i++) {
-                    for (View scrap : mScrapViews[i]) {
-                        scrap.forceLayout();
-                    }
-                }
-            }
-
-            if (mTransientStateViews != null) {
-                final int count = mTransientStateViews.size();
-                for (int i = 0; i < count; i++) {
-                    mTransientStateViews.valueAt(i).forceLayout();
-                }
-            }
-        }
-
-        public boolean shouldRecycleViewType(int viewType) {
-            return viewType >= 0;
-        }
-
-        void clear() {
-            if (mViewTypeCount == 1) {
-                final ArrayList<View> scrap = mCurrentScrap;
-                final int scrapCount = scrap.size();
-
-                for (int i = 0; i < scrapCount; i++) {
-                    removeDetachedView(scrap.remove(scrapCount - 1 - i), false);
-                }
-            } else {
-                final int typeCount = mViewTypeCount;
-                for (int i = 0; i < typeCount; i++) {
-                    final ArrayList<View> scrap = mScrapViews[i];
-                    final int scrapCount = scrap.size();
-
-                    for (int j = 0; j < scrapCount; j++) {
-                        removeDetachedView(scrap.remove(scrapCount - 1 - j), false);
-                    }
-                }
-            }
-
-            if (mTransientStateViews != null) {
-                mTransientStateViews.clear();
-            }
-        }
-
-        void fillActiveViews(int childCount, int firstActivePosition) {
-            if (mActiveViews.length < childCount) {
-                mActiveViews = new View[childCount];
-            }
-
-            mFirstActivePosition = firstActivePosition;
-
-            final View[] activeViews = mActiveViews;
-            for (int i = 0; i < childCount; i++) {
-                View child = getChildAt(i);
-
-                // Note:  We do place AdapterView.ITEM_VIEW_TYPE_IGNORE in active views.
-                //        However, we will NOT place them into scrap views.
-                activeViews[i] = child;
-            }
-        }
-
-        View getActiveView(int position) {
-            final int index = position - mFirstActivePosition;
-            final View[] activeViews = mActiveViews;
-
-            if (index >= 0 && index < activeViews.length) {
-                final View match = activeViews[index];
-                activeViews[index] = null;
-
-                return match;
-            }
-
-            return null;
-        }
-
-        View getTransientStateView(int position) {
-            if (mTransientStateViews == null) {
-                return null;
-            }
-
-            final int index = mTransientStateViews.indexOfKey(position);
-            if (index < 0) {
-                return null;
-            }
-
-            final View result = mTransientStateViews.valueAt(index);
-            mTransientStateViews.removeAt(index);
-
-            return result;
-        }
-
-        void clearTransientStateViews() {
-            if (mTransientStateViews != null) {
-                mTransientStateViews.clear();
-            }
-        }
-
-        View getScrapView(int position) {
-            if (mViewTypeCount == 1) {
-                return retrieveFromScrap(mCurrentScrap, position);
-            } else {
-                int whichScrap = mAdapter.getItemViewType(position);
-                if (whichScrap >= 0 && whichScrap < mScrapViews.length) {
-                    return retrieveFromScrap(mScrapViews[whichScrap], position);
-                }
-            }
-
-            return null;
-        }
-
-        @TargetApi(14)
-        void addScrapView(View scrap, int position) {
-            LayoutParams lp = (LayoutParams) scrap.getLayoutParams();
-            if (lp == null) {
-                return;
-            }
-
-            lp.scrappedFromPosition = position;
-
-            final int viewType = lp.viewType;
-            final boolean scrapHasTransientState = ViewCompat.hasTransientState(scrap);
-
-            // Don't put views that should be ignored into the scrap heap
-            if (!shouldRecycleViewType(viewType) || scrapHasTransientState) {
-                if (scrapHasTransientState) {
-                    if (mTransientStateViews == null) {
-                        mTransientStateViews = new SparseArrayCompat<View>();
-                    }
-
-                    mTransientStateViews.put(position, scrap);
-                }
-
-                return;
-            }
-
-            if (mViewTypeCount == 1) {
-                mCurrentScrap.add(scrap);
-            } else {
-                mScrapViews[viewType].add(scrap);
-            }
-
-            // FIXME: Unfortunately, ViewCompat.setAccessibilityDelegate() doesn't accept
-            // null delegates.
-            if (Build.VERSION.SDK_INT >= 14) {
-                scrap.setAccessibilityDelegate(null);
-            }
-
-            if (mRecyclerListener != null) {
-                mRecyclerListener.onMovedToScrapHeap(scrap);
-            }
-        }
-
-        @TargetApi(14)
-        void scrapActiveViews() {
-            final View[] activeViews = mActiveViews;
-            final boolean multipleScraps = (mViewTypeCount > 1);
-
-            ArrayList<View> scrapViews = mCurrentScrap;
-            final int count = activeViews.length;
-
-            for (int i = count - 1; i >= 0; i--) {
-                final View victim = activeViews[i];
-                if (victim != null) {
-                    final LayoutParams lp = (LayoutParams) victim.getLayoutParams();
-                    int whichScrap = lp.viewType;
-
-                    activeViews[i] = null;
-
-                    final boolean scrapHasTransientState = ViewCompat.hasTransientState(victim);
-                    if (!shouldRecycleViewType(whichScrap) || scrapHasTransientState) {
-                        if (scrapHasTransientState) {
-                            removeDetachedView(victim, false);
-
-                            if (mTransientStateViews == null) {
-                                mTransientStateViews = new SparseArrayCompat<View>();
-                            }
-
-                            mTransientStateViews.put(mFirstActivePosition + i, victim);
-                        }
-
-                        continue;
-                    }
-
-                    if (multipleScraps) {
-                        scrapViews = mScrapViews[whichScrap];
-                    }
-
-                    lp.scrappedFromPosition = mFirstActivePosition + i;
-                    scrapViews.add(victim);
-
-                    // FIXME: Unfortunately, ViewCompat.setAccessibilityDelegate() doesn't accept
-                    // null delegates.
-                    if (Build.VERSION.SDK_INT >= 14) {
-                        victim.setAccessibilityDelegate(null);
-                    }
-
-                    if (mRecyclerListener != null) {
-                        mRecyclerListener.onMovedToScrapHeap(victim);
-                    }
-                }
-            }
-
-            pruneScrapViews();
-        }
-
-        private void pruneScrapViews() {
-            final int maxViews = mActiveViews.length;
-            final int viewTypeCount = mViewTypeCount;
-            final ArrayList<View>[] scrapViews = mScrapViews;
-
-            for (int i = 0; i < viewTypeCount; ++i) {
-                final ArrayList<View> scrapPile = scrapViews[i];
-                int size = scrapPile.size();
-                final int extras = size - maxViews;
-
-                size--;
-
-                for (int j = 0; j < extras; j++) {
-                    removeDetachedView(scrapPile.remove(size--), false);
-                }
-            }
-
-            if (mTransientStateViews != null) {
-                for (int i = 0; i < mTransientStateViews.size(); i++) {
-                    final View v = mTransientStateViews.valueAt(i);
-                    if (!ViewCompat.hasTransientState(v)) {
-                        mTransientStateViews.removeAt(i);
-                        i--;
-                    }
-                }
-            }
-        }
-
-        void reclaimScrapViews(List<View> views) {
-            if (mViewTypeCount == 1) {
-                views.addAll(mCurrentScrap);
-            } else {
-                final int viewTypeCount = mViewTypeCount;
-                final ArrayList<View>[] scrapViews = mScrapViews;
-
-                for (int i = 0; i < viewTypeCount; ++i) {
-                    final ArrayList<View> scrapPile = scrapViews[i];
-                    views.addAll(scrapPile);
-                }
-            }
-        }
-
-        View retrieveFromScrap(ArrayList<View> scrapViews, int position) {
-            int size = scrapViews.size();
-            if (size <= 0) {
-                return null;
-            }
-
-            for (int i = 0; i < size; i++) {
-                final View scrapView = scrapViews.get(i);
-                final LayoutParams lp = (LayoutParams) scrapView.getLayoutParams();
-
-                if (lp.scrappedFromPosition == position) {
-                    scrapViews.remove(i);
-                    return scrapView;
-                }
-            }
-
-            return scrapViews.remove(size - 1);
-        }
-    }
-
     @Override
     public void setEmptyView(View emptyView) {
         super.setEmptyView(emptyView);
@@ -6046,10 +5656,394 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     protected abstract int getChildHeightMeasureSpec(View child, int position, LayoutParams lp);
 
     protected abstract void offsetLayout(int offset);
-    protected abstract void resetLayout(int offset);
 
     protected abstract void detachChildFromLayout(View child, int position, Flow flow);
     protected abstract void attachChildToLayout(View child, int position, Flow flow, Rect childFrame);
+
+    public static class LayoutParams extends ViewGroup.LayoutParams {
+        /**
+         * Type of this view as reported by the adapter
+         */
+        int viewType;
+
+        /**
+         * The stable ID of the item this view displays
+         */
+        long id = -1;
+
+        /**
+         * The position the view was removed from when pulled out of the
+         * scrap heap.
+         * @hide
+         */
+        int scrappedFromPosition;
+
+        /**
+         * When a TwoWayView is measured with an AT_MOST measure spec, it needs
+         * to obtain children views to measure itself. When doing so, the children
+         * are not attached to the window, but put in the recycler which assumes
+         * they've been attached before. Setting this flag will force the reused
+         * view to be attached to the window rather than just attached to the
+         * parent.
+         */
+        boolean forceAdd;
+
+        public LayoutParams(int width, int height) {
+            super(width, height);
+
+            if (this.width == MATCH_PARENT) {
+                Log.w(LOGTAG, "Constructing LayoutParams with width FILL_PARENT " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
+                this.width = WRAP_CONTENT;
+            }
+
+            if (this.height == MATCH_PARENT) {
+                Log.w(LOGTAG, "Constructing LayoutParams with height FILL_PARENT " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
+                this.height = WRAP_CONTENT;
+            }
+        }
+
+        public LayoutParams(Context c, AttributeSet attrs) {
+            super(c, attrs);
+
+            if (this.width == MATCH_PARENT) {
+                Log.w(LOGTAG, "Inflation setting LayoutParams width to MATCH_PARENT - " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
+                this.width = MATCH_PARENT;
+            }
+
+            if (this.height == MATCH_PARENT) {
+                Log.w(LOGTAG, "Inflation setting LayoutParams height to MATCH_PARENT - " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
+                this.height = WRAP_CONTENT;
+            }
+        }
+
+        public LayoutParams(ViewGroup.LayoutParams other) {
+            super(other);
+
+            if (this.width == MATCH_PARENT) {
+                Log.w(LOGTAG, "Constructing LayoutParams with width MATCH_PARENT - " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
+                this.width = WRAP_CONTENT;
+            }
+
+            if (this.height == MATCH_PARENT) {
+                Log.w(LOGTAG, "Constructing LayoutParams with height MATCH_PARENT - " +
+                        "does not make much sense as the view might change orientation. " +
+                        "Falling back to WRAP_CONTENT");
+                this.height = WRAP_CONTENT;
+            }
+        }
+    }
+
+    private class RecycleBin {
+        private RecyclerListener mRecyclerListener;
+        private int mFirstActivePosition;
+        private View[] mActiveViews = new View[0];
+        private ArrayList<View>[] mScrapViews;
+        private int mViewTypeCount;
+        private ArrayList<View> mCurrentScrap;
+        private SparseArrayCompat<View> mTransientStateViews;
+
+        public void setViewTypeCount(int viewTypeCount) {
+            if (viewTypeCount < 1) {
+                throw new IllegalArgumentException("Can't have a viewTypeCount < 1");
+            }
+
+            @SuppressWarnings("unchecked")
+            ArrayList<View>[] scrapViews = new ArrayList[viewTypeCount];
+            for (int i = 0; i < viewTypeCount; i++) {
+                scrapViews[i] = new ArrayList<View>();
+            }
+
+            mViewTypeCount = viewTypeCount;
+            mCurrentScrap = scrapViews[0];
+            mScrapViews = scrapViews;
+        }
+
+        public void markChildrenDirty() {
+            if (mViewTypeCount == 1) {
+                final ArrayList<View> scrap = mCurrentScrap;
+                final int scrapCount = scrap.size();
+
+                for (int i = 0; i < scrapCount; i++) {
+                    scrap.get(i).forceLayout();
+                }
+            } else {
+                final int typeCount = mViewTypeCount;
+                for (int i = 0; i < typeCount; i++) {
+                    for (View scrap : mScrapViews[i]) {
+                        scrap.forceLayout();
+                    }
+                }
+            }
+
+            if (mTransientStateViews != null) {
+                final int count = mTransientStateViews.size();
+                for (int i = 0; i < count; i++) {
+                    mTransientStateViews.valueAt(i).forceLayout();
+                }
+            }
+        }
+
+        public boolean shouldRecycleViewType(int viewType) {
+            return viewType >= 0;
+        }
+
+        public void clear() {
+            if (mViewTypeCount == 1) {
+                final ArrayList<View> scrap = mCurrentScrap;
+                final int scrapCount = scrap.size();
+
+                for (int i = 0; i < scrapCount; i++) {
+                    removeDetachedView(scrap.remove(scrapCount - 1 - i), false);
+                }
+            } else {
+                final int typeCount = mViewTypeCount;
+                for (int i = 0; i < typeCount; i++) {
+                    final ArrayList<View> scrap = mScrapViews[i];
+                    final int scrapCount = scrap.size();
+
+                    for (int j = 0; j < scrapCount; j++) {
+                        removeDetachedView(scrap.remove(scrapCount - 1 - j), false);
+                    }
+                }
+            }
+
+            if (mTransientStateViews != null) {
+                mTransientStateViews.clear();
+            }
+        }
+
+        public void fillActiveViews(int childCount, int firstActivePosition) {
+            if (mActiveViews.length < childCount) {
+                mActiveViews = new View[childCount];
+            }
+
+            mFirstActivePosition = firstActivePosition;
+
+            final View[] activeViews = mActiveViews;
+            for (int i = 0; i < childCount; i++) {
+                View child = getChildAt(i);
+
+                // Note:  We do place AdapterView.ITEM_VIEW_TYPE_IGNORE in active views.
+                //        However, we will NOT place them into scrap views.
+                activeViews[i] = child;
+            }
+        }
+
+        public View getActiveView(int position) {
+            final int index = position - mFirstActivePosition;
+            final View[] activeViews = mActiveViews;
+
+            if (index >= 0 && index < activeViews.length) {
+                final View match = activeViews[index];
+                activeViews[index] = null;
+
+                return match;
+            }
+
+            return null;
+        }
+
+        public View getTransientStateView(int position) {
+            if (mTransientStateViews == null) {
+                return null;
+            }
+
+            final int index = mTransientStateViews.indexOfKey(position);
+            if (index < 0) {
+                return null;
+            }
+
+            final View result = mTransientStateViews.valueAt(index);
+            mTransientStateViews.removeAt(index);
+
+            return result;
+        }
+
+        public void clearTransientStateViews() {
+            if (mTransientStateViews != null) {
+                mTransientStateViews.clear();
+            }
+        }
+
+        public View getScrapView(int position) {
+            if (mViewTypeCount == 1) {
+                return retrieveFromScrap(mCurrentScrap, position);
+            } else {
+                int whichScrap = mAdapter.getItemViewType(position);
+                if (whichScrap >= 0 && whichScrap < mScrapViews.length) {
+                    return retrieveFromScrap(mScrapViews[whichScrap], position);
+                }
+            }
+
+            return null;
+        }
+
+        @TargetApi(14)
+        public void addScrapView(View scrap, int position) {
+            LayoutParams lp = (LayoutParams) scrap.getLayoutParams();
+            if (lp == null) {
+                return;
+            }
+
+            lp.scrappedFromPosition = position;
+
+            final int viewType = lp.viewType;
+            final boolean scrapHasTransientState = ViewCompat.hasTransientState(scrap);
+
+            // Don't put views that should be ignored into the scrap heap
+            if (!shouldRecycleViewType(viewType) || scrapHasTransientState) {
+                if (scrapHasTransientState) {
+                    if (mTransientStateViews == null) {
+                        mTransientStateViews = new SparseArrayCompat<View>();
+                    }
+
+                    mTransientStateViews.put(position, scrap);
+                }
+
+                return;
+            }
+
+            if (mViewTypeCount == 1) {
+                mCurrentScrap.add(scrap);
+            } else {
+                mScrapViews[viewType].add(scrap);
+            }
+
+            // FIXME: Unfortunately, ViewCompat.setAccessibilityDelegate() doesn't accept
+            // null delegates.
+            if (Build.VERSION.SDK_INT >= 14) {
+                scrap.setAccessibilityDelegate(null);
+            }
+
+            if (mRecyclerListener != null) {
+                mRecyclerListener.onMovedToScrapHeap(scrap);
+            }
+        }
+
+        @TargetApi(14)
+        public void scrapActiveViews() {
+            final View[] activeViews = mActiveViews;
+            final boolean multipleScraps = (mViewTypeCount > 1);
+
+            ArrayList<View> scrapViews = mCurrentScrap;
+            final int count = activeViews.length;
+
+            for (int i = count - 1; i >= 0; i--) {
+                final View victim = activeViews[i];
+                if (victim != null) {
+                    final LayoutParams lp = (LayoutParams) victim.getLayoutParams();
+                    int whichScrap = lp.viewType;
+
+                    activeViews[i] = null;
+
+                    final boolean scrapHasTransientState = ViewCompat.hasTransientState(victim);
+                    if (!shouldRecycleViewType(whichScrap) || scrapHasTransientState) {
+                        if (scrapHasTransientState) {
+                            removeDetachedView(victim, false);
+
+                            if (mTransientStateViews == null) {
+                                mTransientStateViews = new SparseArrayCompat<View>();
+                            }
+
+                            mTransientStateViews.put(mFirstActivePosition + i, victim);
+                        }
+
+                        continue;
+                    }
+
+                    if (multipleScraps) {
+                        scrapViews = mScrapViews[whichScrap];
+                    }
+
+                    lp.scrappedFromPosition = mFirstActivePosition + i;
+                    scrapViews.add(victim);
+
+                    // FIXME: Unfortunately, ViewCompat.setAccessibilityDelegate() doesn't accept
+                    // null delegates.
+                    if (Build.VERSION.SDK_INT >= 14) {
+                        victim.setAccessibilityDelegate(null);
+                    }
+
+                    if (mRecyclerListener != null) {
+                        mRecyclerListener.onMovedToScrapHeap(victim);
+                    }
+                }
+            }
+
+            pruneScrapViews();
+        }
+
+        private void pruneScrapViews() {
+            final int maxViews = mActiveViews.length;
+            final int viewTypeCount = mViewTypeCount;
+            final ArrayList<View>[] scrapViews = mScrapViews;
+
+            for (int i = 0; i < viewTypeCount; ++i) {
+                final ArrayList<View> scrapPile = scrapViews[i];
+                int size = scrapPile.size();
+                final int extras = size - maxViews;
+
+                size--;
+
+                for (int j = 0; j < extras; j++) {
+                    removeDetachedView(scrapPile.remove(size--), false);
+                }
+            }
+
+            if (mTransientStateViews != null) {
+                for (int i = 0; i < mTransientStateViews.size(); i++) {
+                    final View v = mTransientStateViews.valueAt(i);
+                    if (!ViewCompat.hasTransientState(v)) {
+                        mTransientStateViews.removeAt(i);
+                        i--;
+                    }
+                }
+            }
+        }
+
+        public void reclaimScrapViews(List<View> views) {
+            if (mViewTypeCount == 1) {
+                views.addAll(mCurrentScrap);
+            } else {
+                final int viewTypeCount = mViewTypeCount;
+                final ArrayList<View>[] scrapViews = mScrapViews;
+
+                for (int i = 0; i < viewTypeCount; ++i) {
+                    final ArrayList<View> scrapPile = scrapViews[i];
+                    views.addAll(scrapPile);
+                }
+            }
+        }
+
+        public View retrieveFromScrap(ArrayList<View> scrapViews, int position) {
+            int size = scrapViews.size();
+            if (size <= 0) {
+                return null;
+            }
+
+            for (int i = 0; i < size; i++) {
+                final View scrapView = scrapViews.get(i);
+                final LayoutParams lp = (LayoutParams) scrapView.getLayoutParams();
+
+                if (lp.scrappedFromPosition == position) {
+                    scrapViews.remove(i);
+                    return scrapView;
+                }
+            }
+
+            return scrapViews.remove(size - 1);
+        }
+    }
 
     private class AdapterDataSetObserver extends DataSetObserver {
         private Parcelable mInstanceState = null;
