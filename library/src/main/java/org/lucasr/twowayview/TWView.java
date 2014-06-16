@@ -989,7 +989,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 if (distance < minDistance) {
                     minDistance = distance;
                     closetChildIndex = i;
-                    closestChildStart = (mIsVertical ? other.getTop() : other.getLeft());
+                    closestChildStart = getChildStartEdge(other);
                 }
             }
         }
@@ -1524,13 +1524,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 final float x = ev.getX();
                 final float y = ev.getY();
 
-                final boolean inList;
-                if (mIsVertical) {
-                    inList = x > getPaddingLeft() && x < getWidth() - getPaddingRight();
-                } else {
-                    inList = y > getPaddingTop() && y < getHeight() - getPaddingBottom();
-                }
-
+                final boolean inList = (x > getStartEdge() && x < getEndEdge());
                 if (child != null && !child.hasFocusable() && inList) {
                     if (mTouchMode != TOUCH_MODE_DOWN) {
                         child.setPressed(false);
@@ -1865,7 +1859,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         final int position = lookForSelectablePosition(nextPage, forward);
         if (position >= 0) {
             mLayoutMode = LAYOUT_SPECIFIC;
-            mSpecificStart = (mIsVertical ? getPaddingTop() : getPaddingLeft());
+            mSpecificStart = getStartEdge();
 
             if (forward && position > mItemCount - getChildCount()) {
                 mLayoutMode = LAYOUT_FORCE_BOTTOM;
@@ -2128,7 +2122,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
                 final int selectedStart;
                 if (selectedView != null) {
-                    selectedStart = (mIsVertical ? selectedView.getTop() : selectedView.getLeft());
+                    selectedStart = getChildStartEdge(selectedView);
                 } else {
                     selectedStart = start;
                 }
@@ -2776,15 +2770,14 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         int motionViewPrevStart = 0;
         View motionView = this.getChildAt(motionIndex);
         if (motionView != null) {
-            motionViewPrevStart = (mIsVertical ? motionView.getTop() : motionView.getLeft());
+            motionViewPrevStart = getChildStartEdge(motionView);
         }
 
         boolean atEdge = scrollChildrenBy(delta);
 
         motionView = this.getChildAt(motionIndex);
         if (motionView != null) {
-            final int motionViewRealStart =
-                    (mIsVertical ? motionView.getTop() : motionView.getLeft());
+            final int motionViewRealStart = getChildStartEdge(motionView);
 
             if (atEdge) {
                 final int overscroll = -delta - (motionViewRealStart - motionViewPrevStart);
@@ -3971,9 +3964,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             switch (mLayoutMode) {
             case LAYOUT_SET_SELECTION:
                 if (newSelected != null) {
-                    final int newSelectedStart =
-                            (mIsVertical ? newSelected.getTop() : newSelected.getLeft());
-
+                    final int newSelectedStart = getChildStartEdge(newSelected);
                     selected = fillFromSelection(newSelectedStart, start, end);
                 } else {
                     selected = fillFromMiddle(start, end);
@@ -4014,13 +4005,13 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                     if (mSelectedPosition >= 0 && mSelectedPosition < mItemCount) {
                         int offset = start;
                         if (oldSelected != null) {
-                            offset = (mIsVertical ? oldSelected.getTop() : oldSelected.getLeft());
+                            offset = getChildStartEdge(oldSelected);
                         }
                         selected = fillSpecific(mSelectedPosition, offset);
                     } else if (mFirstPosition < mItemCount) {
                         int offset = start;
                         if (oldFirstChild != null) {
-                            offset = (mIsVertical ? oldFirstChild.getTop() : oldFirstChild.getLeft());
+                            offset = getChildStartEdge(oldFirstChild);
                         }
 
                         selected = fillSpecific(mFirstPosition, offset);
@@ -4059,7 +4050,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                     positionSelector(INVALID_POSITION, selected);
                 }
 
-                mSelectedStart = (mIsVertical ? selected.getTop() : selected.getLeft());
+                mSelectedStart = getChildStartEdge(selected);
             } else {
                 if (mTouchMode > TOUCH_MODE_DOWN && mTouchMode < TOUCH_MODE_DRAGGING) {
                     View child = getChildAt(mMotionPosition - mFirstPosition);
@@ -4216,7 +4207,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             if (newSelected != null) {
                 // Try to position the top of newSel (A) where it was before it was selected
-                final int newSelectedStart = (mIsVertical ? newSelected.getTop() : newSelected.getLeft());
+                final int newSelectedStart = getChildStartEdge(newSelected);
                 selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
             } else {
                 // If (A) was not on screen and so did not have a view, position
@@ -4463,14 +4454,14 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             selectedPosition = toPosition;
 
             final View selected = getChildAt(selectedPosition - mFirstPosition);
-            selectedStart = (mIsVertical ? selected.getTop() : selected.getLeft());
+            selectedStart = getChildStartEdge(selected);
         } else if (toPosition < firstPosition) {
             // Default to selecting whatever is first
             selectedPosition = firstPosition;
 
             for (int i = 0; i < childCount; i++) {
                 final View child = getChildAt(i);
-                final int childStart = (mIsVertical ? child.getTop() : child.getLeft());
+                final int childStart = getChildStartEdge(child);
 
                 if (i == 0) {
                     // Remember the position of the first item
@@ -5330,7 +5321,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             mSyncPosition = mNextSelectedPosition;
 
             if (child != null) {
-                mSpecificStart = (mIsVertical ? child.getTop() : child.getLeft());
+                mSpecificStart = getChildStartEdge(child);
             }
 
             mSyncMode = SYNC_SELECTED_POSITION;
@@ -5348,7 +5339,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             mSyncPosition = mFirstPosition;
 
             if (child != null) {
-                mSpecificStart = (mIsVertical ? child.getTop() : child.getLeft());
+                mSpecificStart = getChildStartEdge(child);
             }
 
             mSyncMode = SYNC_FIRST_POSITION;
@@ -5514,8 +5505,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // and the user wouldn't expect to end up somewhere else when
             // they revisit the list even if its content has changed.
 
-            View child = getChildAt(0);
-            ss.viewStart = (mIsVertical ? child.getTop() : child.getLeft());
+            ss.viewStart = getChildStartEdge(getChildAt(0));
 
             int firstPos = mFirstPosition;
             if (firstPos >= mItemCount) {
