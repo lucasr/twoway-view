@@ -21,8 +21,15 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 
 public class MainActivity extends ActionBarActivity {
+    private final String ARG_SELECTED_LAYOUT_ID = "selectedLayoutId";
+
+    private final int DEFAULT_LAYOUT = R.layout.layout_list;
+
+    private int mSelectedLayoutId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,33 +40,37 @@ public class MainActivity extends ActionBarActivity {
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
 
-        ActionBar.Tab tab = actionBar.newTab()
-                .setText("").setIcon(R.drawable.ic_list)
-                .setTabListener(new TabListener<TWFragment>(
-                        R.layout.layout_list, "list"));
-        actionBar.addTab(tab);
+        mSelectedLayoutId = DEFAULT_LAYOUT;
+        if (savedInstanceState != null) {
+            mSelectedLayoutId = savedInstanceState.getInt(ARG_SELECTED_LAYOUT_ID);
+        }
 
-        tab = actionBar.newTab()
-                .setText("").setIcon(R.drawable.ic_grid)
-                .setTabListener(new TabListener<TWFragment>(
-                        R.layout.layout_grid, "grid"));
-        actionBar.addTab(tab);
-
-        tab = actionBar.newTab()
-                .setText("").setIcon(R.drawable.ic_staggered)
-                .setTabListener(new TabListener<TWFragment>(
-                        R.layout.layout_staggered_grid, "staggered"));
-        actionBar.addTab(tab);
-
-        tab = actionBar.newTab()
-                .setText("").setIcon(R.drawable.ic_spannable)
-                .setTabListener(new TabListener<TWFragment>(
-                        R.layout.layout_spannable_grid, "spannable"));
-        actionBar.addTab(tab);
+        addLayoutTab(
+                actionBar, R.layout.layout_list, R.drawable.ic_list, "list");
+        addLayoutTab(
+                actionBar, R.layout.layout_grid, R.drawable.ic_grid, "grid");
+        addLayoutTab(
+                actionBar, R.layout.layout_staggered_grid, R.drawable.ic_staggered, "staggered");
+        addLayoutTab(
+                actionBar, R.layout.layout_spannable_grid, R.drawable.ic_spannable, "spannable");
     }
 
-    public static class TabListener<T extends Fragment> implements ActionBar.TabListener {
-        private Fragment mFragment;
+    private void addLayoutTab(ActionBar actionBar, int layoutId, int iconId, String tag) {
+        ActionBar.Tab tab = actionBar.newTab()
+                .setText("")
+                .setIcon(iconId)
+                .setTabListener(new TabListener<TWFragment>(layoutId, tag));
+        actionBar.addTab(tab, layoutId == mSelectedLayoutId);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(ARG_SELECTED_LAYOUT_ID, mSelectedLayoutId);
+    }
+
+    public class TabListener<T extends Fragment> implements ActionBar.TabListener {
+        private TWFragment mFragment;
         private final int mLayoutId;
         private final String mTag;
 
@@ -70,11 +81,13 @@ public class MainActivity extends ActionBarActivity {
 
         public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
             if (mFragment == null) {
-                mFragment = (Fragment) TWFragment.newInstance(mLayoutId);
+                mFragment = (TWFragment) TWFragment.newInstance(mLayoutId);
                 ft.add(R.id.content, mFragment, mTag);
             } else {
                 ft.attach(mFragment);
             }
+
+            mSelectedLayoutId = mFragment.getLayoutId();
         }
 
         public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {

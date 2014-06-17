@@ -161,13 +161,17 @@ public class TWFragment extends Fragment {
         mToast.show();
     }
 
-    private static class ViewHolder {
-        public TextView title;
+    public int getLayoutId() {
+        return getArguments().getInt(ARG_LAYOUT_ID);
     }
 
     private static class SimpleAdapter extends BaseAdapter {
         private final Context mContext;
         private final int mLayoutId;
+
+        private static class ViewHolder {
+            public TextView title;
+        }
 
         public SimpleAdapter(Context context, int layoutId) {
             mContext = context;
