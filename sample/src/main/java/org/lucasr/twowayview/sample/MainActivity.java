@@ -59,7 +59,7 @@ public class MainActivity extends ActionBarActivity {
         ActionBar.Tab tab = actionBar.newTab()
                 .setText("")
                 .setIcon(iconId)
-                .setTabListener(new TabListener<TWFragment>(layoutId, tag));
+                .setTabListener(new TabListener(layoutId, tag));
         actionBar.addTab(tab, layoutId == mSelectedLayoutId);
     }
 
@@ -69,7 +69,7 @@ public class MainActivity extends ActionBarActivity {
         outState.putInt(ARG_SELECTED_LAYOUT_ID, mSelectedLayoutId);
     }
 
-    public class TabListener<T extends Fragment> implements ActionBar.TabListener {
+    public class TabListener implements ActionBar.TabListener {
         private TWFragment mFragment;
         private final int mLayoutId;
         private final String mTag;
@@ -79,6 +79,7 @@ public class MainActivity extends ActionBarActivity {
             mTag = tag;
         }
 
+        @Override
         public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
             if (mFragment == null) {
                 mFragment = (TWFragment) TWFragment.newInstance(mLayoutId);
@@ -90,6 +91,7 @@ public class MainActivity extends ActionBarActivity {
             mSelectedLayoutId = mFragment.getLayoutId();
         }
 
+        @Override
         public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
             if (mFragment != null) {
                 ft.detach(mFragment);
@@ -98,7 +100,6 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
-
         }
     }
 }
