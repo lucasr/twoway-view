@@ -35,25 +35,25 @@ public class MainActivity extends ActionBarActivity {
 
         ActionBar.Tab tab = actionBar.newTab()
                 .setText("").setIcon(R.drawable.ic_list)
-                .setTabListener(new TabListener<LayoutFragment>(
+                .setTabListener(new TabListener<TWFragment>(
                         R.layout.layout_list, "list"));
         actionBar.addTab(tab);
 
         tab = actionBar.newTab()
                 .setText("").setIcon(R.drawable.ic_grid)
-                .setTabListener(new TabListener<LayoutFragment>(
+                .setTabListener(new TabListener<TWFragment>(
                         R.layout.layout_grid, "grid"));
         actionBar.addTab(tab);
 
         tab = actionBar.newTab()
                 .setText("").setIcon(R.drawable.ic_staggered)
-                .setTabListener(new TabListener<LayoutFragment>(
+                .setTabListener(new TabListener<TWFragment>(
                         R.layout.layout_staggered_grid, "staggered"));
         actionBar.addTab(tab);
 
         tab = actionBar.newTab()
                 .setText("").setIcon(R.drawable.ic_spannable)
-                .setTabListener(new TabListener<LayoutFragment>(
+                .setTabListener(new TabListener<TWFragment>(
                         R.layout.layout_spannable_grid, "spannable"));
         actionBar.addTab(tab);
     }
@@ -70,7 +70,7 @@ public class MainActivity extends ActionBarActivity {
 
         public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
             if (mFragment == null) {
-                mFragment = (Fragment) LayoutFragment.newInstance(mLayoutId);
+                mFragment = (Fragment) TWFragment.newInstance(mLayoutId);
                 ft.add(R.id.content, mFragment, mTag);
             } else {
                 ft.attach(mFragment);

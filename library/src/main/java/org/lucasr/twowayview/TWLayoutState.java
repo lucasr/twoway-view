@@ -89,8 +89,8 @@ class TWLayoutState {
         laneRect.set(mLanes[index]);
     }
 
-    public void setLane(int index, int l, int t, int r, int b) {
-        final Rect laneRect = mLanes[index];
+    public void setLane(int lane, int l, int t, int r, int b) {
+        final Rect laneRect = mLanes[lane];
         laneRect.left = l;
         laneRect.top = t;
         laneRect.right = r;

@@ -156,7 +156,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     private boolean mIsAttached;
 
-    private final RecycleBin mRecycler;
+    private final RecycleBin mRecycleBin;
     private AdapterDataSetObserver mDataSetObserver;
 
     private boolean mItemsCanFocus;
@@ -233,11 +233,12 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     private int mLayoutMode;
     private int mTouchMode;
     private int mLastTouchMode;
+
     private VelocityTracker mVelocityTracker;
     private final Scroller mScroller;
 
-    private EdgeEffectCompat mStartEdge;
-    private EdgeEffectCompat mEndEdge;
+    private EdgeEffectCompat mStartEdgeEffect;
+    private EdgeEffectCompat mEndEdgeEffect;
 
     private OnScrollListener mOnScrollListener;
     private int mLastScrollState;
@@ -376,13 +377,13 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         mCheckedIdStates = null;
         mCheckStates = null;
 
-        mRecycler = new RecycleBin();
+        mRecycleBin = new RecycleBin();
         mDataSetObserver = null;
 
         mAreAllItemsSelectable = true;
 
-        mStartEdge = null;
-        mEndEdge = null;
+        mStartEdgeEffect = null;
+        mEndEdgeEffect = null;
 
         setClickable(true);
         setFocusableInTouchMode(true);
@@ -445,7 +446,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         mIsVertical = isVertical;
 
         resetState();
-        mRecycler.clear();
+        mRecycleBin.clear();
 
         requestLayout();
     }
@@ -529,7 +530,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
      * @see TWView.RecyclerListener
      */
     public void setRecyclerListener(RecyclerListener l) {
-        mRecycler.mRecyclerListener = l;
+        mRecycleBin.mRecyclerListener = l;
     }
 
     /**
@@ -831,7 +832,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
 
         resetState();
-        mRecycler.clear();
+        mRecycleBin.clear();
 
         mAdapter = adapter;
         mDataChanged = true;
@@ -854,7 +855,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             mDataSetObserver = new AdapterDataSetObserver();
             mAdapter.registerDataSetObserver(mDataSetObserver);
 
-            mRecycler.setViewTypeCount(adapter.getViewTypeCount());
+            mRecycleBin.setViewTypeCount(adapter.getViewTypeCount());
 
             mHasStableIds = adapter.hasStableIds();
             mAreAllItemsSelectable = adapter.areAllItemsEnabled();
@@ -1024,7 +1025,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         super.onDetachedFromWindow();
 
         // Detach any view left in the scrap heap
-        mRecycler.clear();
+        mRecycleBin.clear();
 
         final ViewTreeObserver treeObserver = getViewTreeObserver();
         treeObserver.removeOnTouchModeChangeListener(this);
@@ -1119,15 +1120,15 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
 
         if (mode != ViewCompat.OVER_SCROLL_NEVER) {
-            if (mStartEdge == null) {
+            if (mStartEdgeEffect == null) {
                 Context context = getContext();
 
-                mStartEdge = new EdgeEffectCompat(context);
-                mEndEdge = new EdgeEffectCompat(context);
+                mStartEdgeEffect = new EdgeEffectCompat(context);
+                mEndEdgeEffect = new EdgeEffectCompat(context);
             }
         } else {
-            mStartEdge = null;
-            mEndEdge = null;
+            mStartEdgeEffect = null;
+            mEndEdgeEffect = null;
         }
 
         super.setOverScrollMode(mode);
@@ -1355,7 +1356,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
             if (index < 0) {
                 Log.e(LOGTAG, "onInterceptTouchEvent could not find pointer with id " +
-                        mActivePointerId + " - did TwoWayView receive an inconsistent " +
+                        mActivePointerId + " - did TWView receive an inconsistent " +
                         "event stream?");
                 return false;
             }
@@ -1451,7 +1452,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             final int index = MotionEventCompat.findPointerIndex(ev, mActivePointerId);
             if (index < 0) {
                 Log.e(LOGTAG, "onInterceptTouchEvent could not find pointer with id " +
-                        mActivePointerId + " - did TwoWayView receive an inconsistent " +
+                        mActivePointerId + " - did TWView receive an inconsistent " +
                         "event stream?");
                 return false;
             }
@@ -1503,8 +1504,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 motionView.setPressed(false);
             }
 
-            if (mStartEdge != null && mEndEdge != null) {
-                needsInvalidate = mStartEdge.onRelease() | mEndEdge.onRelease();
+            if (mStartEdgeEffect != null && mEndEdgeEffect != null) {
+                needsInvalidate = mStartEdgeEffect.onRelease() | mEndEdgeEffect.onRelease();
             }
 
             recycleVelocityTracker();
@@ -1647,8 +1648,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             cancelCheckForLongPress();
             setPressed(false);
 
-            if (mStartEdge != null && mEndEdge != null) {
-                needsInvalidate |= mStartEdge.onRelease() | mEndEdge.onRelease();
+            if (mStartEdgeEffect != null && mEndEdgeEffect != null) {
+                needsInvalidate |= mStartEdgeEffect.onRelease() | mEndEdgeEffect.onRelease();
             }
 
             recycleVelocityTracker();
@@ -1682,7 +1683,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             if (touchMode == TOUCH_MODE_OVERSCROLL) {
                 if (mOverScroll != 0) {
                     mOverScroll = 0;
-                    finishEdgeGlows();
+                    finishEdgeEffects();
                     invalidate();
                 }
             }
@@ -2199,7 +2200,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
      * @return The amount to preview next items when arrow scrolling.
      */
     private int getArrowScrollPreviewLength() {
-        // FIXME: TwoWayView has no fading edge support just yet but using it
+        // FIXME: TWView has no fading edge support just yet but using it
         // makes it convenient for defining the next item's previous length.
         int fadingEdgeLength =
                 (mIsVertical ? getVerticalFadingEdgeLength() : getHorizontalFadingEdgeLength());
@@ -2309,7 +2310,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         if (needToRedraw) {
             if (selectedView != null) {
                 positionSelector(selectedPos, selectedView);
-                mSelectedStart = selectedView.getTop();
+                mSelectedStart = getChildStartEdge(selectedView);
             }
 
             if (!awakenScrollbarsInternal()) {
@@ -2586,8 +2587,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                     handled = resurrectSelectionIfNeeded() ||
                             fullScroll(mIsVertical ? View.FOCUS_UP : View.FOCUS_LEFT);
                 }
-
-                handled = true;
                 break;
 
             case KeyEvent.KEYCODE_PAGE_UP:
@@ -2778,12 +2777,12 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             if (atEdge) {
                 final int overscroll = -delta - (motionViewRealStart - motionViewPrevStart);
-                updateOverScrollState(delta, overscroll);
+                updateOverscrollState(delta, overscroll);
             }
         }
     }
 
-    private void updateOverScrollState(int delta, int overscroll) {
+    private void updateOverscrollState(int delta, int overscroll) {
         overScrollByInternal((mIsVertical ? 0 : overscroll),
                              (mIsVertical ? overscroll : 0),
                              (mIsVertical ? 0 : mOverScroll),
@@ -2807,16 +2806,16 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             float pull = (float) overscroll / (mIsVertical ? getHeight() : getWidth());
             if (delta > 0) {
-                mStartEdge.onPull(pull);
+                mStartEdgeEffect.onPull(pull);
 
-                if (!mEndEdge.isFinished()) {
-                    mEndEdge.onRelease();
+                if (!mEndEdgeEffect.isFinished()) {
+                    mEndEdgeEffect.onRelease();
                 }
             } else if (delta < 0) {
-                mEndEdge.onPull(pull);
+                mEndEdgeEffect.onPull(pull);
 
-                if (!mStartEdge.isFinished()) {
-                    mStartEdge.onRelease();
+                if (!mStartEdgeEffect.isFinished()) {
+                    mStartEdgeEffect.onRelease();
                 }
             }
 
@@ -2840,7 +2839,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
 
         if (overScrollDistance != 0) {
-            updateOverScrollState(delta, overScrollDistance);
+            updateOverscrollState(delta, overScrollDistance);
         }
 
         if (delta != 0) {
@@ -2973,11 +2972,11 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
     }
 
-    private int getChildStartEdge(View child) {
+    protected int getChildStartEdge(View child) {
         return (mIsVertical ? child.getTop() : child.getLeft());
     }
 
-    private int getChildEndEdge(View child) {
+    protected int getChildEndEdge(View child) {
         return (mIsVertical ? child.getBottom() : child.getRight());
     }
 
@@ -3099,7 +3098,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 detachedCount++;
 
                 final int position = firstPosition + i;
-                mRecycler.addScrapView(child, position);
+                mRecycleBin.addScrapView(child, position);
                 detachChildFromLayout(child, position, flow);
             }
         } else {
@@ -3117,7 +3116,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 detachedCount++;
 
                 final int position = firstPosition + i;
-                mRecycler.addScrapView(child, position);
+                mRecycleBin.addScrapView(child, position);
                 detachChildFromLayout(child, position, flow);
             }
         }
@@ -3167,7 +3166,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     @TargetApi(14)
-    private final float getCurrVelocity() {
+    private final float getCurrentVelocity() {
         if (Build.VERSION.SDK_INT >= 14) {
             return mScroller.getCurrVelocity();
         }
@@ -3205,10 +3204,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 final int overScrollMode = ViewCompat.getOverScrollMode(this);
                 if (overScrollMode != ViewCompat.OVER_SCROLL_NEVER) {
                     final EdgeEffectCompat edge =
-                            (diff > 0 ? mStartEdge : mEndEdge);
+                            (diff > 0 ? mStartEdgeEffect : mEndEdgeEffect);
 
                     boolean needsInvalidate =
-                            edge.onAbsorb(Math.abs((int) getCurrVelocity()));
+                            edge.onAbsorb(Math.abs((int) getCurrentVelocity()));
 
                     if (needsInvalidate) {
                         ViewCompat.postInvalidateOnAnimation(this);
@@ -3223,23 +3222,23 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
     }
 
-    private void finishEdgeGlows() {
-        if (mStartEdge != null) {
-            mStartEdge.finish();
+    private void finishEdgeEffects() {
+        if (mStartEdgeEffect != null) {
+            mStartEdgeEffect.finish();
         }
 
-        if (mEndEdge != null) {
-            mEndEdge.finish();
+        if (mEndEdgeEffect != null) {
+            mEndEdgeEffect.finish();
         }
     }
 
-    private boolean drawStartEdge(Canvas canvas) {
-        if (mStartEdge.isFinished()) {
+    private boolean drawStartEdgeEffect(Canvas canvas) {
+        if (mStartEdgeEffect.isFinished()) {
             return false;
         }
 
         if (mIsVertical) {
-            return mStartEdge.draw(canvas);
+            return mStartEdgeEffect.draw(canvas);
         }
 
         final int restoreCount = canvas.save();
@@ -3248,13 +3247,13 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         canvas.translate(0, height);
         canvas.rotate(270);
 
-        final boolean needsInvalidate = mStartEdge.draw(canvas);
+        final boolean needsInvalidate = mStartEdgeEffect.draw(canvas);
         canvas.restoreToCount(restoreCount);
         return needsInvalidate;
     }
 
-    private boolean drawEndEdge(Canvas canvas) {
-        if (mEndEdge.isFinished()) {
+    private boolean drawEndEdgeEffect(Canvas canvas) {
+        if (mEndEdgeEffect.isFinished()) {
             return false;
         }
 
@@ -3270,7 +3269,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             canvas.rotate(90);
         }
 
-        final boolean needsInvalidate = mEndEdge.draw(canvas);
+        final boolean needsInvalidate = mEndEdgeEffect.draw(canvas);
         canvas.restoreToCount(restoreCount);
         return needsInvalidate;
     }
@@ -3650,12 +3649,12 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         boolean needsInvalidate = false;
 
-        if (mStartEdge != null) {
-            needsInvalidate |= drawStartEdge(canvas);
+        if (mStartEdgeEffect != null) {
+            needsInvalidate |= drawStartEdgeEffect(canvas);
         }
 
-        if (mEndEdge != null) {
-            needsInvalidate |= drawEndEdge(canvas);
+        if (mEndEdgeEffect != null) {
+            needsInvalidate |= drawEndEdgeEffect(canvas);
         }
 
         if (needsInvalidate) {
@@ -3766,7 +3765,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             childHeight = child.getMeasuredHeight();
 
             if (recycleOnMeasure()) {
-                mRecycler.addScrapView(child, -1);
+                mRecycleBin.addScrapView(child, -1);
             }
         }
 
@@ -3785,11 +3784,11 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
 
         if (mIsVertical && heightMode == MeasureSpec.AT_MOST) {
-            heightSize = measureHeightOfChildren(widthMeasureSpec, 0, NO_POSITION, heightSize, -1);
+            heightSize = measureHeightOfChildren(widthMeasureSpec, heightSize);
         }
 
         if (!mIsVertical && widthMode == MeasureSpec.AT_MOST) {
-            widthSize = measureWidthOfChildren(heightMeasureSpec, 0, NO_POSITION, widthSize, -1);
+            widthSize = measureWidthOfChildren(heightMeasureSpec, widthSize);
         }
 
         setMeasuredDimension(widthSize, heightSize);
@@ -3805,23 +3804,23 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 getChildAt(i).forceLayout();
             }
 
-            mRecycler.markChildrenDirty();
+            mRecycleBin.markChildrenDirty();
         }
 
         layoutChildren();
 
         mInLayout = false;
 
-        if (mStartEdge != null && mEndEdge != null) {
+        if (mStartEdgeEffect != null && mEndEdgeEffect != null) {
             final int width = r - l;
             final int height = b - t;
 
             if (mIsVertical) {
-                mStartEdge.setSize(width, height);
-                mEndEdge.setSize(width, height);
+                mStartEdgeEffect.setSize(width, height);
+                mEndEdgeEffect.setSize(width, height);
             } else {
-                mStartEdge.setSize(height, width);
-                mEndEdge.setSize(height, width);
+                mStartEdgeEffect.setSize(height, width);
+                mEndEdgeEffect.setSize(height, width);
             }
         }
     }
@@ -3906,9 +3905,9 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 return;
             } else if (mItemCount != mAdapter.getCount()) {
                 throw new IllegalStateException("The content of the adapter has changed but "
-                        + "TwoWayView did not receive a notification. Make sure the content of "
+                        + "TWView did not receive a notification. Make sure the content of "
                         + "your adapter is not modified from a background thread, but only "
-                        + "from the UI thread. [in TwoWayView(" + getId() + ", " + getClass()
+                        + "from the UI thread. [in TWView(" + getId() + ", " + getClass()
                         + ") with Adapter(" + mAdapter.getClass() + ")]");
             }
 
@@ -3920,7 +3919,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // Pull all children into the RecycleBin.
             // These views will be reused if possible
             final int firstPosition = mFirstPosition;
-            final RecycleBin recycleBin = mRecycler;
+            final RecycleBin recycleBin = mRecycleBin;
 
             if (dataChanged) {
                 for (int i = 0; i < childCount; i++) {
@@ -4309,7 +4308,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             confirmCheckedPositionsById();
         }
 
-        mRecycler.clearTransientStateViews();
+        mRecycleBin.clearTransientStateViews();
 
         final int itemCount = mItemCount;
         if (itemCount > 0) {
@@ -4538,6 +4537,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         final int w = child.getMeasuredWidth();
         final int h = child.getMeasuredHeight();
 
+        // FIXME: should not assume list-type of child layout
         final int childLeft = getPaddingLeft();
         final int childRight = childLeft + w;
         final int childTop = child.getTop();
@@ -4571,38 +4571,22 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     /**
      * Measures the height of the given range of children (inclusive) and
-     * returns the height with this TwoWayView's padding and item margin heights
+     * returns the height with this TWView's padding and item margin heights
      * included. If maxHeight is provided, the measuring will stop when the
      * current height reaches maxHeight.
      *
      * @param widthMeasureSpec The width measure spec to be given to a child's
      *            {@link View#measure(int, int)}.
-     * @param startPosition The position of the first child to be shown.
-     * @param endPosition The (inclusive) position of the last child to be
-     *            shown. Specify {@link #NO_POSITION} if the last child should be
-     *            the last available child from the adapter.
      * @param maxHeight The maximum height that will be returned (if all the
      *            children don't fit in this value, this value will be
      *            returned).
-     * @param disallowPartialChildPosition In general, whether the returned
-     *            height should only contain entire children. This is more
-     *            powerful--it is the first inclusive position at which partial
-     *            children will not be allowed. Example: it looks nice to have
-     *            at least 3 completely visible children, and in portrait this
-     *            will most likely fit; but in landscape there could be times
-     *            when even 2 children can not be completely shown, so a value
-     *            of 2 (remember, inclusive) would be good (assuming
-     *            startPosition is 0).
-     * @return The height of this TwoWayView with the given children.
+     * @return The height of this TWView with the given children.
      */
-    private int measureHeightOfChildren(int widthMeasureSpec, int startPosition, int endPosition,
-            final int maxHeight, int disallowPartialChildPosition) {
-
+    private int measureHeightOfChildren(int widthMeasureSpec, final int maxHeight) {
         final int paddingTop = getPaddingTop();
         final int paddingBottom = getPaddingBottom();
 
-        final ListAdapter adapter = mAdapter;
-        if (adapter == null) {
+        if (mAdapter == null) {
             return paddingTop + paddingBottom;
         }
 
@@ -4752,7 +4736,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     private View makeAndAddView(int position, Flow flow, boolean selected) {
         if (!mDataChanged) {
             // Try to use an existing view for this position
-            final View activeChild = mRecycler.getActiveView(position);
+            final View activeChild = mRecycleBin.getActiveView(position);
             if (activeChild != null) {
                 // Found it -- we're using an existing child
                 // This just needs to be positioned
@@ -5125,8 +5109,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             return null;
         }
 
-        SparseBooleanArray checkedStates;
-
+        final SparseBooleanArray checkedStates;
         if (Build.VERSION.SDK_INT >= 14) {
             checkedStates = mCheckStates.clone();
         } else {
@@ -5224,19 +5207,19 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     private View obtainView(int position, boolean[] isScrap) {
         isScrap[0] = false;
 
-        View scrapView = mRecycler.getTransientStateView(position);
+        View scrapView = mRecycleBin.getTransientStateView(position);
         if (scrapView != null) {
             return scrapView;
         }
 
-        scrapView = mRecycler.getScrapView(position);
+        scrapView = mRecycleBin.getScrapView(position);
 
         final View child;
         if (scrapView != null) {
             child = mAdapter.getView(position, scrapView, this);
 
             if (child != scrapView) {
-                mRecycler.addScrapView(scrapView, position);
+                mRecycleBin.addScrapView(scrapView, position);
             } else {
                 isScrap[0] = true;
             }
@@ -5458,8 +5441,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     @Override
     public Parcelable onSaveInstanceState() {
-        Parcelable superState = super.onSaveInstanceState();
-        SavedState ss = new SavedState(superState);
+        final Parcelable superState = super.onSaveInstanceState();
+        final SavedState ss = new SavedState(superState);
 
         if (mPendingSync != null) {
             ss.selectedId = mPendingSync.selectedId;
@@ -5508,19 +5491,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             ss.position = 0;
         }
 
-        if (mCheckStates != null) {
-            ss.checkState = cloneCheckStates();
-        }
+        ss.checkState = cloneCheckStates();
 
         if (mCheckedIdStates != null) {
-            final LongSparseArray<Integer> idState = new LongSparseArray<Integer>();
-
-            final int count = mCheckedIdStates.size();
-            for (int i = 0; i < count; i++) {
-                idState.put(mCheckedIdStates.keyAt(i), mCheckedIdStates.valueAt(i));
-            }
-
-            ss.checkIdState = idState;
+            ss.checkIdState = mCheckedIdStates.clone();
         }
 
         ss.checkedItemCount = mCheckedItemCount;
@@ -5656,7 +5630,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     protected abstract int getChildHeightMeasureSpec(View child, int position, LayoutParams lp);
 
     protected abstract void offsetLayout(int offset);
-
     protected abstract void detachChildFromLayout(View child, int position, Flow flow);
     protected abstract void attachChildToLayout(View child, int position, Flow flow, Rect childFrame);
 
@@ -6095,27 +6068,27 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
     }
 
-    private static class SavedState extends BaseSavedState {
-        long selectedId;
-        long firstId;
-        int viewStart;
-        int position;
-        int height;
-        int checkedItemCount;
-        SparseBooleanArray checkState;
-        LongSparseArray<Integer> checkIdState;
+    protected static class SavedState extends BaseSavedState {
+        private long selectedId;
+        private long firstId;
+        private int viewStart;
+        private int position;
+        private int height;
+        private int checkedItemCount;
+        private SparseBooleanArray checkState;
+        private LongSparseArray<Integer> checkIdState;
 
         /**
          * Constructor called from {@link TWView#onSaveInstanceState()}
          */
-        SavedState(Parcelable superState) {
+        protected SavedState(Parcelable superState) {
             super(superState);
         }
 
         /**
          * Constructor called from {@link #CREATOR}
          */
-        private SavedState(Parcel in) {
+        protected SavedState(Parcel in) {
             super(in);
 
             selectedId = in.readLong();
@@ -6162,7 +6135,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         @Override
         public String toString() {
-            return "TwoWayView.SavedState{"
+            return "TWView.SavedState{"
                     + Integer.toHexString(System.identityHashCode(this))
                     + " selectedId=" + selectedId
                     + " firstId=" + firstId

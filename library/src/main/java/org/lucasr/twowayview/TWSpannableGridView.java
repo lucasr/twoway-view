@@ -123,6 +123,10 @@ public class TWSpannableGridView extends TWView {
 
     private void ensureLayoutState() {
         final int laneCount = getLaneCount();
+        if (laneCount == 0) {
+            return;
+        }
+
         if (mLayoutState != null && mLayoutState.getLaneCount() == laneCount) {
             return;
         }
@@ -136,10 +140,8 @@ public class TWSpannableGridView extends TWView {
     }
 
     private void recreateLayoutState() {
-        if (mNumColumns > 0 && mNumRows > 0) {
-            mLayoutState = null;
-            ensureLayoutState();
-        }
+        mLayoutState = null;
+        ensureLayoutState();
     }
 
     @Override

@@ -178,7 +178,7 @@ public class TWStaggeredGridView extends TWView {
 
         mNumColumns = numColumns;
         if (mIsVertical) {
-            recreateLayoutState();
+            ensureLayoutState();
         }
     }
 
@@ -193,7 +193,7 @@ public class TWStaggeredGridView extends TWView {
 
         mNumRows = numRows;
         if (!mIsVertical) {
-            recreateLayoutState();
+            ensureLayoutState();
         }
     }
 

@@ -32,9 +32,8 @@ import android.widget.Toast;
 
 import org.lucasr.twowayview.TWSpannableGridView;
 import org.lucasr.twowayview.TWView;
-import org.lucasr.twowayview.TWView.Orientation;
 
-public class LayoutFragment extends Fragment {
+public class TWFragment extends Fragment {
     private static final String ARG_LAYOUT_ID = "layout_id";
 
     private TWView mListView;
@@ -45,8 +44,8 @@ public class LayoutFragment extends Fragment {
     private String mScrollMessage;
     private String mStateMessage;
 
-    public static LayoutFragment newInstance(int layoutId) {
-        LayoutFragment fragment = new LayoutFragment();
+    public static TWFragment newInstance(int layoutId) {
+        TWFragment fragment = new TWFragment();
 
         Bundle args = new Bundle();
         args.putInt(ARG_LAYOUT_ID, layoutId);
