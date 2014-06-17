@@ -22,16 +22,20 @@ import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.View;
 
 public abstract class TWLanedView extends TWView {
     TWLanes mLanes;
     TWLanes mLanesToRestore;
+
     SparseIntArray mItemLanes;
+    SparseIntArray mItemLanesToRestore;
+
+    boolean mIsVertical;
 
     final Rect mTempRect = new Rect();
-    boolean mIsVertical;
 
     public TWLanedView(Context context) {
         this(context, null);
@@ -65,31 +69,52 @@ public abstract class TWLanedView extends TWView {
         return itemLanes;
     }
 
-    protected void forceCreateLayoutState() {
+    protected void forceCreateLanes() {
         mLanes = null;
         ensureLayoutState();
     }
 
+    private boolean canUseLanes(TWLanes lanes) {
+        if (lanes == null) {
+            return false;
+        }
+
+        if (lanes.getOrientation() != getOrientation()) {
+            return false;
+        }
+
+        if (mLanes != null && lanes.getLaneSize() != mLanes.getLaneSize()) {
+            return false;
+        }
+
+        if (mLanes != null && lanes.getCount() != mLanes.getCount()) {
+            return false;
+        }
+
+        return true;
+    }
+
     private void ensureLayoutState() {
-        if (getWidth() == 0 || getHeight() == 0) {
+        final int laneCount = getLaneCount();
+        if (laneCount == 0 || getWidth() == 0 || getHeight() == 0) {
             return;
         }
 
-        if (mLanesToRestore != null) {
+        if (canUseLanes(mLanesToRestore)) {
             mLanes = mLanesToRestore;
             mLanesToRestore = null;
 
-            // TODO: migrate saved state to new conditions (e.g. new num columns/rows,
-            // lane size, orientation, etc).
+            mItemLanes = mItemLanesToRestore;
+            mItemLanesToRestore = null;
 
             return;
         }
 
-        if (mLanes != null) {
+        if (mLanes != null && mLanes.getCount() == laneCount) {
             return;
         }
 
-        createLayoutState();
+        mLanes = new TWLanes(this, getLaneCount());
 
         if (mItemLanes == null) {
             mItemLanes = new SparseIntArray(10);
@@ -110,13 +135,13 @@ public abstract class TWLanedView extends TWView {
     @Override
     protected void resetState() {
         super.resetState();
-        forceCreateLayoutState();
+        forceCreateLanes();
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        forceCreateLayoutState();
+        forceCreateLanes();
     }
 
     @Override
@@ -126,7 +151,7 @@ public abstract class TWLanedView extends TWView {
 
         if (changed) {
             mIsVertical = (orientation == Orientation.VERTICAL);
-            forceCreateLayoutState();
+            forceCreateLanes();
         }
     }
 
@@ -143,6 +168,7 @@ public abstract class TWLanedView extends TWView {
             ss.lanes[i] = laneRect;
         }
 
+        ss.orientation = getOrientation();
         ss.laneSize = mLanes.getLaneSize();
         ss.itemLanes = cloneItemLanes();
 
@@ -154,11 +180,8 @@ public abstract class TWLanedView extends TWView {
         final LanedSavedState ss = (LanedSavedState) state;
 
         if (ss.lanes != null && ss.laneSize > 0) {
-            mLanesToRestore = new TWLanes(this, ss.lanes, ss.laneSize);
-        }
-
-        if (ss.itemLanes != null) {
-            mItemLanes = ss.itemLanes;
+            mLanesToRestore = new TWLanes(this, ss.orientation, ss.lanes, ss.laneSize);
+            mItemLanesToRestore = ss.itemLanes;
         }
 
         super.onRestoreInstanceState(ss.getSuperState());
@@ -227,11 +250,11 @@ public abstract class TWLanedView extends TWView {
         mLanes.addToLane(lane, flow, dimension);
     }
 
-    protected abstract void createLayoutState();
+    protected abstract int getLaneCount();
     protected abstract int getLaneForPosition(int position, Flow flow);
 
     protected static class LanedSavedState extends SavedState {
-        // TODO: save orientation, width, height too
+        private Orientation orientation;
         private Rect[] lanes;
         private int laneSize;
         private SparseIntArray itemLanes;
@@ -243,6 +266,7 @@ public abstract class TWLanedView extends TWView {
         private LanedSavedState(Parcel in) {
             super(in);
 
+            orientation = Orientation.values()[in.readInt()];
             laneSize = in.readInt();
 
             final int laneCount = in.readInt();
@@ -268,6 +292,7 @@ public abstract class TWLanedView extends TWView {
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
 
+            out.writeInt(orientation.ordinal());
             out.writeInt(laneSize);
 
             final int laneCount = (lanes != null ? lanes.length : 0);

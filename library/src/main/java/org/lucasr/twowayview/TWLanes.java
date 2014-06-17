@@ -33,9 +33,9 @@ class TWLanes {
     private final Rect[] mLanes;
     private final int mLaneSize;
 
-    public TWLanes(TWView view, Rect[] lanes, int laneSize) {
+    public TWLanes(TWView view, Orientation orientation, Rect[] lanes, int laneSize) {
         mView = view;
-        mIsVertical = (view.getOrientation() == Orientation.VERTICAL);
+        mIsVertical = (orientation == Orientation.VERTICAL);
         mLanes = lanes;
         mLaneSize = laneSize;
     }
@@ -80,12 +80,16 @@ class TWLanes {
         }
     }
 
-    public int getCount() {
-        return mLanes.length;
+    public Orientation getOrientation() {
+        return (mIsVertical ? Orientation.VERTICAL : Orientation.HORIZONTAL);
     }
 
     public int getLaneSize() {
         return mLaneSize;
+    }
+
+    public int getCount() {
+        return mLanes.length;
     }
 
     public void offset(int offset) {

@@ -35,8 +35,8 @@ public class TWListView extends TWLanedView {
     }
 
     @Override
-    protected void createLayoutState() {
-        mLanes = new TWLanes(this, 1);
+    protected int getLaneCount() {
+        return 1;
     }
 
     @Override

@@ -51,6 +51,7 @@ public class TWGridView extends TWLanedView {
         a.recycle();
     }
 
+    @Override
     protected int getLaneCount() {
         return (mIsVertical ? mNumColumns : mNumRows);
     }
@@ -58,20 +59,6 @@ public class TWGridView extends TWLanedView {
     @Override
     protected int getLaneForPosition(int position, Flow flow) {
         return (position % getLaneCount());
-    }
-
-    @Override
-    protected void createLayoutState() {
-        final int laneCount = getLaneCount();
-        if (laneCount == 0) {
-            return;
-        }
-
-        if (mLanes != null && mLanes.getCount() == laneCount) {
-            return;
-        }
-
-        mLanes = new TWLanes(this, laneCount);
     }
 
     public int getNumColumns() {
@@ -85,7 +72,7 @@ public class TWGridView extends TWLanedView {
 
         mNumColumns = numColumns;
         if (mIsVertical) {
-            forceCreateLayoutState();
+            forceCreateLanes();
         }
     }
 
@@ -100,7 +87,7 @@ public class TWGridView extends TWLanedView {
 
         mNumRows = numRows;
         if (!mIsVertical) {
-            forceCreateLayoutState();
+            forceCreateLanes();
         }
     }
 }
