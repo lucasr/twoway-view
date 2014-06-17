@@ -3784,11 +3784,11 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
 
         if (mIsVertical && heightMode == MeasureSpec.AT_MOST) {
-            heightSize = measureHeightOfChildren(widthMeasureSpec, heightSize);
+            heightSize = measureHeightOfChildren(widthMeasureSpec, 0, NO_POSITION, heightSize, -1);
         }
 
         if (!mIsVertical && widthMode == MeasureSpec.AT_MOST) {
-            widthSize = measureWidthOfChildren(heightMeasureSpec, widthSize);
+            widthSize = measureWidthOfChildren(heightMeasureSpec, 0, NO_POSITION, widthSize, -1);
         }
 
         setMeasuredDimension(widthSize, heightSize);
@@ -4577,16 +4577,31 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
      *
      * @param widthMeasureSpec The width measure spec to be given to a child's
      *            {@link View#measure(int, int)}.
+     * @param startPosition The position of the first child to be shown.
+     * @param endPosition The (inclusive) position of the last child to be
+     *            shown. Specify {@link #NO_POSITION} if the last child should be
+     *            the last available child from the adapter.
      * @param maxHeight The maximum height that will be returned (if all the
      *            children don't fit in this value, this value will be
      *            returned).
-     * @return The height of this TWView with the given children.
+     * @param disallowPartialChildPosition In general, whether the returned
+     *            height should only contain entire children. This is more
+     *            powerful--it is the first inclusive position at which partial
+     *            children will not be allowed. Example: it looks nice to have
+     *            at least 3 completely visible children, and in portrait this
+     *            will most likely fit; but in landscape there could be times
+     *            when even 2 children can not be completely shown, so a value
+     *            of 2 (remember, inclusive) would be good (assuming
+     *            startPosition is 0).
+     * @return The height of this TwoWayView with the given children.
      */
-    private int measureHeightOfChildren(int widthMeasureSpec, final int maxHeight) {
+    private int measureHeightOfChildren(int widthMeasureSpec, int startPosition, int endPosition,
+            final int maxHeight, int disallowPartialChildPosition) {
         final int paddingTop = getPaddingTop();
         final int paddingBottom = getPaddingBottom();
 
-        if (mAdapter == null) {
+        ListAdapter adapter = mAdapter;
+        if (adapter == null) {
             return paddingTop + paddingBottom;
         }
 
@@ -4601,7 +4616,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         // mItemCount - 1 since endPosition parameter is inclusive
         endPosition = (endPosition == NO_POSITION) ? adapter.getCount() - 1 : endPosition;
-        final RecycleBin recycleBin = mRecycler;
+        final RecycleBin recycleBin = mRecycleBin;
         final boolean shouldRecycle = recycleOnMeasure();
         final boolean[] isScrap = mIsScrap;
 
@@ -4691,7 +4706,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         // mItemCount - 1 since endPosition parameter is inclusive
         endPosition = (endPosition == NO_POSITION) ? adapter.getCount() - 1 : endPosition;
-        final RecycleBin recycleBin = mRecycler;
+        final RecycleBin recycleBin = mRecycleBin;
         final boolean shouldRecycle = recycleOnMeasure();
         final boolean[] isScrap = mIsScrap;
 
