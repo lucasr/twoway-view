@@ -17,6 +17,7 @@
 package org.lucasr.twowayview;
 
 import android.graphics.Rect;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 
@@ -24,13 +25,22 @@ import org.lucasr.twowayview.TWView.Flow;
 
 import org.lucasr.twowayview.TWView.Orientation;
 
-class TWLayoutState {
+class TWLanes {
+    public static final int NO_LANE = -1;
+
     private final TWView mView;
     private final boolean mIsVertical;
     private final Rect[] mLanes;
     private final int mLaneSize;
 
-    public TWLayoutState(TWView view, int laneCount) {
+    public TWLanes(TWView view, Rect[] lanes, int laneSize) {
+        mView = view;
+        mIsVertical = (view.getOrientation() == Orientation.VERTICAL);
+        mLanes = lanes;
+        mLaneSize = laneSize;
+    }
+
+    public TWLanes(TWView view, int laneCount) {
         mView = view;
         mIsVertical = (view.getOrientation() == Orientation.VERTICAL);
 
@@ -70,7 +80,7 @@ class TWLayoutState {
         }
     }
 
-    public int getLaneCount() {
+    public int getCount() {
         return mLanes.length;
     }
 
@@ -85,8 +95,8 @@ class TWLayoutState {
         }
     }
 
-    public void getLane(int index, Rect laneRect) {
-        laneRect.set(mLanes[index]);
+    public void getLane(int lane, Rect laneRect) {
+        laneRect.set(mLanes[lane]);
     }
 
     public void setLane(int lane, int l, int t, int r, int b) {
@@ -188,7 +198,6 @@ class TWLayoutState {
     }
 
     public int getOuterStartEdge() {
-        // TODO: make this a lot more performant/efficient
         int outerStart = Integer.MAX_VALUE;
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
