@@ -33,16 +33,20 @@ import android.widget.Toast;
 import org.lucasr.twowayview.TWSpannableGridView;
 import org.lucasr.twowayview.TWView;
 
+import static org.lucasr.twowayview.TWView.OnScrollListener.SCROLL_STATE_IDLE;
+import static org.lucasr.twowayview.TWView.OnScrollListener.SCROLL_STATE_FLING;
+import static org.lucasr.twowayview.TWView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL;
+
 public class TWFragment extends Fragment {
     private static final String ARG_LAYOUT_ID = "layout_id";
 
     private TWView mListView;
-    private int mLayoutId;
-
+    private TextView mPositionText;
+    private TextView mCountText;
+    private TextView mStateText;
     private Toast mToast;
-    private String mClickMessage;
-    private String mScrollMessage;
-    private String mStateMessage;
+
+    private int mLayoutId;
 
     public static TWFragment newInstance(int layoutId) {
         TWFragment fragment = new TWFragment();
@@ -71,10 +75,6 @@ public class TWFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mClickMessage = "";
-        mScrollMessage = "";
-        mStateMessage = "";
-
         final Activity activity = getActivity();
 
         mToast = Toast.makeText(activity, "", Toast.LENGTH_SHORT);
@@ -83,12 +83,18 @@ public class TWFragment extends Fragment {
         mListView = (TWView) view.findViewById(R.id.list);
         mListView.setLongClickable(true);
 
+        mPositionText = (TextView) view.getRootView().findViewById(R.id.position);
+        mCountText = (TextView) view.getRootView().findViewById(R.id.count);
+
+        mStateText = (TextView) view.getRootView().findViewById(R.id.state);
+        updateState(SCROLL_STATE_IDLE);
+
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View child, int position,
                     long id) {
-                mClickMessage = "Item clicked: " + position;
-                refreshToast();
+                mToast.setText("Item clicked: " + position);
+                mToast.show();
             }
         });
 
@@ -96,8 +102,8 @@ public class TWFragment extends Fragment {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View child,
                     int position, long id) {
-                mClickMessage = "Item long pressed: " + position;
-                refreshToast();
+                mToast.setText("Item long pressed: " + position);
+                mToast.show();
                 return true;
             }
         });
@@ -105,61 +111,37 @@ public class TWFragment extends Fragment {
         mListView.setOnScrollListener(new TWView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(TWView view, int scrollState) {
-                String stateName = "Undefined";
-                switch(scrollState) {
-                case SCROLL_STATE_IDLE:
-                    stateName = "Idle";
-                    break;
-
-                case SCROLL_STATE_TOUCH_SCROLL:
-                    stateName = "Dragging";
-                    break;
-
-                case SCROLL_STATE_FLING:
-                    stateName = "Flinging";
-                    break;
-                }
-
-                mStateMessage = "Scroll state changed: " + stateName;
-                refreshToast();
+                updateState(scrollState);
             }
 
             @Override
             public void onScroll(TWView view, int firstVisibleItem,
                     int visibleItemCount, int totalItemCount) {
-                mScrollMessage = "Scroll (first: " + firstVisibleItem + ", count = " + visibleItemCount + ")";
-                refreshToast();
+                mPositionText.setText("First: " + firstVisibleItem);
+                mCountText.setText("Count: " + visibleItemCount);
             }
         });
 
         mListView.setAdapter(new SimpleAdapter(activity, mLayoutId));
     }
 
-    private void refreshToast() {
-        StringBuffer buffer = new StringBuffer();
+    private void updateState(int scrollState) {
+        String stateName = "Undefined";
+        switch(scrollState) {
+            case SCROLL_STATE_IDLE:
+                stateName = "Idle";
+                break;
 
-        if (!TextUtils.isEmpty(mClickMessage)) {
-            buffer.append(mClickMessage);
+            case SCROLL_STATE_TOUCH_SCROLL:
+                stateName = "Dragging";
+                break;
+
+            case SCROLL_STATE_FLING:
+                stateName = "Flinging";
+                break;
         }
 
-        if (!TextUtils.isEmpty(mScrollMessage)) {
-            if (buffer.length() != 0) {
-                buffer.append("\n");
-            }
-
-            buffer.append(mScrollMessage);
-        }
-
-        if (!TextUtils.isEmpty(mStateMessage)) {
-            if (buffer.length() != 0) {
-                buffer.append("\n");
-            }
-
-            buffer.append(mStateMessage);
-        }
-
-        mToast.setText(buffer.toString());
-        mToast.show();
+        mStateText.setText(stateName);
     }
 
     public int getLayoutId() {

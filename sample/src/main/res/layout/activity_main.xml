@@ -16,6 +16,31 @@
 
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/content"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center">
+
+        <TextView
+            android:id="@+id/position"
+            style="@style/StateText"/>
+
+        <TextView
+            android:id="@+id/count"
+            style="@style/StateText"/>
+
+        <TextView
+            android:id="@+id/state"
+            style="@style/StateText"/>
+
+    </LinearLayout>
+
+</FrameLayout>
