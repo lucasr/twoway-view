@@ -1100,10 +1100,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     @TargetApi(9)
     private boolean overScrollByInternal(int deltaX, int deltaY,
-            int scrollX, int scrollY,
-            int scrollRangeX, int scrollRangeY,
-            int maxOverScrollX, int maxOverScrollY,
-            boolean isTouchEvent) {
+                                         int scrollX, int scrollY,
+                                         int scrollRangeX, int scrollRangeY,
+                                         int maxOverScrollX, int maxOverScrollY,
+                                         boolean isTouchEvent) {
         if (Build.VERSION.SDK_INT < 9) {
             return false;
         }
@@ -1798,6 +1798,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
      * Return true if child is an ancestor of parent, (or equal to the parent).
      */
     private boolean isViewAncestorOf(View child, View parent) {
+        if (child == null) {
+            return false;
+        }
+
         if (child == parent) {
             return true;
         }
@@ -2020,8 +2024,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
      * @param newFocusAssigned whether new focus was assigned.  This matters because
      *        when something has focus, we don't want to show selection (ugh).
      */
-    private void handleNewSelectionChange(View selectedView, int direction, int newSelectedPosition,
-            boolean newFocusAssigned) {
+    private void handleNewSelectionChange(View selectedView, int direction,
+                                          int newSelectedPosition, boolean newFocusAssigned) {
         forceValidFocusDirection(direction);
 
         if (newSelectedPosition == INVALID_POSITION) {
@@ -2034,6 +2038,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         // - moving up/left: the view that is getting selection
         final int selectedIndex = mSelectedPosition - mFirstPosition;
         final int nextSelectedIndex = newSelectedPosition - mFirstPosition;
+
         int startViewIndex, endViewIndex;
         boolean topSelected = false;
         View startView;
@@ -2089,7 +2094,12 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         // adjust views below appropriately
         final int heightDelta = child.getMeasuredHeight() - oldHeight;
         for (int i = childIndex + 1; i < numChildren; i++) {
-            getChildAt(i).offsetTopAndBottom(heightDelta);
+            final View c = getChildAt(i);
+            if (c == null) {
+                return;
+            }
+
+            c.offsetTopAndBottom(heightDelta);
         }
     }
 
@@ -4312,7 +4322,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         final int itemCount = mItemCount;
         if (itemCount > 0) {
-            int newPos;
+            int newPosition;
             int selectablePos;
 
             // Find the row we are supposed to sync to
@@ -4335,13 +4345,13 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                     } else {
                         // See if we can find a position in the new data with the same
                         // id as the old selection. This will change mSyncPosition.
-                        newPos = findSyncPosition();
-                        if (newPos >= 0) {
+                        newPosition = findSyncPosition();
+                        if (newPosition >= 0) {
                             // Found it. Now verify that new selection is still selectable
-                            selectablePos = lookForSelectablePosition(newPos, true);
-                            if (selectablePos == newPos) {
+                            selectablePos = lookForSelectablePosition(newPosition, true);
+                            if (selectablePos == newPosition) {
                                 // Same row id is selected
-                                mSyncPosition = newPos;
+                                mSyncPosition = newPosition;
 
                                 if (mSyncHeight == getHeight()) {
                                     // If we are at the same height as when we saved state, try
@@ -4354,7 +4364,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                                 }
 
                                 // Restore selection
-                                setNextSelectedPositionInt(newPos);
+                                setNextSelectedPositionInt(newPosition);
                                 return;
                             }
                         }
@@ -4372,25 +4382,25 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             if (!isInTouchMode()) {
                 // We couldn't find matching data -- try to use the same position
-                newPos = getSelectedItemPosition();
+                newPosition = getSelectedItemPosition();
 
                 // Pin position to the available range
-                if (newPos >= itemCount) {
-                    newPos = itemCount - 1;
+                if (newPosition >= itemCount) {
+                    newPosition = itemCount - 1;
                 }
-                if (newPos < 0) {
-                    newPos = 0;
+                if (newPosition < 0) {
+                    newPosition = 0;
                 }
 
                 // Make sure we select something selectable -- first look down
-                selectablePos = lookForSelectablePosition(newPos, true);
+                selectablePos = lookForSelectablePosition(newPosition, true);
 
                 if (selectablePos >= 0) {
                     setNextSelectedPositionInt(selectablePos);
                     return;
                 } else {
                     // Looking down didn't work -- try looking up
-                    selectablePos = lookForSelectablePosition(newPos, false);
+                    selectablePos = lookForSelectablePosition(newPosition, false);
                     if (selectablePos >= 0) {
                         setNextSelectedPositionInt(selectablePos);
                         return;
@@ -5462,7 +5472,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         if (mPendingSync != null) {
             ss.selectedId = mPendingSync.selectedId;
             ss.firstId = mPendingSync.firstId;
-            ss.viewStart = mPendingSync.viewStart;
             ss.position = mPendingSync.position;
             ss.height = mPendingSync.height;
 
@@ -5475,7 +5484,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         ss.height = getHeight();
 
         if (selectedId >= 0) {
-            ss.viewStart = mSelectedStart;
             ss.position = getSelectedItemPosition();
             ss.firstId = INVALID_POSITION;
         } else if (haveChildren && mFirstPosition > 0) {
@@ -5491,8 +5499,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // and the user wouldn't expect to end up somewhere else when
             // they revisit the list even if its content has changed.
 
-            ss.viewStart = getChildStartEdge(getChildAt(0));
-
             int firstPos = mFirstPosition;
             if (firstPos >= mItemCount) {
                 firstPos = mItemCount - 1;
@@ -5501,7 +5507,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             ss.position = firstPos;
             ss.firstId = mAdapter.getItemId(firstPos);
         } else {
-            ss.viewStart = 0;
             ss.firstId = INVALID_POSITION;
             ss.position = 0;
         }
@@ -5530,7 +5535,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             mPendingSync = ss;
             mSyncRowId = ss.selectedId;
             mSyncPosition = ss.position;
-            mSpecificStart = ss.viewStart;
             mSyncMode = SYNC_SELECTED_POSITION;
         } else if (ss.firstId >= 0) {
             setSelectedPositionInt(INVALID_POSITION);
@@ -5543,7 +5547,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             mPendingSync = ss;
             mSyncRowId = ss.firstId;
             mSyncPosition = ss.position;
-            mSpecificStart = ss.viewStart;
             mSyncMode = SYNC_FIRST_POSITION;
         }
 
@@ -6086,7 +6089,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     protected static class SavedState extends BaseSavedState {
         private long selectedId;
         private long firstId;
-        private int viewStart;
         private int position;
         private int height;
         private int checkedItemCount;
@@ -6108,7 +6110,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             selectedId = in.readLong();
             firstId = in.readLong();
-            viewStart = in.readInt();
             position = in.readInt();
             height = in.readInt();
 
@@ -6132,7 +6133,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             out.writeLong(selectedId);
             out.writeLong(firstId);
-            out.writeInt(viewStart);
             out.writeInt(position);
             out.writeInt(height);
 
@@ -6154,7 +6154,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                     + Integer.toHexString(System.identityHashCode(this))
                     + " selectedId=" + selectedId
                     + " firstId=" + firstId
-                    + " viewStart=" + viewStart
                     + " height=" + height
                     + " position=" + position
                     + " checkState=" + checkState + "}";

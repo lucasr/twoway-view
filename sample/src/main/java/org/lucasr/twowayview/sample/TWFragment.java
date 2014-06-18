@@ -46,6 +46,7 @@ public class TWFragment extends Fragment {
 
     public static TWFragment newInstance(int layoutId) {
         TWFragment fragment = new TWFragment();
+        fragment.setRetainInstance(true);
 
         Bundle args = new Bundle();
         args.putInt(ARG_LAYOUT_ID, layoutId);
