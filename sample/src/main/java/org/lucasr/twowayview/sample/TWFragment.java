@@ -20,7 +20,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -221,8 +220,11 @@ public class TWFragment extends Fragment {
                 final TWSpannableGridView.LayoutParams lp =
                         (TWSpannableGridView.LayoutParams) convertView.getLayoutParams();
 
-                final int rowSpan = (position == 0 || position == 3 ? 2 : 1);
-                final int colSpan = (position == 0 ? 2 : (position == 3 ? 3 : 1));
+                final int span1 = (position == 0 || position == 3 ? 2 : 1);
+                final int span2 = (position == 0 ? 2 : (position == 3 ? 3 : 1));
+
+                final int colSpan = (isVertical ? span2 : span1);
+                final int rowSpan = (isVertical ? span1 : span2);
 
                 if (lp.rowSpan != rowSpan || lp.colSpan != colSpan) {
                     lp.rowSpan = rowSpan;
