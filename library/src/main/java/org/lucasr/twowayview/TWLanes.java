@@ -17,13 +17,13 @@
 package org.lucasr.twowayview;
 
 import android.graphics.Rect;
-import android.os.Parcelable;
-import android.util.Log;
 import android.view.View;
 
 import org.lucasr.twowayview.TWView.Flow;
 
 import org.lucasr.twowayview.TWView.Orientation;
+
+import java.util.EnumMap;
 
 class TWLanes {
     public static final int NO_LANE = -1;
@@ -32,6 +32,15 @@ class TWLanes {
     private final boolean mIsVertical;
     private final Rect[] mLanes;
     private final int mLaneSize;
+
+    private static enum Edge {
+        OUTER_START,
+        OUTER_END,
+        INNER_START,
+        INNER_END
+    }
+
+    private final EnumMap<Edge, Integer> mCachedEdges = new EnumMap(Edge.class);
 
     public TWLanes(TWView view, Orientation orientation, Rect[] lanes, int laneSize) {
         mView = view;
@@ -80,6 +89,10 @@ class TWLanes {
         }
     }
 
+    private void invalidateEdges() {
+        mCachedEdges.clear();
+    }
+
     public Orientation getOrientation() {
         return (mIsVertical ? Orientation.VERTICAL : Orientation.HORIZONTAL);
     }
@@ -97,6 +110,8 @@ class TWLanes {
             mLanes[i].offset(mIsVertical ? 0 : offset,
                     mIsVertical ? offset : 0);
         }
+
+        invalidateEdges();
     }
 
     public void getLane(int lane, Rect laneRect) {
@@ -109,6 +124,8 @@ class TWLanes {
         laneRect.top = t;
         laneRect.right = r;
         laneRect.bottom = b;
+
+        invalidateEdges();
     }
 
     public void addToLane(int lane, Flow flow, int dimension) {
@@ -127,6 +144,8 @@ class TWLanes {
                 laneRect.left -= dimension;
             }
         }
+
+        invalidateEdges();
     }
 
     public void removeFromLane(int lane, Flow flow, int dimension) {
@@ -145,6 +164,8 @@ class TWLanes {
                 laneRect.right -= dimension;
             }
         }
+
+        invalidateEdges();
     }
 
     public int getChildFrame(View child, int lane, Flow flow, Rect childFrame) {
@@ -199,45 +220,71 @@ class TWLanes {
                 laneRect.right = laneRect.left;
             }
         }
+
+        invalidateEdges();
     }
 
     public int getOuterStartEdge() {
-        int outerStart = Integer.MAX_VALUE;
+        Integer outerStart = mCachedEdges.get(Edge.OUTER_START);
+        if (outerStart != null) {
+            return outerStart;
+        }
+
+        outerStart = Integer.MAX_VALUE;
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
             outerStart = Math.min(outerStart, mIsVertical ? laneRect.top : laneRect.left);
         }
 
+        mCachedEdges.put(Edge.OUTER_START, outerStart);
         return outerStart;
     }
 
     public int getInnerStartEdge() {
-        int innerStart = Integer.MIN_VALUE;
+        Integer innerStart = mCachedEdges.get(Edge.INNER_START);
+        if (innerStart != null) {
+            return innerStart;
+        }
+
+        innerStart = Integer.MIN_VALUE;
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
             innerStart = Math.max(innerStart, mIsVertical ? laneRect.top : laneRect.left);
         }
 
+        mCachedEdges.put(Edge.INNER_START, innerStart);
         return innerStart;
     }
 
     public int getInnerEndEdge() {
-        int innerEnd = Integer.MAX_VALUE;
+        Integer innerEnd = mCachedEdges.get(Edge.INNER_END);
+        if (innerEnd != null) {
+            return innerEnd;
+        }
+
+        innerEnd = Integer.MAX_VALUE;
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
             innerEnd = Math.min(innerEnd, mIsVertical ? laneRect.bottom : laneRect.right);
         }
 
+        mCachedEdges.put(Edge.INNER_END, innerEnd);
         return innerEnd;
     }
 
     public int getOuterEndEdge() {
-        int outerEnd = Integer.MIN_VALUE;
+        Integer outerEnd = mCachedEdges.get(Edge.OUTER_END);
+        if (outerEnd != null) {
+            return outerEnd;
+        }
+
+        outerEnd = Integer.MIN_VALUE;
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
             outerEnd = Math.max(outerEnd, mIsVertical ? laneRect.bottom : laneRect.right);
         }
 
+        mCachedEdges.put(Edge.OUTER_END, outerEnd);
         return outerEnd;
     }
 
