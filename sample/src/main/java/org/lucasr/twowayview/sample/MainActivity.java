@@ -1,5 +1,7 @@
 /*
+ * Copyright (C) 2011 The Android Open Source Project
  * Copyright (C) 2012 Lucas Rocha
+ * Copyright (C) 2013 Evelio Tarazona Cáceres
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,129 +18,77 @@
 
 package org.lucasr.twowayview.sample;
 
-import org.lucasr.twowayview.TwoWayView;
-
-import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.app.ListActivity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Toast;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 
-public class MainActivity extends Activity {
-    private static final String LOGTAG = "TwoWayViewSample";
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-    private TwoWayView mListView;
+public class MainActivity extends ListActivity {
+    private static final String SAMPLE_CATEGORY = "org.lucasr.twowayview.sample.SAMPLE";
+    private static final String KEY_LABEL = "org.lucasr.twowayview.key.LABEL";
+    private static final String KEY_INTENT = "org.lucasr.twowayview.key.INTENT";
 
-    private Toast mToast;
-    private String mClickMessage;
-    private String mScrollMessage;
-    private String mStateMessage;
-
-    @SuppressLint("ShowToast")
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_main);
-
-        mClickMessage = "";
-        mScrollMessage = "";
-        mStateMessage = "";
-
-        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-        mToast.setGravity(Gravity.CENTER, 0, 0);
-
-        mListView = (TwoWayView) findViewById(R.id.list);
-        mListView.setItemMargin(10);
-        mListView.setLongClickable(true);
-
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View child, int position,
-                    long id) {
-                mClickMessage = "Item clicked: " + position;
-                refreshToast();
-            }
-        });
-
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View child,
-                    int position, long id) {
-                mClickMessage = "Item long pressed: " + position;
-                refreshToast();
-                return true;
-            }
-        });
-
-        mListView.setOnScrollListener(new TwoWayView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(TwoWayView view, int scrollState) {
-                String stateName = "Undefined";
-                switch(scrollState) {
-                case SCROLL_STATE_IDLE:
-                    stateName = "Idle";
-                    break;
-
-                case SCROLL_STATE_TOUCH_SCROLL:
-                    stateName = "Dragging";
-                    break;
-
-                case SCROLL_STATE_FLING:
-                    stateName = "Flinging";
-                    break;
-                }
-
-                mStateMessage = "Scroll state changed: " + stateName;
-                refreshToast();
-            }
-
-            @Override
-            public void onScroll(TwoWayView view, int firstVisibleItem,
-                    int visibleItemCount, int totalItemCount) {
-                mScrollMessage = "Scroll (first: " + firstVisibleItem + ", count = " + visibleItemCount + ")";
-                refreshToast();
-            }
-        });
-
-        mListView.setRecyclerListener(new TwoWayView.RecyclerListener() {
-            @Override
-            public void onMovedToScrapHeap(View view) {
-                Log.d(LOGTAG, "View moved to scrap heap");
-            }
-        });
-
-        mListView.setAdapter(new SimpleListAdapter(MainActivity.this));
+        setListAdapter(new SimpleAdapter(this, getItems(),
+                android.R.layout.simple_list_item_1, new String[]{KEY_LABEL},
+                new int[]{android.R.id.text1}));
     }
 
-    private void refreshToast() {
-        StringBuffer buffer = new StringBuffer();
+    @Override
+    protected void onListItemClick(ListView listView, View view, int position, long id) {
+        Map<String, Object> item = (Map<String, Object>) listView.getItemAtPosition(position);
+        Intent intent = (Intent) item.get(KEY_INTENT);
+        startActivity(intent);
+    }
 
-        if (!TextUtils.isEmpty(mClickMessage)) {
-            buffer.append(mClickMessage);
+    public List<? extends Map<String, ?>> getItems() {
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+
+        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+        mainIntent.addCategory(SAMPLE_CATEGORY);
+
+        final PackageManager pm = getPackageManager();
+        List<ResolveInfo> resolvedActivities = pm.queryIntentActivities(mainIntent, 0);
+
+        if (resolvedActivities == null || resolvedActivities.size() < 1) {
+            return result;
         }
 
-        if (!TextUtils.isEmpty(mScrollMessage)) {
-            if (buffer.length() != 0) {
-                buffer.append("\n");
-            }
-
-            buffer.append(mScrollMessage);
+        for (ResolveInfo info : resolvedActivities) {
+            CharSequence loadedLabel = info.loadLabel(pm);
+            String label = loadedLabel != null ? loadedLabel.toString() : info.activityInfo.name;
+            result.add(
+                    buildItem(label,
+                            buildIntent(info.activityInfo.applicationInfo.packageName, info.activityInfo.name)
+                    )
+            );
         }
 
-        if (!TextUtils.isEmpty(mStateMessage)) {
-            if (buffer.length() != 0) {
-                buffer.append("\n");
-            }
+        return result;
+    }
 
-            buffer.append(mStateMessage);
-        }
+    private Intent buildIntent(String packageName, String name) {
+        Intent intent = new Intent();
+        intent.setClassName(packageName, name);
+        return intent;
+    }
 
-        mToast.setText(buffer.toString());
-        mToast.show();
+    private static final Map<String, Object> buildItem(String label, Intent intent) {
+        Map<String, Object> item = new HashMap<String, Object>(2);
+        item.put(KEY_LABEL, label);
+        item.put(KEY_INTENT, intent);
+        return item;
     }
 }

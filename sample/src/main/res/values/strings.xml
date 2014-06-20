@@ -17,4 +17,6 @@
 
 <resources>
     <string name="app_name">TwoWayView Sample</string>
+    <string name="basic">Basic</string>
+    <string name="no_fill_and_gravity">No fill &amp; Gravity</string>
 </resources>

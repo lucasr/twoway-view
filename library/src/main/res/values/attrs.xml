@@ -16,6 +16,7 @@
 -->
 
 <resources>
+
     <declare-styleable name="TwoWayView">
 
         <!-- Imported from View -->
@@ -94,5 +95,8 @@
         <attr name="android:drawSelectorOnTop"/>
         <attr name="android:listSelector"/>
 
+        <attr name="fillOrientation" format="boolean" />
+
     </declare-styleable>
+
 </resources>
