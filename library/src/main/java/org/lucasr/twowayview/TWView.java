@@ -181,11 +181,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     private float mTouchRemainderPos;
     private int mActivePointerId;
 
-    private final Rect mTempRect;
+    private final Rect mTempRect = new Rect();
 
     private final ArrowScrollFocusResult mArrowScrollFocusResult;
 
-    private Rect mTouchFrame;
     private int mMotionPosition;
     private CheckForTap mPendingCheckForTap;
     private CheckForLongPress mPendingCheckForLongPress;
@@ -199,7 +198,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     private boolean mDrawSelectorOnTop;
     private Drawable mSelector;
     private int mSelectorPosition;
-    private final Rect mSelectorRect;
+    private final Rect mSelectorRect = new Rect();
 
     private int mOverScroll;
     private final int mOverscrollDistance;
@@ -325,18 +324,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     public TWView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        mNeedSync = false;
-        mVelocityTracker = null;
-
         mLayoutMode = LAYOUT_NORMAL;
         mTouchMode = TOUCH_MODE_REST;
         mLastTouchMode = TOUCH_MODE_UNKNOWN;
 
-        mIsAttached = false;
-
-        mContextMenuInfo = null;
-
-        mOnScrollListener = null;
         mLastScrollState = OnScrollListener.SCROLL_STATE_IDLE;
 
         final ViewConfiguration vc = ViewConfiguration.get(context);
@@ -353,15 +344,9 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         mItemsCanFocus = false;
 
-        mTempRect = new Rect();
-
         mArrowScrollFocusResult = new ArrowScrollFocusResult();
 
         mSelectorPosition = INVALID_POSITION;
-
-        mSelectorRect = new Rect();
-        mSelectedStart = 0;
-
         mResurrectToPosition = INVALID_POSITION;
 
         mSelectedStart = 0;
@@ -374,16 +359,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         mChoiceMode = ChoiceMode.NONE;
         mCheckedItemCount = 0;
-        mCheckedIdStates = null;
-        mCheckStates = null;
 
         mRecycleBin = new RecycleBin();
-        mDataSetObserver = null;
 
         mAreAllItemsSelectable = true;
-
-        mStartEdgeEffect = null;
-        mEndEdgeEffect = null;
 
         setClickable(true);
         setFocusableInTouchMode(true);
@@ -864,7 +843,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 mCheckedIdStates = new LongSparseArray<Integer>();
             }
 
-            final int position = lookForSelectablePosition(0);
+            final int position = lookForSelectableAfterPosition(0);
             setSelectedPositionInt(position);
             setNextSelectedPositionInt(position);
 
@@ -1135,20 +1114,14 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     private int pointToPosition(int x, int y) {
-        Rect frame = mTouchFrame;
-        if (frame == null) {
-            mTouchFrame = new Rect();
-            frame = mTouchFrame;
-        }
-
         final int count = getChildCount();
         for (int i = count - 1; i >= 0; i--) {
             final View child = getChildAt(i);
 
             if (child.getVisibility() == View.VISIBLE) {
-                child.getHitRect(frame);
+                child.getHitRect(mTempRect);
 
-                if (frame.contains(x, y)) {
+                if (mTempRect.contains(x, y)) {
                     return mFirstPosition + i;
                 }
             }
@@ -3343,16 +3316,9 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     private void setSelectionInt(int position) {
         setNextSelectedPositionInt(position);
-        boolean awakeScrollbars = false;
 
-        final int selectedPosition = mSelectedPosition;
-        if (selectedPosition >= 0) {
-            if (position == selectedPosition - 1) {
-                awakeScrollbars = true;
-            } else if (position == selectedPosition + 1) {
-                awakeScrollbars = true;
-            }
-        }
+        final boolean awakeScrollbars = mSelectedPosition >= 0 &&
+                (position == mSelectedPosition - 1 || position == mSelectedPosition + 1);
 
         layoutChildren();
 
@@ -3495,11 +3461,11 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
     }
 
-    private int lookForSelectablePosition(int position) {
+    private int lookForSelectableAfterPosition(int position) {
         return lookForSelectablePosition(position, true);
     }
 
-    private int lookForSelectablePosition(int position, boolean lookDown) {
+    private int lookForSelectablePosition(int position, boolean lookAfter) {
         final ListAdapter adapter = mAdapter;
         if (adapter == null || isInTouchMode()) {
             return INVALID_POSITION;
@@ -3507,7 +3473,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         final int itemCount = mItemCount;
         if (!mAreAllItemsSelectable) {
-            if (lookDown) {
+            if (lookAfter) {
                 position = Math.max(0, position);
                 while (position < itemCount && !adapter.isEnabled(position)) {
                     position++;
@@ -3699,7 +3665,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
 
         if (!isInTouchMode()) {
-            position = lookForSelectablePosition(position);
+            position = lookForSelectableAfterPosition(position);
             if (position >= 0) {
                 setNextSelectedPositionInt(position);
             }
@@ -4003,7 +3969,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             default:
                 if (childCount == 0) {
-                    final int position = lookForSelectablePosition(0);
+                    final int position = lookForSelectableAfterPosition(0);
                     setSelectedPositionInt(position);
                     selected = fillFromStart(start);
                 } else {
@@ -4123,9 +4089,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     private View moveSelection(View oldSelected, View newSelected, int delta,
                                int start, int end) {
         final int selectedPosition = mSelectedPosition;
-
         final int oldSelectedStart = getChildStartEdge(oldSelected);
-        final int oldSelectedEnd = getChildEndEdge(oldSelected);
 
         View selected = null;
 
@@ -4277,7 +4241,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         return selected;
     }
 
-    void confirmCheckedPositionsById() {
+    private void confirmCheckedPositionsById() {
         // Clear out the positional check states, we'll rebuild it below from IDs.
         mCheckStates.clear();
 
@@ -4339,8 +4303,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                         // restore in touch mode. Just leave mSyncPosition as it is (possibly
                         // adjusting if the available range changed) and return.
                         mLayoutMode = LAYOUT_SYNC;
-                        mSyncPosition = Math.min(Math.max(0, mSyncPosition), itemCount - 1);
-
+                        mSyncPosition = clampPosition(mSyncPosition);
                         return;
                     } else {
                         // See if we can find a position in the new data with the same
@@ -4374,8 +4337,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 case SYNC_FIRST_POSITION:
                     // Leave mSyncPosition as it is -- just pin to available range
                     mLayoutMode = LAYOUT_SYNC;
-                    mSyncPosition = Math.min(Math.max(0, mSyncPosition), itemCount - 1);
-
+                    mSyncPosition = clampPosition(mSyncPosition);
                     return;
                 }
             }
@@ -4427,16 +4389,17 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         checkSelectionChanged();
     }
 
+    private int clampPosition(int position) {
+        return Math.min(Math.max(0, position), mItemCount - 1);
+    }
+
     private int reconcileSelectedPosition() {
         int position = mSelectedPosition;
         if (position < 0) {
             position = mResurrectToPosition;
         }
 
-        position = Math.max(0, position);
-        position = Math.min(position, mItemCount - 1);
-
-        return position;
+        return clampPosition(position);
     }
 
     private boolean resurrectSelection() {
@@ -4925,9 +4888,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     private View fillFromStart(int offset) {
-        mFirstPosition = Math.min(mFirstPosition, mSelectedPosition);
-        mFirstPosition = Math.min(mFirstPosition, mItemCount - 1);
-
+        mFirstPosition = Math.min(Math.min(mFirstPosition, mSelectedPosition), mItemCount - 1);
         if (mFirstPosition < 0) {
             mFirstPosition = 0;
         }
@@ -5163,10 +5124,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         }
 
         // Pin seed to reasonable values
-        int seed = mSyncPosition;
-        seed = Math.max(0, seed);
-        seed = Math.min(itemCount - 1, seed);
-
+        int seed = clampPosition(mSyncPosition);
         long endTime = SystemClock.uptimeMillis() + SYNC_MAX_DURATION_MILLIS;
 
         long rowId;
