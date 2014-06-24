@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,7 +50,6 @@ public class TWFragment extends Fragment {
 
     public static TWFragment newInstance(int layoutId) {
         TWFragment fragment = new TWFragment();
-        fragment.setRetainInstance(true);
 
         Bundle args = new Bundle();
         args.putInt(ARG_LAYOUT_ID, layoutId);
@@ -126,7 +126,7 @@ public class TWFragment extends Fragment {
         mListView.postDelayed(new Runnable() {
             @Override
             public void run() {
-                mListView.setSelectionFromOffset(10, 50);
+                mListView.setSelection(10);
             }
         }, 5000);
     }

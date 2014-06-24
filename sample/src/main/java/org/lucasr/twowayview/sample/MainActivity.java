@@ -55,18 +55,18 @@ public class MainActivity extends ActionBarActivity {
                 actionBar, R.layout.layout_spannable_grid, R.drawable.ic_spannable, "spannable");
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(ARG_SELECTED_LAYOUT_ID, mSelectedLayoutId);
+    }
+
     private void addLayoutTab(ActionBar actionBar, int layoutId, int iconId, String tag) {
         ActionBar.Tab tab = actionBar.newTab()
                 .setText("")
                 .setIcon(iconId)
                 .setTabListener(new TabListener(layoutId, tag));
         actionBar.addTab(tab, layoutId == mSelectedLayoutId);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt(ARG_SELECTED_LAYOUT_ID, mSelectedLayoutId);
     }
 
     public class TabListener implements ActionBar.TabListener {
@@ -81,6 +81,7 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+            mFragment = (TWFragment) getSupportFragmentManager().findFragmentByTag(mTag);
             if (mFragment == null) {
                 mFragment = (TWFragment) TWFragment.newInstance(mLayoutId);
                 ft.add(R.id.content, mFragment, mTag);

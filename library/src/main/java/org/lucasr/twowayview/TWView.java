@@ -213,7 +213,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     private int mSyncPosition;
     private long mSyncRowId;
     private long mSyncHeight;
-    private int mSelectedStart;
 
     private int mNextSelectedPosition;
     private long mNextSelectedRowId;
@@ -349,7 +348,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         mSelectorPosition = INVALID_POSITION;
         mResurrectToPosition = INVALID_POSITION;
 
-        mSelectedStart = 0;
         mNextSelectedPosition = INVALID_POSITION;
         mNextSelectedRowId = INVALID_ROW_ID;
         mSelectedPosition = INVALID_POSITION;
@@ -2293,7 +2291,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         if (needToRedraw) {
             if (selectedView != null) {
                 positionSelector(selectedPos, selectedView);
-                mSelectedStart = getChildStartEdge(selectedView);
             }
 
             if (!awakenScrollbarsInternal()) {
@@ -3304,8 +3301,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             setSelectedPositionInt(INVALID_POSITION);
             setNextSelectedPositionInt(INVALID_POSITION);
-
-            mSelectedStart = 0;
         }
     }
 
@@ -3984,7 +3979,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                         if (oldFirstChild != null) {
                             offset = getChildStartEdge(oldFirstChild);
                         }
-
                         selected = fillSpecific(mFirstPosition, offset);
                     } else {
                         selected = fillSpecific(0, start);
@@ -4020,8 +4014,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 } else {
                     positionSelector(INVALID_POSITION, selected);
                 }
-
-                mSelectedStart = getChildStartEdge(selected);
             } else {
                 if (mTouchMode > TOUCH_MODE_DOWN && mTouchMode < TOUCH_MODE_DRAGGING) {
                     View child = getChildAt(mMotionPosition - mFirstPosition);
@@ -4030,7 +4022,6 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                         positionSelector(mMotionPosition, child);
                     }
                 } else {
-                    mSelectedStart = 0;
                     mSelectorRect.setEmpty();
                 }
 
@@ -4886,11 +4877,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     private View fillFromStart(int offset) {
-        mFirstPosition = Math.min(Math.min(mFirstPosition, mSelectedPosition), mItemCount - 1);
-        if (mFirstPosition < 0) {
-            mFirstPosition = 0;
-        }
-
+        mFirstPosition = clampPosition(Math.min(mFirstPosition, mSelectedPosition));
         moveLayoutToPosition(mFirstPosition, offset);
         return fillAfter(mFirstPosition);
     }
@@ -4932,9 +4919,9 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         fillAfter(position + 1);
     }
 
-    private View fillFromSelection(int selectedTop) {
+    private View fillFromSelection(int offset) {
         final int selectedPosition = mSelectedPosition;
-        moveLayoutToPosition(selectedPosition, selectedTop);
+        moveLayoutToPosition(selectedPosition, offset);
 
         View selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
 
@@ -4954,11 +4941,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // fully into view
             final int spaceBelow = selectedEnd - end;
 
-            final int offset = Math.min(spaceAbove, spaceBelow);
-
             // Now offset the selected item to get it into view
-            selected.offsetTopAndBottom(-offset);
-            offsetLayout(-offset);
+            final int space = Math.min(spaceAbove, spaceBelow);
+            selected.offsetTopAndBottom(-space);
+            offsetLayout(-space);
         } else if (selectedStart < start) {
             // Find space required to bring the top of the selected item fully
             // into view
@@ -4968,11 +4954,10 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // downwards
             final int spaceBelow = end - selectedEnd;
 
-            final int offset = Math.min(spaceAbove, spaceBelow);
-
             // Offset the selected item to get it into view
-            selected.offsetTopAndBottom(offset);
-            offsetLayout(offset);
+            final int space = Math.min(spaceAbove, spaceBelow);
+            selected.offsetTopAndBottom(space);
+            offsetLayout(space);
         }
 
         // Fill in views above and below
@@ -5184,6 +5169,14 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         return INVALID_POSITION;
     }
 
+    protected View obtainChild(int position) {
+        return obtainView(position, mIsScrap);
+    }
+
+    protected void recycleChild(View child) {
+        mRecycleBin.addScrapView(child, -1);
+    }
+
     @TargetApi(16)
     private View obtainView(int position, boolean[] isScrap) {
         isScrap[0] = false;
@@ -5240,8 +5233,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
         removeAllViewsInLayout();
 
-        mSelectedStart = 0;
         mFirstPosition = 0;
+
         mDataChanged = false;
         mNeedSync = false;
         mPendingSync = null;
@@ -5447,7 +5440,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // We only do this if we are not currently at the top of
             // the list, for two reasons:
             //
-            // (1) The list may be in the process of becoming empty, in
+            // (1) The view may be in the process of becoming empty, in
             // which case mItemCount may not be 0, but if we try to
             // ask for any information about position 0 we will crash.
             //
