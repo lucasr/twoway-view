@@ -81,7 +81,7 @@ import static android.os.Build.VERSION_CODES.HONEYCOMB;
  * Given the bi-directional nature of this view, the source code
  * usually names variables with 'start' to mean 'top' or 'left'; and
  * 'end' to mean 'bottom' or 'right', depending on the current
- * orientation of the widget.
+ * widget orientation.
  */
 
 /**

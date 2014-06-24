@@ -116,8 +116,6 @@ public class TWStaggeredGridView extends TWGridView {
 
     @Override
     protected void ensureItemEntry(View child, int position, int lane, Rect childFrame) {
-        super.ensureItemEntry(child, position, lane, childFrame);
-
         StaggeredItemEntry entry = (StaggeredItemEntry) mItemEntries.get(position, null);
         if (entry == null) {
             final int width = childFrame.right - childFrame.left;

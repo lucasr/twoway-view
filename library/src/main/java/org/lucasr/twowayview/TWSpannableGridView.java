@@ -19,6 +19,8 @@ package org.lucasr.twowayview;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +30,43 @@ public class TWSpannableGridView extends TWGridView {
 
     private static final int NUM_COLS = 3;
     private static final int NUM_ROWS = 3;
+
+    protected static class SpannableItemEntry extends TWLanedView.ItemEntry {
+        private final int colSpan;
+        private final int rowSpan;
+
+        public SpannableItemEntry(int lane, int colSpan, int rowSpan) {
+            super(lane);
+            this.colSpan = colSpan;
+            this.rowSpan = rowSpan;
+        }
+
+        public SpannableItemEntry(Parcel in) {
+            super(in);
+            this.colSpan = in.readInt();
+            this.rowSpan = in.readInt();
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            super.writeToParcel(out, flags);
+            out.writeInt(colSpan);
+            out.writeInt(rowSpan);
+        }
+
+        public static final Parcelable.Creator<SpannableItemEntry> CREATOR
+                = new Parcelable.Creator<SpannableItemEntry>() {
+            @Override
+            public SpannableItemEntry createFromParcel(Parcel in) {
+                return new SpannableItemEntry(in);
+            }
+
+            @Override
+            public SpannableItemEntry[] newArray(int size) {
+                return new SpannableItemEntry[size];
+            }
+        };
+    }
 
     public TWSpannableGridView(Context context) {
         this(context, null);
@@ -65,7 +104,13 @@ public class TWSpannableGridView extends TWGridView {
 
     private int getChildLaneAndFrame(View child, int position, Flow flow,
                                      int laneSpan, Rect frame) {
-        int lane = mItemEntries.get(position, TWLanes.NO_LANE);
+        int lane = TWLanes.NO_LANE;
+
+        final ItemEntry entry = mItemEntries.get(position, null);
+        if (entry != null) {
+            lane = entry.lane;
+        }
+
         if (lane != TWLanes.NO_LANE) {
             mLanes.getChildFrame(child, lane, flow, frame);
             return lane;
@@ -90,16 +135,30 @@ public class TWSpannableGridView extends TWGridView {
             }
         }
 
-        if (lane != TWLanes.NO_LANE) {
-            mItemEntries.put(position, lane);
-        }
-
         return lane;
     }
 
     @Override
     protected int getLaneForPosition(int position, Flow flow) {
-        return mItemEntries.get(position, TWLanes.NO_LANE);
+        final SpannableItemEntry entry = (SpannableItemEntry) mItemEntries.get(position, null);
+        if (entry != null) {
+            return entry.lane;
+        }
+
+        return TWLanes.NO_LANE;
+    }
+
+    @Override
+    protected void ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+        SpannableItemEntry entry = (SpannableItemEntry) mItemEntries.get(position, null);
+        if (entry == null) {
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            final int colSpan = lp.colSpan;
+            final int rowSpan = lp.rowSpan;
+
+            entry = new SpannableItemEntry(lane, colSpan, rowSpan);
+            mItemEntries.put(position, entry);
+        }
     }
 
     @Override
@@ -122,17 +181,13 @@ public class TWSpannableGridView extends TWGridView {
 
     @Override
     protected void detachChildFromLayout(View child, int position, Flow flow) {
-        final int lane = getLaneForPosition(position, flow);
-        if (lane == TWLanes.NO_LANE) {
-            return;
-        }
-
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         final int laneSpan = (mIsVertical ? lp.colSpan : lp.rowSpan);
 
         final int spacing = (mIsVertical ? getVerticalSpacing() : getHorizontalSpacing());
         final int dimension = (mIsVertical ? child.getHeight() : child.getWidth());
 
+        final int lane = getLaneForPosition(position, flow);
         for (int i = lane; i < lane + laneSpan; i++) {
             mLanes.removeFromLane(i, flow, dimension + spacing);
         }
