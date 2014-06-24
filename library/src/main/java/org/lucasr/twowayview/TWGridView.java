@@ -18,7 +18,9 @@ package org.lucasr.twowayview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.View;
 
 public class TWGridView extends TWLanedView {
     private static final String LOGTAG = "TWGridView";
@@ -51,6 +53,14 @@ public class TWGridView extends TWLanedView {
         a.recycle();
     }
 
+    private int getRectDimension(Rect r) {
+        if (mIsVertical) {
+            return r.bottom - r.top;
+        } else {
+            return r.right - r.left;
+        }
+    }
+
     @Override
     protected int getLaneCount() {
         return (mIsVertical ? mNumColumns : mNumRows);
@@ -59,6 +69,20 @@ public class TWGridView extends TWLanedView {
     @Override
     protected int getLaneForPosition(int position, Flow flow) {
         return (position % getLaneCount());
+    }
+
+    @Override
+    protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
+        super.attachChildToLayout(child, position, flow, childFrame);
+
+        final int lane = getLaneForPosition(position, flow);
+        final int dimension = getRectDimension(childFrame);
+        for (int i = 0; i < lane; i++) {
+            mLanes.getLane(i, mTempRect);
+            if (getRectDimension(mTempRect) == 0) {
+                mLanes.offset(i, dimension);
+            }
+        }
     }
 
     public int getNumColumns() {

@@ -22,7 +22,6 @@ import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.View;
 
@@ -126,7 +125,7 @@ public abstract class TWLanedView extends TWView {
     @Override
     protected void layoutChildren() {
         if (mLanes != null) {
-            mLanes.resetEndEdges();
+            mLanes.reset();
         }
 
         super.layoutChildren();
@@ -188,11 +187,6 @@ public abstract class TWLanedView extends TWView {
     }
 
     @Override
-    protected void offsetLayout(int offset) {
-        mLanes.offset(offset);
-    }
-
-    @Override
     protected int getOuterStartEdge() {
         return mLanes.getOuterStartEdge();
     }
@@ -232,6 +226,16 @@ public abstract class TWLanedView extends TWView {
         } else {
             return MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
         }
+    }
+
+    @Override
+    protected void offsetLayout(int offset) {
+        mLanes.offset(offset);
+    }
+
+    @Override
+    protected void moveLayoutToPosition(int position, int offset) {
+        mLanes.resetToOffset(offset);
     }
 
     @Override

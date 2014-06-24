@@ -4860,6 +4860,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     private View fillSpecific(int position, int offset) {
+        moveLayoutToPosition(position, offset);
+
         final boolean tempIsSelected = (position == mSelectedPosition);
         View temp = makeAndAddView(position, Flow.FORWARD, tempIsSelected);
 
@@ -4893,6 +4895,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             mFirstPosition = 0;
         }
 
+        moveLayoutToPosition(mFirstPosition, offset);
         return fillAfter(mFirstPosition);
     }
 
@@ -4915,6 +4918,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             }
         }
 
+        moveLayoutToPosition(mFirstPosition, getChildStartEdge(selected) - getStartEdge());
         fillBeforeAndAfter(selected, position);
         correctTooHigh(getChildCount());
 
@@ -4934,6 +4938,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     private View fillFromSelection(int selectedTop, int start, int end) {
         final int selectedPosition = mSelectedPosition;
+        moveLayoutToPosition(selectedPosition, selectedTop);
 
         View selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
 
@@ -5606,6 +5611,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     protected abstract int getChildHeightMeasureSpec(View child, int position, LayoutParams lp);
 
     protected abstract void offsetLayout(int offset);
+    protected abstract void moveLayoutToPosition(int position, int offset);
     protected abstract void detachChildFromLayout(View child, int position, Flow flow);
     protected abstract void attachChildToLayout(View child, int position, Flow flow, Rect childFrame);
 

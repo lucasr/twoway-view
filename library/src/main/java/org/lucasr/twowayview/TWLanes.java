@@ -105,12 +105,21 @@ class TWLanes {
         return mLanes.length;
     }
 
+    private void offsetLane(int lane, int offset) {
+        mLanes[lane].offset(mIsVertical ? 0 : offset,
+                            mIsVertical ? offset : 0);
+    }
+
     public void offset(int offset) {
         for (int i = 0; i < mLanes.length; i++) {
-            mLanes[i].offset(mIsVertical ? 0 : offset,
-                    mIsVertical ? offset : 0);
+            offset(i, offset);
         }
 
+        invalidateEdges();
+    }
+
+    public void offset(int lane, int offset) {
+        offsetLane(lane, offset);
         invalidateEdges();
     }
 
@@ -211,12 +220,27 @@ class TWLanes {
         return delta;
     }
 
-    public void resetEndEdges() {
+    public void reset() {
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
             if (mIsVertical) {
                 laneRect.bottom = laneRect.top;
             } else {
+                laneRect.right = laneRect.left;
+            }
+        }
+
+        invalidateEdges();
+    }
+
+    public void resetToOffset(int offset) {
+        for (int i = 0; i < mLanes.length; i++) {
+            final Rect laneRect = mLanes[i];
+            if (mIsVertical) {
+                laneRect.top = offset;
+                laneRect.bottom = laneRect.top;
+            } else {
+                laneRect.left = offset;
                 laneRect.right = laneRect.left;
             }
         }
