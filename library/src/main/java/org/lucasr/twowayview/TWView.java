@@ -3937,7 +3937,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             case LAYOUT_SET_SELECTION:
                 if (newSelected != null) {
                     final int newSelectedStart = getChildStartEdge(newSelected);
-                    selected = fillFromSelection(newSelectedStart, start, end);
+                    selected = fillFromSelection(newSelectedStart);
                 } else {
                     selected = fillFromMiddle(start, end);
                 }
@@ -4906,19 +4906,24 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         View selected = makeAndAddView(position, Flow.FORWARD, true);
         mFirstPosition = position;
 
+        int offset = 0;
         if (mIsVertical) {
             int selectedHeight = selected.getMeasuredHeight();
             if (selectedHeight <= size) {
-                selected.offsetTopAndBottom((size - selectedHeight) / 2);
+                offset = (size - selectedHeight) / 2;
+                selected.offsetTopAndBottom(offset);
             }
         } else {
             int selectedWidth = selected.getMeasuredWidth();
             if (selectedWidth <= size) {
-                selected.offsetLeftAndRight((size - selectedWidth) / 2);
+                offset = (size - selectedWidth) / 2;
+                selected.offsetLeftAndRight(offset);
             }
         }
 
-        moveLayoutToPosition(mFirstPosition, getChildStartEdge(selected) - getStartEdge());
+        offsetLayout(offset);
+        moveLayoutToPosition(position, getChildStartEdge(selected) - getStartEdge());
+
         fillBeforeAndAfter(selected, position);
         correctTooHigh(getChildCount());
 
@@ -4926,21 +4931,19 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
     }
 
     private void fillBeforeAndAfter(View selected, int position) {
-//        TODO: reset layout here?
-//        final int offsetBefore = getChildStartEdge(selected) - mItemMargin;
         fillBefore(position - 1);
-
         adjustViewsStartOrEnd();
-
-//        final int offsetAfter = getChildEndEdge(selected) + mItemMargin;
         fillAfter(position + 1);
     }
 
-    private View fillFromSelection(int selectedTop, int start, int end) {
+    private View fillFromSelection(int selectedTop) {
         final int selectedPosition = mSelectedPosition;
         moveLayoutToPosition(selectedPosition, selectedTop);
 
         View selected = makeAndAddView(selectedPosition, Flow.FORWARD, true);
+
+        final int start = getStartEdge();
+        final int end = getEndEdge();
 
         final int selectedStart = getChildStartEdge(selected);
         final int selectedEnd = getChildEndEdge(selected);
@@ -4959,6 +4962,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             // Now offset the selected item to get it into view
             selected.offsetTopAndBottom(-offset);
+            offsetLayout(-offset);
         } else if (selectedStart < start) {
             // Find space required to bring the top of the selected item fully
             // into view
@@ -4972,6 +4976,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             // Offset the selected item to get it into view
             selected.offsetTopAndBottom(offset);
+            offsetLayout(offset);
         }
 
         // Fill in views above and below
