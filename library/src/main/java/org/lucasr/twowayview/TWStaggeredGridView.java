@@ -16,15 +16,11 @@
 
 package org.lucasr.twowayview;
 
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Rect;
-import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
-import android.util.SparseIntArray;
 import android.view.View;
 
 public class TWStaggeredGridView extends TWGridView {
@@ -32,6 +28,43 @@ public class TWStaggeredGridView extends TWGridView {
 
     private static final int NUM_COLS = 2;
     private static final int NUM_ROWS = 2;
+
+    protected static class StaggeredItemEntry extends TWLanedView.ItemEntry {
+        private final int width;
+        private final int height;
+
+        public StaggeredItemEntry(int lane, int width, int height) {
+            super(lane);
+            this.width = width;
+            this.height = height;
+        }
+
+        public StaggeredItemEntry(Parcel in) {
+            super(in);
+            this.width = in.readInt();
+            this.height = in.readInt();
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            super.writeToParcel(out, flags);
+            out.writeInt(width);
+            out.writeInt(height);
+        }
+
+        public static final Parcelable.Creator<StaggeredItemEntry> CREATOR
+                = new Parcelable.Creator<StaggeredItemEntry>() {
+            @Override
+            public StaggeredItemEntry createFromParcel(Parcel in) {
+                return new StaggeredItemEntry(in);
+            }
+
+            @Override
+            public StaggeredItemEntry[] newArray(int size) {
+                return new StaggeredItemEntry[size];
+            }
+        };
+    }
 
     public TWStaggeredGridView(Context context) {
         this(context, null);
@@ -47,7 +80,13 @@ public class TWStaggeredGridView extends TWGridView {
 
     @Override
     protected int getLaneForPosition(int position, Flow flow) {
-        int lane = mItemLanes.get(position, TWLanes.NO_LANE);
+        int lane = TWLanes.NO_LANE;
+
+        final StaggeredItemEntry entry = (StaggeredItemEntry) mItemEntries.get(position, null);
+        if (entry != null) {
+            lane = entry.lane;
+        }
+
         if (lane != TWLanes.NO_LANE) {
             return lane;
         }
@@ -72,7 +111,25 @@ public class TWStaggeredGridView extends TWGridView {
             }
         }
 
-        mItemLanes.put(position, lane);
         return lane;
+    }
+
+    @Override
+    protected void ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+        super.ensureItemEntry(child, position, lane, childFrame);
+
+        StaggeredItemEntry entry = (StaggeredItemEntry) mItemEntries.get(position, null);
+        if (entry == null) {
+            final int width = childFrame.right - childFrame.left;
+            final int height = childFrame.bottom - childFrame.top;
+
+            entry = new StaggeredItemEntry(lane, width, height);
+            mItemEntries.put(position, entry);
+        }
+    }
+
+    @Override
+    protected void moveLayoutToPosition(int position, int offset) {
+        super.moveLayoutToPosition(position, offset);
     }
 }

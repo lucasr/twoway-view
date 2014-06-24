@@ -16,12 +16,14 @@
 
 package org.lucasr.twowayview;
 
+import android.content.ClipData;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.View;
 
@@ -29,8 +31,43 @@ public abstract class TWLanedView extends TWView {
     TWLanes mLanes;
     TWLanes mLanesToRestore;
 
-    SparseIntArray mItemLanes;
-    SparseIntArray mItemLanesToRestore;
+    protected static class ItemEntry implements Parcelable {
+        public final int lane;
+
+        public ItemEntry(int position) {
+            this.lane = position;
+        }
+
+        public ItemEntry(Parcel in) {
+            this.lane = in.readInt();
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            out.writeInt(lane);
+        }
+
+        public static final Parcelable.Creator<ItemEntry> CREATOR
+                = new Parcelable.Creator<ItemEntry>() {
+            @Override
+            public ItemEntry createFromParcel(Parcel in) {
+                return new ItemEntry(in);
+            }
+
+            @Override
+            public ItemEntry[] newArray(int size) {
+                return new ItemEntry[size];
+            }
+        };
+    }
+
+    SparseArray<ItemEntry> mItemEntries;
+    SparseArray<ItemEntry> mItemEntriesToRestore;
 
     boolean mIsVertical;
 
@@ -49,19 +86,19 @@ public abstract class TWLanedView extends TWView {
         mIsVertical = (getOrientation() == Orientation.VERTICAL);
     }
 
-    private SparseIntArray cloneItemLanes() {
-        if (mItemLanes == null) {
+    private SparseArray<ItemEntry> cloneItemEntries() {
+        if (mItemEntries == null) {
             return null;
         }
 
-        final SparseIntArray itemLanes;
+        final SparseArray<ItemEntry> itemLanes;
         if (Build.VERSION.SDK_INT >= 14) {
-            itemLanes = mItemLanes.clone();
+            itemLanes = mItemEntries.clone();
         } else {
-            itemLanes = new SparseIntArray();
+            itemLanes = new SparseArray<ItemEntry>();
 
-            for (int i = 0; i < mItemLanes.size(); i++) {
-                itemLanes.put(mItemLanes.keyAt(i), mItemLanes.valueAt(i));
+            for (int i = 0; i < mItemEntries.size(); i++) {
+                itemLanes.put(mItemEntries.keyAt(i), mItemEntries.valueAt(i));
             }
         }
 
@@ -103,8 +140,8 @@ public abstract class TWLanedView extends TWView {
             mLanes = mLanesToRestore;
             mLanesToRestore = null;
 
-            mItemLanes = mItemLanesToRestore;
-            mItemLanesToRestore = null;
+            mItemEntries = mItemEntriesToRestore;
+            mItemEntriesToRestore = null;
 
             return;
         }
@@ -115,10 +152,10 @@ public abstract class TWLanedView extends TWView {
 
         mLanes = new TWLanes(this, getLaneCount());
 
-        if (mItemLanes == null) {
-            mItemLanes = new SparseIntArray(10);
+        if (mItemEntries == null) {
+            mItemEntries = new SparseArray<ItemEntry>(10);
         } else {
-            mItemLanes.clear();
+            mItemEntries.clear();
         }
     }
 
@@ -169,7 +206,7 @@ public abstract class TWLanedView extends TWView {
 
         ss.orientation = getOrientation();
         ss.laneSize = mLanes.getLaneSize();
-        ss.itemLanes = cloneItemLanes();
+        ss.itemLanes = cloneItemEntries();
 
         return ss;
     }
@@ -180,7 +217,7 @@ public abstract class TWLanedView extends TWView {
 
         if (ss.lanes != null && ss.laneSize > 0) {
             mLanesToRestore = new TWLanes(this, ss.orientation, ss.lanes, ss.laneSize);
-            mItemLanesToRestore = ss.itemLanes;
+            mItemEntriesToRestore = ss.itemLanes;
         }
 
         super.onRestoreInstanceState(ss.getSuperState());
@@ -252,6 +289,12 @@ public abstract class TWLanedView extends TWView {
         final int lane = getLaneForPosition(position, flow);
         final int dimension = mLanes.getChildFrame(child, lane, flow, childFrame);
         mLanes.addToLane(lane, flow, dimension);
+
+        ensureItemEntry(child, position, lane, childFrame);
+    }
+
+    protected void ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+        // Do nothing by default
     }
 
     protected abstract int getLaneCount();
@@ -261,7 +304,7 @@ public abstract class TWLanedView extends TWView {
         private Orientation orientation;
         private Rect[] lanes;
         private int laneSize;
-        private SparseIntArray itemLanes;
+        private SparseArray<ItemEntry> itemLanes;
 
         protected LanedSavedState(Parcelable superState) {
             super(superState);
@@ -283,10 +326,10 @@ public abstract class TWLanedView extends TWView {
 
             final int itemLanesCount = in.readInt();
             if (itemLanesCount > 0) {
-                itemLanes = new SparseIntArray(itemLanesCount);
+                itemLanes = new SparseArray<ItemEntry>(itemLanesCount);
                 for (int i = 0; i < itemLanesCount; i++) {
                     final int key = in.readInt();
-                    final int value = in.readInt();
+                    final ItemEntry value = in.readParcelable(getClass().getClassLoader());
                     itemLanes.put(key, value);
                 }
             }
@@ -311,7 +354,7 @@ public abstract class TWLanedView extends TWView {
 
             for (int i = 0; i < itemLanesCount; i++) {
                 out.writeInt(itemLanes.keyAt(i));
-                out.writeInt(itemLanes.valueAt(i));
+                out.writeParcelable(itemLanes.valueAt(i), flags);
             }
         }
 

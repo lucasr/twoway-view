@@ -20,7 +20,6 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -66,7 +65,7 @@ public class TWSpannableGridView extends TWGridView {
 
     private int getChildLaneAndFrame(View child, int position, Flow flow,
                                      int laneSpan, Rect frame) {
-        int lane = mItemLanes.get(position, TWLanes.NO_LANE);
+        int lane = mItemEntries.get(position, TWLanes.NO_LANE);
         if (lane != TWLanes.NO_LANE) {
             mLanes.getChildFrame(child, lane, flow, frame);
             return lane;
@@ -92,7 +91,7 @@ public class TWSpannableGridView extends TWGridView {
         }
 
         if (lane != TWLanes.NO_LANE) {
-            mItemLanes.put(position, lane);
+            mItemEntries.put(position, lane);
         }
 
         return lane;
@@ -100,7 +99,7 @@ public class TWSpannableGridView extends TWGridView {
 
     @Override
     protected int getLaneForPosition(int position, Flow flow) {
-        return mItemLanes.get(position, TWLanes.NO_LANE);
+        return mItemEntries.get(position, TWLanes.NO_LANE);
     }
 
     @Override
