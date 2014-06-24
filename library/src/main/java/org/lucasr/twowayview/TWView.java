@@ -4145,13 +4145,9 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 }
             }
 
-            // Fill in views before and after
-            // TODO: reset layout here?
-//            fillBefore(mSelectedPosition - 2, selectedStart - itemMargin);
+            // TODO: reset and offset layout here
             fillBefore(mSelectedPosition - 2);
             adjustViewsStartOrEnd();
-            // TODO reset layout here?
-//            fillAfter(mSelectedPosition + 1, selectedEnd + itemMargin);
             fillAfter(mSelectedPosition + 1);
         } else if (delta < 0) {
             /*
