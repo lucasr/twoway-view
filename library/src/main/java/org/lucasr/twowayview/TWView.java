@@ -5019,12 +5019,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             offsetChildren(endOffset);
 
             if (mFirstPosition > 0) {
-                firstStart = getOuterStartEdge();
-
-                // Fill the gap that was opened above mFirstPosition with more rows, if
-                // possible
-                // TODO: reset layout here?
-//                fillBefore(mFirstPosition - 1, firstStart - mItemMargin);
+                // Fill the gap that was opened above mFirstPosition with more
+                // children, if possible.
                 fillBefore(mFirstPosition - 1);
 
                 // Close up the remaining gap
@@ -5065,12 +5061,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 offsetChildren(-startOffset);
 
                 if (lastPosition < mItemCount - 1) {
-                    lastEnd = getOuterEndEdge();
-
-                    // Fill the gap that was opened below the last position with more rows, if
-                    // possible
-                    // TODO: reset layout here?
-//                    fillAfter(lastPosition + 1, lastEnd + mItemMargin);
+                    // Fill the gap that was opened below the last position with more
+                    // children, if possible.
                     fillAfter(lastPosition + 1);
 
                     // Close up the remaining gap
