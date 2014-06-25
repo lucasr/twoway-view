@@ -941,6 +941,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // it could change in layoutChildren.
             if (adapter.getCount() < getChildCount() + mFirstPosition) {
                 mLayoutMode = LAYOUT_NORMAL;
+                Log.d("BOOM", "layoutChildren: onFocusChanged");
                 layoutChildren();
             }
 
@@ -1047,6 +1048,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 } else {
                     hideSelector();
                     mLayoutMode = LAYOUT_NORMAL;
+                    Log.d("BOOM", "layoutChildren: onWindowsFocusChanged");
                     layoutChildren();
                 }
             }
@@ -1438,6 +1440,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             if (mDataChanged) {
                 // Re-sync everything if data has been changed
                 // since the scroll operation can query the adapter.
+                Log.d("BOOM", "layoutChildren: mDataChanged");
                 layoutChildren();
             }
 
@@ -1645,6 +1648,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
             // Layout, but only if we already have done so previously.
             // (Otherwise may clobber a LAYOUT_SYNC layout that was requested to restore state.)
             if (getWidth() > 0 && getHeight() > 0 && getChildCount() > 0) {
+                Log.d("BOOM", "layoutChildren: onTouchModeChanged");
                 layoutChildren();
             }
 
@@ -3315,6 +3319,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         final boolean awakeScrollbars = mSelectedPosition >= 0 &&
                 (position == mSelectedPosition - 1 || position == mSelectedPosition + 1);
 
+        Log.d("BOOM", "layoutChildren: setSelectionInt");
         layoutChildren();
 
         if (awakeScrollbars) {
@@ -3767,6 +3772,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        Log.d("BOOM", "onLayout: start");
+
         mInLayout = true;
 
         if (changed) {
@@ -3794,6 +3801,8 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 mEndEdgeEffect.setSize(height, width);
             }
         }
+
+        Log.d("BOOM", "onLayout: end");
     }
 
     protected void layoutChildren() {
@@ -3930,6 +3939,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
 
             switch (mLayoutMode) {
             case LAYOUT_SET_SELECTION:
+                Log.d("BOOM", "LAYOUT_SET_SELECTION");
                 if (newSelected != null) {
                     final int newSelectedStart = getChildStartEdge(newSelected);
                     selected = fillFromSelection(newSelectedStart);
@@ -3940,49 +3950,55 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                 break;
 
             case LAYOUT_SYNC:
-                selected = fillSpecific(mSyncPosition, mSpecificStart);
+                Log.d("BOOM", "LAYOUT_SYNC");
+                selected = fillSpecificAndMove(mSyncPosition, mSpecificStart);
                 break;
 
             case LAYOUT_FORCE_BOTTOM:
+                Log.d("BOOM", "LAYOUT_FORCE_BOTTOM");
                 selected = fillBefore(mItemCount - 1);
                 adjustViewsStartOrEnd();
                 break;
 
             case LAYOUT_FORCE_TOP:
+                Log.d("BOOM", "LAYOUT_FORCE_TOP");
                 mFirstPosition = 0;
                 selected = fillFromStart(start);
                 adjustViewsStartOrEnd();
                 break;
 
             case LAYOUT_SPECIFIC:
-                selected = fillSpecific(reconcileSelectedPosition(), mSpecificStart);
+                Log.d("BOOM", "LAYOUT_SPECIFIC");
+                selected = fillSpecificAndMove(reconcileSelectedPosition(), mSpecificStart);
                 break;
 
             case LAYOUT_MOVE_SELECTION:
+                Log.d("BOOM", "LAYOUT_MOVE_SELECTION");
                 selected = moveSelection(oldSelected, newSelected, delta, start, end);
                 break;
 
             default:
                 if (childCount == 0) {
+                    Log.d("BOOM", "LAYOUT_DEFAULT: 1");
                     final int position = lookForSelectableAfterPosition(0);
                     setSelectedPositionInt(position);
                     selected = fillFromStart(start);
-                } else {
-                    if (mSelectedPosition >= 0 && mSelectedPosition < mItemCount) {
-                        int offset = start;
-                        if (oldSelected != null) {
-                            offset = getChildStartEdge(oldSelected);
-                        }
-                        selected = fillSpecific(mSelectedPosition, offset);
-                    } else if (mFirstPosition < mItemCount) {
-                        int offset = start;
-                        if (oldFirstChild != null) {
-                            offset = getChildStartEdge(oldFirstChild);
-                        }
-                        selected = fillSpecific(mFirstPosition, offset);
-                    } else {
-                        selected = fillSpecific(0, start);
+                } else if (mSelectedPosition >= 0 && mSelectedPosition < mItemCount) {
+                    Log.d("BOOM", "LAYOUT_DEFAULT: 2");
+                    int offset = start;
+                    if (oldSelected != null) {
+                        offset = getChildStartEdge(oldSelected);
                     }
+                    selected = fillSpecific(mSelectedPosition, offset);
+                } else if (mFirstPosition < mItemCount) {
+                    Log.d("BOOM", "LAYOUT_DEFAULT: 3");
+                    int offset = start;
+                    if (oldFirstChild != null) {
+                        offset = getChildStartEdge(oldFirstChild);
+                    }
+                    selected = fillSpecific(mFirstPosition, offset);
+                } else {
+                    selected = fillSpecific(0, start);
                 }
 
                 break;
@@ -4846,9 +4862,12 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
         return selectedView;
     }
 
-    private View fillSpecific(int position, int offset) {
+    private View fillSpecificAndMove(int position, int offset) {
         moveLayoutToPosition(position, offset);
+        return fillSpecific(position, offset);
+    }
 
+    private View fillSpecific(int position, int offset) {
         final boolean tempIsSelected = (position == mSelectedPosition);
         View temp = makeAndAddView(position, Flow.FORWARD, tempIsSelected);
 
@@ -6193,6 +6212,7 @@ public abstract class TWView extends AdapterView<ListAdapter> implements
                     setPressed(true);
                     child.setPressed(true);
 
+                    Log.d("BOOM", "layoutChildren: CheckForTap");
                     layoutChildren();
                     positionSelector(mMotionPosition, child);
                     refreshDrawableState();

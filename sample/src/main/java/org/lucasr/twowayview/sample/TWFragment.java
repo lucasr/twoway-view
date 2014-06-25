@@ -123,12 +123,12 @@ public class TWFragment extends Fragment {
 
         mListView.setAdapter(new SimpleAdapter(activity, mLayoutId));
 
-        mListView.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mListView.setSelection(10);
-            }
-        }, 5000);
+//        mListView.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                mListView.setSelection(10);
+//            }
+//        }, 5000);
     }
 
     private void updateState(int scrollState) {
