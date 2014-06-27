@@ -127,6 +127,12 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private static final float MAX_SCROLL_FACTOR = 0.33f;
 
     private static final int MIN_SCROLL_PREVIEW_PIXELS = 10;
+	
+	/**
+	 * <p>These fields were copied from android.view.View (4.3_r2.1)</p>
+	 */
+	private static final int SCROLLBARS_HORIZONTAL = 0x00000100;
+	private static final int SCROLLBARS_VERTICAL = 0x00000200;
 
     public static enum ChoiceMode {
         NONE,
@@ -242,6 +248,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
     private int mLastAccessibilityScrollEventFromIndex;
     private int mLastAccessibilityScrollEventToIndex;
+	
+	private int mScrollbars;
 
     public interface OnScrollListener {
 
@@ -407,6 +415,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         if (choiceMode >= 0) {
             setChoiceMode(ChoiceMode.values()[choiceMode]);
         }
+		
+		mScrollbars = a.getInt(R.styleable.TwoWayView_android_scrollbars, mIsVertical ? SCROLLBARS_VERTICAL : SCROLLBARS_HORIZONTAL);
 
         a.recycle();
 
@@ -2968,8 +2978,13 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     private void updateScrollbarsDirection() {
-        setHorizontalScrollBarEnabled(!mIsVertical);
-        setVerticalScrollBarEnabled(mIsVertical);
+        if((mScrollbars & SCROLLBARS_HORIZONTAL) != 0){
+			setHorizontalScrollBarEnabled(!mIsVertical);
+		}
+		
+		if((mScrollbars & SCROLLBARS_VERTICAL) != 0){
+			setVerticalScrollBarEnabled(mIsVertical);
+		}
     }
 
     private void triggerCheckForTap() {
