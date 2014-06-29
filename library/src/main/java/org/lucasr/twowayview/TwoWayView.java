@@ -21,6 +21,8 @@
 
 package org.lucasr.twowayview;
 
+import static android.os.Build.VERSION_CODES.HONEYCOMB;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,8 +69,6 @@ import android.widget.AdapterView;
 import android.widget.Checkable;
 import android.widget.ListAdapter;
 import android.widget.Scroller;
-
-import static android.os.Build.VERSION_CODES.HONEYCOMB;
 
 /*
  * Implementation Notes:
@@ -3762,6 +3762,14 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             heightSize = measureHeightOfChildren(widthMeasureSpec, 0, NO_POSITION, heightSize, -1);
         }
 
+        if (!mIsVertical && heightMode == MeasureSpec.AT_MOST) {
+        	heightSize = measureHeightOfBiggestChild(heightMeasureSpec, heightSize);
+        }
+
+        if (mIsVertical && widthMode == MeasureSpec.AT_MOST) {
+            widthSize = measureWidthOfBiggestChild(heightMeasureSpec, widthSize);
+        }
+
         if (!mIsVertical && widthMode == MeasureSpec.AT_MOST) {
             widthSize = measureWidthOfChildren(heightMeasureSpec, 0, NO_POSITION, widthSize, -1);
         }
@@ -4654,6 +4662,57 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         return returnedHeight;
     }
 
+	/**
+	 * Measures the height of each child and returns the height of the largest
+	 * child. The height includes this TwoWayView's top and bottom padding. If
+	 * maxHeight is provided, the returned height will be the smaller of the
+	 * measured height and the provided maxHeight.<br />
+	 * This is used to calculate the height of the TwoWayView in horizontal
+	 * mode.
+	 * 
+	 * @param heightMeasureSpec
+	 *            The height measure spec to be given to a childs
+	 *            {@link View#measure(int, int)}.
+	 * @param maxHeight
+	 *            The maximum height that will be returned.
+	 * @return The height of this TwoWayView's largest child (The TwoWayView
+	 *         height in horizontal mode).
+	 */
+    private int measureHeightOfBiggestChild(int heightMeasureSpec, final int maxHeight) {
+
+        int staticHeight = getPaddingTop() + getPaddingBottom();
+
+        final ListAdapter adapter = mAdapter;
+        if (adapter == null) {
+            return staticHeight;
+        }
+
+        int largestChildHeight = 0;
+
+        // mItemCount - 1 since endPosition parameter is inclusive
+        final RecycleBin recycleBin = mRecycler;
+        final boolean shouldRecycle = recycleOnMeasure();
+        final boolean[] isScrap = mIsScrap;
+
+		for (int i = 0; i < adapter.getCount(); i++) {
+            final View child = obtainView(i, isScrap);
+
+            measureScrapChild(child, i, heightMeasureSpec);
+
+            // Recycle the view before we possibly return from the method
+            if (shouldRecycle) {
+                recycleBin.addScrapView(child, -1);
+            }
+
+            int itemHeight = child.getMeasuredHeight();
+            if (itemHeight > largestChildHeight) {
+            	largestChildHeight = itemHeight + staticHeight;
+            }
+        }
+
+        return Math.min(largestChildHeight, maxHeight);
+    }
+
     /**
      * Measures the width of the given range of children (inclusive) and
      * returns the width with this TwoWayView's padding and item margin widths
@@ -4743,6 +4802,56 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         // At this point, we went through the range of children, and they each
         // completely fit, so return the returnedWidth
         return returnedWidth;
+    }
+
+	/**
+	 * Measures the width of each child and returns the width of the largest
+	 * child. The width includes this TwoWayView's left and right padding. If
+	 * maxWidth is provided, the returned width will be the smaller of the
+	 * measured width and the provided maxWidth.<br />
+	 * This is used to calculate the width of the TwoWayView in vertical mode.
+	 * 
+	 * @param widthMeasureSpec
+	 *            The width measure spec to be given to a childs
+	 *            {@link View#measure(int, int)}.
+	 * @param maxWidth
+	 *            The maximum width that will be returned.
+	 * @return The width of this TwoWayView's largest child (The TwoWayView
+	 *         width in vertical mode).
+	 */
+    private int measureWidthOfBiggestChild(int widthMeasureSpec, final int maxWidth) {
+
+        int staticWidth = getPaddingLeft() + getPaddingRight();
+
+        final ListAdapter adapter = mAdapter;
+        if (adapter == null) {
+            return staticWidth;
+        }
+
+        int largestChildWidth = 0;
+
+        // mItemCount - 1 since endPosition parameter is inclusive
+        final RecycleBin recycleBin = mRecycler;
+        final boolean shouldRecycle = recycleOnMeasure();
+        final boolean[] isScrap = mIsScrap;
+
+        for (int i = 0; i < adapter.getCount(); i++) {
+            View child = obtainView(i, isScrap);
+
+            measureScrapChild(child, i, widthMeasureSpec);
+
+            // Recycle the view before we possibly return from the method
+            if (shouldRecycle) {
+                recycleBin.addScrapView(child, -1);
+            }
+
+            int childWidth = child.getMeasuredWidth();
+            if (childWidth > largestChildWidth) {
+            	largestChildWidth = childWidth + staticWidth;
+            }
+        }
+
+        return Math.min(largestChildWidth, maxWidth);
     }
 
     private View makeAndAddView(int position, int offset, boolean flow, boolean selected) {
