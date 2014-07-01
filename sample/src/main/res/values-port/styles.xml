@@ -19,6 +19,7 @@
 
     <style name="TwoWayView">
         <item name="android:orientation">vertical</item>
+        <item name="android:scrollbars">vertical</item>
     </style>
 
 </resources>

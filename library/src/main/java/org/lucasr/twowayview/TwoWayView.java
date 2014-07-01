@@ -388,7 +388,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         ViewCompat.setOverScrollMode(this, ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TwoWayView, defStyle, 0);
-        initializeScrollbars(a);
 
         mDrawSelectorOnTop = a.getBoolean(
                 R.styleable.TwoWayView_android_drawSelectorOnTop, false);
@@ -409,8 +408,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
 
         a.recycle();
-
-        updateScrollbarsDirection();
     }
 
     public void setOrientation(Orientation orientation) {
@@ -421,7 +418,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         mIsVertical = isVertical;
 
-        updateScrollbarsDirection();
         resetState();
         mRecycler.clear();
 
@@ -2965,11 +2961,6 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
 
         return (getChildStartEdge(first) >= getStartEdge() &&
                 getChildEndEdge(last) <= getEndEdge());
-    }
-
-    private void updateScrollbarsDirection() {
-        setHorizontalScrollBarEnabled(!mIsVertical);
-        setVerticalScrollBarEnabled(mIsVertical);
     }
 
     private void triggerCheckForTap() {
