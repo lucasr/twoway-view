@@ -43,7 +43,7 @@ Grab via Maven:
 ```
 or Gradle:
 ```groovy
-compile 'org.lucasr.twowayview:twowayview:0.1.0'
+compile 'org.lucasr.twowayview:twowayview:0.1.1'
 ```
 
 Want to help?
