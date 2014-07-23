@@ -27,6 +27,7 @@
               android:textColor="#999999"
               android:textStyle="bold"
               android:textSize="22sp"
-              android:background="#eeeeee"/>
+              android:background="@drawable/item_background"
+              android:duplicateParentState="true"/>
 
 </FrameLayout>
