@@ -62,8 +62,8 @@ class TWLanes {
         final int paddingRight = layout.getPaddingRight();
         final int paddingBottom = layout.getPaddingBottom();
 
-        final int verticalSpacing = 0;//layout.getVerticalSpacing();
-        final int horizontalSpacing = 0;//layout.getHorizontalSpacing();
+        final int verticalSpacing = layout.getVerticalSpacing();
+        final int horizontalSpacing = layout.getHorizontalSpacing();
 
         if (mIsVertical) {
             final int width = layout.getWidth() - paddingLeft - paddingRight;
