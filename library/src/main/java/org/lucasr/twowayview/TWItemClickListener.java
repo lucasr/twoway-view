@@ -229,8 +229,6 @@ public class TWItemClickListener implements OnItemTouchListener {
                 cancelCheckForTap();
                 mTouchMode = TOUCH_MODE_REST;
 
-                mHostView.setPressed(false);
-
                 final View motionView = getViewAtPosition(mMotionPosition);
                 if (motionView != null) {
                     motionView.setPressed(false);
@@ -268,7 +266,6 @@ public class TWItemClickListener implements OnItemTouchListener {
 
                         mTouchMode = TOUCH_MODE_TAP;
 
-                        mHostView.setPressed(true);
                         child.setPressed(true);
 
                         if (mTouchModeReset != null) {
@@ -280,7 +277,6 @@ public class TWItemClickListener implements OnItemTouchListener {
                             public void run() {
                                 mTouchMode = TOUCH_MODE_REST;
 
-                                mHostView.setPressed(false);
                                 child.setPressed(false);
 
                                 performClick.run();
@@ -297,7 +293,6 @@ public class TWItemClickListener implements OnItemTouchListener {
 
                 mTouchMode = TOUCH_MODE_REST;
                 mActivePointerId = INVALID_POINTER;
-                mHostView.setPressed(false);
                 break;
         }
 
@@ -369,10 +364,7 @@ public class TWItemClickListener implements OnItemTouchListener {
 
             final View child = getViewAtPosition(mMotionPosition);
             if (child != null && !child.hasFocusable()) {
-                mHostView.setPressed(true);
                 child.setPressed(true);
-
-                mHostView.refreshDrawableState();
 
                 if (mHostView.isLongClickable()) {
                     triggerCheckForLongPress();
@@ -400,7 +392,6 @@ public class TWItemClickListener implements OnItemTouchListener {
 
                 if (handled) {
                     mTouchMode = TOUCH_MODE_REST;
-                    mHostView.setPressed(false);
                     child.setPressed(false);
                 } else {
                     mTouchMode = TOUCH_MODE_DONE_WAITING;
