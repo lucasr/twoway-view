@@ -27,7 +27,7 @@ import java.util.EnumMap;
 class TWLanes {
     public static final int NO_LANE = -1;
 
-    private final TWLayoutManager mLayout;
+    private final TWLanedLayoutManager mLayout;
     private final boolean mIsVertical;
     private final Rect[] mLanes;
     private final int mLaneSize;
@@ -48,7 +48,7 @@ class TWLanes {
         mLaneSize = laneSize;
     }
 
-    public TWLanes(TWLayoutManager layout, int laneCount) {
+    public TWLanes(TWLanedLayoutManager layout, int laneCount) {
         mLayout = layout;
         mIsVertical = (layout.getOrientation() == Orientation.VERTICAL);
 
@@ -188,7 +188,7 @@ class TWLanes {
             childFrame.left = laneRect.left;
             childFrame.right = laneRect.left + childWidth;
 
-            final int spacing = 0;//mLayout.getVerticalSpacing();
+            final int spacing = mLayout.getVerticalSpacing();
             final boolean shouldHaveSpacing = (laneRect.top != laneRect.bottom);
             if (flow == Flow.FORWARD) {
                 childFrame.top = laneRect.bottom + (shouldHaveSpacing ? spacing : 0);
@@ -203,7 +203,7 @@ class TWLanes {
             childFrame.top = laneRect.top;
             childFrame.bottom = laneRect.top + childHeight;
 
-            final int spacing = 0;//mLayout.getHorizontalSpacing();
+            final int spacing = mLayout.getHorizontalSpacing();
             final boolean shouldHaveSpacing = (laneRect.left != laneRect.right);
             if (flow == Flow.FORWARD) {
                 childFrame.left = laneRect.right + (shouldHaveSpacing ? spacing : 0);
