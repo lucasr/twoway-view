@@ -18,7 +18,6 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:layout_width="70dp"
              android:layout_height="130dp"
-             android:padding="2dp"
              android:layout_gravity="center">
 
     <TextView android:id="@+id/title"

@@ -21,8 +21,8 @@
 
     <style name="TWViewBase">
         <item name="android:background">#999999</item>
-        <item name="android:verticalSpacing">1dp</item>
-        <item name="android:horizontalSpacing">1dp</item>
+        <item name="android:verticalSpacing">2dp</item>
+        <item name="android:horizontalSpacing">2dp</item>
     </style>
 
     <style name="StateText">
