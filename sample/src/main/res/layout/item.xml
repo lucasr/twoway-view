@@ -15,19 +15,12 @@
    limitations under the License.
 -->
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="70dp"
-             android:layout_height="130dp"
-             android:layout_gravity="center">
-
-    <TextView android:id="@+id/title"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:gravity="center"
-              android:textColor="#999999"
-              android:textStyle="bold"
-              android:textSize="22sp"
-              android:background="@drawable/item_background"
-              android:duplicateParentState="true"/>
-
-</FrameLayout>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/title"
+    android:layout_width="70dp"
+    android:layout_height="130dp"
+    android:gravity="center"
+    android:textColor="#999999"
+    android:textStyle="bold"
+    android:textSize="22sp"
+    android:background="@drawable/item_background"/>
