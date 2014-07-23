@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-   Copyright (C) 2012 Lucas Rocha
+   Copyright (C) 2014 Lucas Rocha
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,17 +15,12 @@
    limitations under the License.
 -->
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="70dp"
-             android:layout_height="130dp"
-             android:background="@drawable/list_selector"
-             android:padding="5dp" >
-
-    <TextView android:id="@+id/title"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:layout_gravity="center"
-              android:textColor="@android:color/black"
-              android:background="#ffcc00" />
-
-</FrameLayout>
+<org.lucasr.twowayview.TWSpannableGridView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/list"
+    style="@style/TWView"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    app:numColumns="3"
+    app:numRows="3" />

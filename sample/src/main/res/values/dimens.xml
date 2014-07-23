@@ -16,9 +16,15 @@
 
 <resources>
 
-    <color name="actionbar_color">#3FBA91</color>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
 
-    <color name="titlestrip_background_color">#DEDEDE</color>
-    <color name="titlestrip_text_color">#999999</color>
+    <dimen name="titlestrip_height">32dp</dimen>
+    <dimen name="titlestrip_text_size">16sp</dimen>
+
+    <dimen name="staggered_child_small">120dp</dimen>
+    <dimen name="staggered_child_medium">230dp</dimen>
+    <dimen name="staggered_child_large">310dp</dimen>
+    <dimen name="staggered_child_xlarge">400dp</dimen>
 
 </resources>

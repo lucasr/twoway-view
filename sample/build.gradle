@@ -4,12 +4,13 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    compile project(':library')
-    compile 'com.android.support:support-v4:19.0.+'
+android {
+    compileSdkVersion 'android-L'
+    buildToolsVersion '19.1.0'
 }
 
-android {
-    compileSdkVersion 19
-    buildToolsVersion '19.1.0'
+dependencies {
+    compile project(':library')
+    compile 'com.android.support:recyclerview-v7:+'
+    compile 'com.android.support:appcompat-v7:19.+'
 }

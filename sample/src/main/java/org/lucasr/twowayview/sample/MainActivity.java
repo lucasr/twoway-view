@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Lucas Rocha
+ * Copyright (C) 2014 Lucas Rocha
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,129 +16,89 @@
 
 package org.lucasr.twowayview.sample;
 
-import org.lucasr.twowayview.TwoWayView;
-
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.Gravity;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Toast;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 
-public class MainActivity extends Activity {
-    private static final String LOGTAG = "TwoWayViewSample";
+public class MainActivity extends ActionBarActivity {
+    private final String ARG_SELECTED_LAYOUT_ID = "selectedLayoutId";
 
-    private TwoWayView mListView;
+    private final int DEFAULT_LAYOUT = R.layout.layout_list;
 
-    private Toast mToast;
-    private String mClickMessage;
-    private String mScrollMessage;
-    private String mStateMessage;
+    private int mSelectedLayoutId;
 
-    @SuppressLint("ShowToast")
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
 
-        mClickMessage = "";
-        mScrollMessage = "";
-        mStateMessage = "";
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowHomeEnabled(false);
 
-        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-        mToast.setGravity(Gravity.CENTER, 0, 0);
+        mSelectedLayoutId = DEFAULT_LAYOUT;
+        if (savedInstanceState != null) {
+            mSelectedLayoutId = savedInstanceState.getInt(ARG_SELECTED_LAYOUT_ID);
+        }
 
-        mListView = (TwoWayView) findViewById(R.id.list);
-        mListView.setItemMargin(10);
-        mListView.setLongClickable(true);
-
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View child, int position,
-                    long id) {
-                mClickMessage = "Item clicked: " + position;
-                refreshToast();
-            }
-        });
-
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View child,
-                    int position, long id) {
-                mClickMessage = "Item long pressed: " + position;
-                refreshToast();
-                return true;
-            }
-        });
-
-        mListView.setOnScrollListener(new TwoWayView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(TwoWayView view, int scrollState) {
-                String stateName = "Undefined";
-                switch(scrollState) {
-                case SCROLL_STATE_IDLE:
-                    stateName = "Idle";
-                    break;
-
-                case SCROLL_STATE_TOUCH_SCROLL:
-                    stateName = "Dragging";
-                    break;
-
-                case SCROLL_STATE_FLING:
-                    stateName = "Flinging";
-                    break;
-                }
-
-                mStateMessage = "Scroll state changed: " + stateName;
-                refreshToast();
-            }
-
-            @Override
-            public void onScroll(TwoWayView view, int firstVisibleItem,
-                    int visibleItemCount, int totalItemCount) {
-                mScrollMessage = "Scroll (first: " + firstVisibleItem + ", count = " + visibleItemCount + ")";
-                refreshToast();
-            }
-        });
-
-        mListView.setRecyclerListener(new TwoWayView.RecyclerListener() {
-            @Override
-            public void onMovedToScrapHeap(View view) {
-                Log.d(LOGTAG, "View moved to scrap heap");
-            }
-        });
-
-        mListView.setAdapter(new SimpleListAdapter(MainActivity.this));
+        addLayoutTab(
+                actionBar, R.layout.layout_list, R.drawable.ic_list, "list");
+        addLayoutTab(
+                actionBar, R.layout.layout_grid, R.drawable.ic_grid, "grid");
+        addLayoutTab(
+                actionBar, R.layout.layout_staggered_grid, R.drawable.ic_staggered, "staggered");
+        addLayoutTab(
+                actionBar, R.layout.layout_spannable_grid, R.drawable.ic_spannable, "spannable");
     }
 
-    private void refreshToast() {
-        StringBuffer buffer = new StringBuffer();
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(ARG_SELECTED_LAYOUT_ID, mSelectedLayoutId);
+    }
 
-        if (!TextUtils.isEmpty(mClickMessage)) {
-            buffer.append(mClickMessage);
+    private void addLayoutTab(ActionBar actionBar, int layoutId, int iconId, String tag) {
+        ActionBar.Tab tab = actionBar.newTab()
+                .setText("")
+                .setIcon(iconId)
+                .setTabListener(new TabListener(layoutId, tag));
+        actionBar.addTab(tab, layoutId == mSelectedLayoutId);
+    }
+
+    public class TabListener implements ActionBar.TabListener {
+        private TWFragment mFragment;
+        private final int mLayoutId;
+        private final String mTag;
+
+        public TabListener(int layoutId, String tag) {
+            mLayoutId = layoutId;
+            mTag = tag;
         }
 
-        if (!TextUtils.isEmpty(mScrollMessage)) {
-            if (buffer.length() != 0) {
-                buffer.append("\n");
+        @Override
+        public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+            mFragment = (TWFragment) getSupportFragmentManager().findFragmentByTag(mTag);
+            if (mFragment == null) {
+                mFragment = (TWFragment) TWFragment.newInstance(mLayoutId);
+                ft.add(R.id.content, mFragment, mTag);
+            } else {
+                ft.attach(mFragment);
             }
 
-            buffer.append(mScrollMessage);
+            mSelectedLayoutId = mFragment.getLayoutId();
         }
 
-        if (!TextUtils.isEmpty(mStateMessage)) {
-            if (buffer.length() != 0) {
-                buffer.append("\n");
+        @Override
+        public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+            if (mFragment != null) {
+                ft.detach(mFragment);
             }
-
-            buffer.append(mStateMessage);
         }
 
-        mToast.setText(buffer.toString());
-        mToast.show();
+        @Override
+        public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
+        }
     }
 }

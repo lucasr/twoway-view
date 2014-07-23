@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Copyright (C) 2014 Lucas Rocha
   ~
@@ -14,11 +15,12 @@
   ~ limitations under the License.
   -->
 
-<resources>
-
-    <color name="actionbar_color">#3FBA91</color>
-
-    <color name="titlestrip_background_color">#DEDEDE</color>
-    <color name="titlestrip_text_color">#999999</color>
-
-</resources>
+<org.lucasr.twowayview.TWStaggeredGridView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/list"
+    style="@style/TWView"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    app:numColumns="2"
+    app:numRows="2" />

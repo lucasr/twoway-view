@@ -17,11 +17,23 @@
 
 <resources>
 
-    <declare-styleable name="TwoWayView">
+    <declare-styleable name="TWLayoutManager">
         <attr name="android:orientation"/>
-        <attr name="android:choiceMode"/>
-        <attr name="android:listSelector"/>
-        <attr name="android:drawSelectorOnTop"/>
+    </declare-styleable>
+
+    <declare-styleable name="TWLanedLayoutManager">
+        <attr name="android:horizontalSpacing"/>
+        <attr name="android:verticalSpacing"/>
+    </declare-styleable>
+
+    <declare-styleable name="TWGridLayoutManager">
+        <attr name="numColumns" format="integer"/>
+        <attr name="numRows" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="TWSpannableGridViewChild">
+        <attr name="colSpan" format="integer"/>
+        <attr name="rowSpan" format="integer"/>
     </declare-styleable>
 
 </resources>
