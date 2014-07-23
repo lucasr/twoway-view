@@ -473,55 +473,6 @@ public abstract class TWLayoutManager extends LayoutManager {
         detachAndScrapAttachedViews(recycler);
         fillSpecific(anchorItemPosition, recycler, state);
 
-//        // If there are scrap children that we did not layout, we need to find where they did go
-//        // and layout them accordingly so that animations can work as expected.
-//        // This case may happen if new views are added or an existing view expands and pushes
-//        // another view out of bounds.
-//        if (getChildCount() > 0 && !state.isPreLayout() && supportsItemAnimations()) {
-//            // to make the logic simpler, we calculate the size of children and call fill.
-//            int scrapExtraStart = 0;
-//            int scrapExtraEnd = 0;
-//
-//            final List<ViewHolder> scrapList = recycler.getScrapList();
-//
-//            final int firstChildPos = getPosition(getChildAt(0));
-//            final int scrapSize = scrapList.size();
-//
-//            for (int i = 0; i < scrapSize; i++) {
-//                final ViewHolder scrap = scrapList.get(i);
-//                final int position = scrap.getPosition();
-//
-//                final int direction = position < firstChildPos != mShouldReverseLayout
-//                        ? RenderState.LAYOUT_START : RenderState.LAYOUT_END;
-//                if (direction == RenderState.LAYOUT_START) {
-//                    scrapExtraStart += mOrientationHelper.getDecoratedMeasurement(scrap.itemView);
-//                } else {
-//                    scrapExtraEnd += mOrientationHelper.getDecoratedMeasurement(scrap.itemView);
-//                }
-//            }
-//
-//            mRenderState.mScrapList = scrapList;
-//            if (scrapExtraStart > 0) {
-//                View anchor = getChildClosestToStart();
-//                updateRenderStateToFillStart(getPosition(anchor), startOffset);
-//                mRenderState.mExtra = scrapExtraStart;
-//                mRenderState.mAvailable = 0;
-//                mRenderState.mCurrentPosition += -1;
-//                fill(recycler, mRenderState, state, false);
-//            }
-//
-//            if (scrapExtraEnd > 0) {
-//                View anchor = getChildClosestToEnd();
-//                updateRenderStateToFillEnd(getPosition(anchor),
-//                        endOffset);
-//                mRenderState.mExtra = scrapExtraEnd;
-//                mRenderState.mAvailable = 0;
-//                mRenderState.mCurrentPosition += mShouldReverseLayout ? -1 : 1;
-//                fill(recycler, mRenderState, state, false);
-//            }
-//            mRenderState.mScrapList = null;
-//        }
-
         mPendingItemPosition = RecyclerView.NO_POSITION;
         mPendingItemOffset = INVALID_OFFSET;
         mPendingSavedState = null;
