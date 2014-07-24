@@ -89,14 +89,14 @@ public class TWGridLayoutManager extends TWLanedLayoutManager {
     protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
         super.attachChildToLayout(child, position, flow, childFrame);
 
-        final TWLanes lanes = getLanes();
+        final int previousLane = getLaneForPosition(position, flow) - 1;
+        if (previousLane >= 0) {
+            final int dimension = getRectDimension(childFrame);
 
-        final int lane = getLaneForPosition(position, flow);
-        final int dimension = getRectDimension(childFrame);
-        for (int i = 0; i < lane; i++) {
-            lanes.getLane(i, mTempRect);
+            final TWLanes lanes = getLanes();
+            lanes.getLane(previousLane, mTempRect);
             if (getRectDimension(mTempRect) == 0) {
-                lanes.offset(i, dimension);
+                lanes.offset(previousLane, dimension);
             }
         }
     }
