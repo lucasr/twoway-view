@@ -206,6 +206,10 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         }
     }
 
+    protected void moveLayoutToPosition(int position, int offset) {
+        mLanes.resetToOffset(offset);
+    }
+
     @Override
     public void onAdapterChanged(Adapter oldAdapter, Adapter newAdapter) {
         super.onAdapterChanged(oldAdapter, newAdapter);
@@ -228,6 +232,18 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         if (isVertical()) {
             mLanes.offset(offset);
         }
+    }
+
+    @Override
+    public void scrollToPosition(int position) {
+        moveLayoutToPosition(position, 0);
+        super.scrollToPosition(position);
+    }
+
+    @Override
+    public void scrollToPositionWithOffset(int position, int offset) {
+        moveLayoutToPosition(position, offset);
+        super.scrollToPositionWithOffset(position, offset);
     }
 
     @Override
@@ -326,11 +342,6 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         } else {
             return View.MeasureSpec.makeMeasureSpec(lp.height, View.MeasureSpec.EXACTLY);
         }
-    }
-
-    @Override
-    protected void offsetLayoutToPosition(int position, int offset) {
-        mLanes.resetToOffset(offset);
     }
 
     @Override

@@ -567,7 +567,6 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     public void scrollToPositionWithOffset(int position, int offset) {
         mPendingItemPosition = position;
-        offsetLayoutToPosition(position, offset);
         requestLayout();
     }
 
@@ -689,7 +688,6 @@ public abstract class TWLayoutManager extends LayoutManager {
     protected abstract int getChildWidthMeasureSpec(View child, int position);
     protected abstract int getChildHeightMeasureSpec(View child, int position);
 
-    protected abstract void offsetLayoutToPosition(int position, int offset);
     protected abstract void detachChildFromLayout(View child, int position, Flow flow);
     protected abstract void attachChildToLayout(View child, int position, Flow flow, Rect childFrame);
 

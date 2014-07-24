@@ -131,9 +131,4 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
             setItemEntryForPosition(position, entry);
         }
     }
-
-    @Override
-    protected void offsetLayoutToPosition(int position, int offset) {
-        super.offsetLayoutToPosition(position, offset);
-    }
 }
