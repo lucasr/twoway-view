@@ -433,9 +433,6 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     @Override
     public void onLayoutChildren(Recycler recycler, State state) {
-        final int start = getStartEdge();
-        final int end = getEndEdge();
-
         if (mPendingSavedState != null) {
             mPendingItemPosition = mPendingSavedState.anchorItemPosition;
         }
