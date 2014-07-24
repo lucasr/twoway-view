@@ -22,6 +22,7 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
@@ -209,6 +210,24 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     @Override
+    public void offsetChildrenHorizontal(int offset) {
+        if (!isVertical()) {
+            mLanes.offset(offset);
+        }
+
+        super.offsetChildrenHorizontal(offset);
+    }
+
+    @Override
+    public void offsetChildrenVertical(int offset) {
+        super.offsetChildrenVertical(offset);
+
+        if (isVertical()) {
+            mLanes.offset(offset);
+        }
+    }
+
+    @Override
     public void onLayoutChildren(Recycler recycler, State state) {
         ensureLayoutState();
         mLanes.reset();
@@ -304,11 +323,6 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         } else {
             return View.MeasureSpec.makeMeasureSpec(lp.height, View.MeasureSpec.EXACTLY);
         }
-    }
-
-    @Override
-    protected void offsetLayout(int offset) {
-        mLanes.offset(offset);
     }
 
     @Override

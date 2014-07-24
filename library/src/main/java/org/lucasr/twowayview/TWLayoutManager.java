@@ -127,8 +127,6 @@ public abstract class TWLayoutManager extends LayoutManager {
         } else {
             offsetChildrenHorizontal(offset);
         }
-
-        offsetLayout(offset);
     }
 
     private void recycleChildrenOutOfBounds(int delta, Flow flow, Recycler recycler) {
@@ -691,7 +689,6 @@ public abstract class TWLayoutManager extends LayoutManager {
     protected abstract int getChildWidthMeasureSpec(View child, int position);
     protected abstract int getChildHeightMeasureSpec(View child, int position);
 
-    protected abstract void offsetLayout(int offset);
     protected abstract void offsetLayoutToPosition(int position, int offset);
     protected abstract void detachChildFromLayout(View child, int position, Flow flow);
     protected abstract void attachChildToLayout(View child, int position, Flow flow, Rect childFrame);
