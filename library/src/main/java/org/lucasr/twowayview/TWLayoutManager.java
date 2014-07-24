@@ -238,12 +238,13 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     private void fillGap(Flow flow, Recycler recycler, State state) {
         final int childCount = getChildCount();
+        final int extraSpace = getExtraLayoutSpace(state);
 
         if (flow == Flow.FORWARD) {
-            fillAfter(mFirstPosition + childCount, recycler, state);
+            fillAfter(mFirstPosition + childCount, recycler, state, extraSpace);
             correctTooHigh(childCount, recycler, state);
         } else {
-            fillBefore(mFirstPosition - 1, recycler);
+            fillBefore(mFirstPosition - 1, recycler, extraSpace);
             correctTooLow(childCount, recycler, state);
         }
     }
@@ -288,13 +289,25 @@ public abstract class TWLayoutManager extends LayoutManager {
         // before this one.
         mFirstPosition = position;
 
-        fillBefore(position - 1, recycler);
+        final int extraSpaceBefore;
+        final int extraSpaceAfter;
+
+        final int extraSpace = getExtraLayoutSpace(state);
+        if (state.getTargetScrollPosition() < position) {
+            extraSpaceAfter = 0;
+            extraSpaceBefore = extraSpace;
+        } else {
+            extraSpaceAfter = extraSpace;
+            extraSpaceBefore = 0;
+        }
+
+        fillBefore(position - 1, recycler, extraSpaceBefore);
 
         // This will correct for the top of the first view not
         // touching the top of the parent.
         adjustViewsStartOrEnd();
 
-        fillAfter(position + 1, recycler, state);
+        fillAfter(position + 1, recycler, state, extraSpaceAfter);
         correctTooHigh(getChildCount(), recycler, state);
 
         return null;
@@ -458,6 +471,14 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
 
         return child;
+    }
+
+    protected int getExtraLayoutSpace(State state) {
+        if (state.hasTargetScrollPosition()) {
+            return getTotalSpace();
+        } else {
+            return 0;
+        }
     }
 
     @Override
