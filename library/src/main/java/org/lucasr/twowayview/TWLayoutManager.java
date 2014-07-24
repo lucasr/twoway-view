@@ -564,9 +564,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     @Override
     public void scrollToPosition(int position) {
-        mPendingItemPosition = position;
-        offsetLayoutToPosition(position, 0);
-        requestLayout();
+        scrollToPositionWithOffset(position, 0);
     }
 
     public void scrollToPositionWithOffset(int position, int offset) {
