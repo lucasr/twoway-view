@@ -82,6 +82,7 @@ public class TWFragment extends Fragment {
         mToast.setGravity(Gravity.CENTER, 0, 0);
 
         mRecyclerView = (TWView) view.findViewById(R.id.list);
+        mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLongClickable(true);
 
         mPositionText = (TextView) view.getRootView().findViewById(R.id.position);
