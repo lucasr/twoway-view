@@ -421,19 +421,6 @@ public abstract class TWLayoutManager extends LayoutManager {
         return child;
     }
 
-    private PointF computeScrollVectorForPosition(int targetPosition) {
-        if (getChildCount() == 0) {
-            return null;
-        }
-
-        final int direction = targetPosition < mFirstPosition ? -1 : 1;
-        if (mIsVertical) {
-            return new PointF(0, direction);
-        } else {
-            return new PointF(direction, 0);
-        }
-    }
-
     @Override
     public void onAttachedToWindow(RecyclerView view) {
         super.onAttachedToWindow(view);
@@ -537,7 +524,26 @@ public abstract class TWLayoutManager extends LayoutManager {
         final LinearSmoothScroller scroller = new LinearSmoothScroller(recyclerView.getContext()) {
             @Override
             public PointF computeScrollVectorForPosition(int targetPosition) {
-                return TWLayoutManager.this.computeScrollVectorForPosition(targetPosition);
+                if (getChildCount() == 0) {
+                    return null;
+                }
+
+                final int direction = targetPosition < mFirstPosition ? -1 : 1;
+                if (mIsVertical) {
+                    return new PointF(0, direction);
+                } else {
+                    return new PointF(direction, 0);
+                }
+            }
+
+            @Override
+            protected int getVerticalSnapPreference() {
+                return LinearSmoothScroller.SNAP_TO_START;
+            }
+
+            @Override
+            protected int getHorizontalSnapPreference() {
+                return LinearSmoothScroller.SNAP_TO_START;
             }
         };
 
