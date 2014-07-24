@@ -68,10 +68,10 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         };
     }
 
-    protected TWLanes mLanes;
+    private TWLanes mLanes;
     private TWLanes mLanesToRestore;
 
-    protected SparseArray<ItemEntry> mItemEntries;
+    private SparseArray<ItemEntry> mItemEntries;
     private SparseArray<ItemEntry> mItemEntriesToRestore;
 
     private int mHorizontalSpacing;
@@ -139,6 +139,18 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     protected void forceCreateLanes() {
         mLanes = null;
         ensureLayoutState();
+    }
+
+    protected TWLanes getLanes() {
+        return mLanes;
+    }
+
+    protected void setItemEntryForPosition(int position, ItemEntry entry) {
+        mItemEntries.put(position, entry);
+    }
+
+    protected ItemEntry getItemEntryForPosition(int position) {
+        return mItemEntries.get(position, null);
     }
 
     private boolean canUseLanes(TWLanes lanes) {

@@ -87,7 +87,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     protected int getLaneForPosition(int position, Flow flow) {
         int lane = TWLanes.NO_LANE;
 
-        final StaggeredItemEntry entry = (StaggeredItemEntry) mItemEntries.get(position, null);
+        final StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry != null) {
             lane = entry.lane;
         }
@@ -96,11 +96,12 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
             return lane;
         }
 
+        final TWLanes lanes = getLanes();
         int targetEdge = (flow == Flow.FORWARD ? Integer.MAX_VALUE : Integer.MIN_VALUE);
 
-        final int laneCount = mLanes.getCount();
+        final int laneCount = lanes.getCount();
         for (int i = 0; i < laneCount; i++) {
-            mLanes.getLane(i, mTempRect);
+            lanes.getLane(i, mTempRect);
 
             final int laneEdge;
             if (isVertical()) {
@@ -121,13 +122,13 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     protected void ensureItemEntry(View child, int position, int lane, Rect childFrame) {
-        StaggeredItemEntry entry = (StaggeredItemEntry) mItemEntries.get(position, null);
+        StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
             final int width = childFrame.right - childFrame.left;
             final int height = childFrame.bottom - childFrame.top;
 
             entry = new StaggeredItemEntry(lane, width, height);
-            mItemEntries.put(position, entry);
+            setItemEntryForPosition(position, entry);
         }
     }
 
