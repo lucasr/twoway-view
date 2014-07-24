@@ -180,13 +180,16 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
             return;
         }
 
-        if (canUseLanes(mLanesToRestore)) {
+        final boolean canRestore = canUseLanes(mLanesToRestore);
+        if (canRestore) {
             mLanes = mLanesToRestore;
             mItemEntries = mItemEntriesToRestore;
+        }
 
-            mLanesToRestore = null;
-            mItemEntriesToRestore = null;
+        mLanesToRestore = null;
+        mItemEntriesToRestore = null;
 
+        if (canRestore) {
             return;
         }
 
