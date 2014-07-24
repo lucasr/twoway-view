@@ -493,7 +493,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             return 0;
         }
 
-        return scrollBy(-dx, recycler, state);
+        return -scrollBy(-dx, recycler, state);
     }
 
     @Override
@@ -502,7 +502,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             return 0;
         }
 
-        return scrollBy(-dy, recycler, state);
+        return -scrollBy(-dy, recycler, state);
     }
 
     @Override
