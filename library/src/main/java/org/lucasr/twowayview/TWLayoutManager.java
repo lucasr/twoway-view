@@ -29,9 +29,13 @@ import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
+import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.View.BaseSavedState;
+
+import java.util.List;
 
 public abstract class TWLayoutManager extends LayoutManager {
     private static final String LOGTAG = "TWLayoutManager";
@@ -245,7 +249,11 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private void fillBefore(int pos, Recycler recycler) {
-        final int start = getStartEdge();
+        fillBefore(pos, recycler, 0);
+    }
+
+    private void fillBefore(int pos, Recycler recycler, int extraSpace) {
+        final int start = getStartEdge() - extraSpace;
         int nextOffset = getInnerStartEdge();
 
         while (nextOffset > start && pos >= 0) {
@@ -258,7 +266,11 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private void fillAfter(int pos, Recycler recycler, State state) {
-        final int end = getEndEdge();
+        fillAfter(pos, recycler, state, 0);
+    }
+
+    private void fillAfter(int pos, Recycler recycler, State state, int extraSpace) {
+        final int end = getEndEdge() + extraSpace;
         int nextOffset = getInnerEndEdge();
 
         final int itemCount = state.getItemCount();
@@ -286,6 +298,33 @@ public abstract class TWLayoutManager extends LayoutManager {
         correctTooHigh(getChildCount(), recycler, state);
 
         return null;
+    }
+
+    private void fillScrapViewsIfNeeded(Recycler recycler, State state) {
+        final int childCount = getChildCount();
+        if (childCount == 0 || state.isPreLayout() || !supportsPredictiveItemAnimations()) {
+            return;
+        }
+
+        final List<ViewHolder> scrapList = recycler.getScrapList();
+        final int scrapCount = scrapList.size();
+
+        int extraSpaceBefore = 0;
+        int extraSpaceAfter = 0;
+
+        for (int i = 0; i < scrapCount; i++) {
+            final ViewHolder holder = scrapList.get(i);
+
+            final int childMeasurement = getChildMeasurement(holder.itemView);
+            if (holder.getPosition() < mFirstPosition) {
+                extraSpaceBefore += childMeasurement;
+            } else {
+                extraSpaceAfter += childMeasurement;
+            }
+        }
+
+        fillBefore(mFirstPosition - 1, recycler, extraSpaceBefore);
+        fillAfter(childCount, recycler, state, extraSpaceAfter);
     }
 
     private void correctTooHigh(int childCount, Recycler recycler, State state) {
@@ -456,6 +495,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
         detachAndScrapAttachedViews(recycler);
         fillSpecific(anchorItemPosition, recycler, state);
+        fillScrapViewsIfNeeded(recycler, state);
 
         mPendingItemPosition = RecyclerView.NO_POSITION;
         mPendingItemOffset = INVALID_OFFSET;
@@ -469,6 +509,11 @@ public abstract class TWLayoutManager extends LayoutManager {
         } else {
             return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
         }
+    }
+
+    @Override
+    public boolean supportsPredictiveItemAnimations() {
+        return true;
     }
 
     @Override
