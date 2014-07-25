@@ -140,7 +140,6 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final TWLanes lanes = getLanes();
         final int firstVisiblePosition = getFirstVisiblePosition();
-        final int childCount = getChildCount();
 
         final View visibleChild = findViewByPosition(position);
         if (visibleChild != null) {
