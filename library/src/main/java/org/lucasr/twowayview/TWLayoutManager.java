@@ -249,32 +249,32 @@ public abstract class TWLayoutManager extends LayoutManager {
         fillBefore(pos, recycler, 0);
     }
 
-    private void fillBefore(int pos, Recycler recycler, int extraSpace) {
+    private void fillBefore(int position, Recycler recycler, int extraSpace) {
         final int start = getStartEdge() - extraSpace;
         int nextOffset = getInnerStartEdge();
 
-        while (nextOffset > start && pos >= 0) {
-            makeAndAddView(pos, Flow.BACKWARD, recycler);
+        while (nextOffset > start && position >= 0) {
+            makeAndAddView(position, Flow.BACKWARD, recycler);
             nextOffset = getInnerStartEdge();
-            pos--;
+            position--;
         }
 
-        mFirstPosition = pos + 1;
+        mFirstPosition = position + 1;
     }
 
     private void fillAfter(int pos, Recycler recycler, State state) {
         fillAfter(pos, recycler, state, 0);
     }
 
-    private void fillAfter(int pos, Recycler recycler, State state, int extraSpace) {
+    private void fillAfter(int position, Recycler recycler, State state, int extraSpace) {
         final int end = getEndEdge() + extraSpace;
         int nextOffset = getInnerEndEdge();
 
         final int itemCount = state.getItemCount();
-        while (nextOffset < end && pos < itemCount) {
-            makeAndAddView(pos, Flow.FORWARD, recycler);
+        while (nextOffset < end && position < itemCount) {
+            makeAndAddView(position, Flow.FORWARD, recycler);
             nextOffset = getInnerEndEdge();
-            pos++;
+            position++;
         }
     }
 
