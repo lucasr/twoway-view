@@ -180,19 +180,6 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
             return;
         }
 
-        final boolean canRestore = canUseLanes(mLanesToRestore);
-        if (canRestore) {
-            mLanes = mLanesToRestore;
-            mItemEntries = mItemEntriesToRestore;
-        }
-
-        mLanesToRestore = null;
-        mItemEntriesToRestore = null;
-
-        if (canRestore) {
-            return;
-        }
-
         if (mLanes != null && mLanes.getCount() == laneCount) {
             return;
         }
@@ -249,6 +236,15 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     @Override
     public void onLayoutChildren(Recycler recycler, State state) {
         ensureLayoutState();
+
+        if (canUseLanes(mLanesToRestore)) {
+            mLanes = mLanesToRestore;
+            mItemEntries = mItemEntriesToRestore;
+        }
+
+        mLanesToRestore = null;
+        mItemEntriesToRestore = null;
+
         mLanes.reset();
 
         super.onLayoutChildren(recycler, state);
