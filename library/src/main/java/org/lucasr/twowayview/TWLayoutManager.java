@@ -57,6 +57,7 @@ public abstract class TWLayoutManager extends LayoutManager {
     private SavedState mPendingSavedState = null;
 
     private int mPendingScrollPosition = RecyclerView.NO_POSITION;
+    private int mPendingScrollOffset = 0;
 
     private final Rect mTempRect = new Rect();
 
@@ -490,11 +491,13 @@ public abstract class TWLayoutManager extends LayoutManager {
     public void onLayoutChildren(Recycler recycler, State state) {
         if (mPendingSavedState != null) {
             mPendingScrollPosition = mPendingSavedState.anchorItemPosition;
+            mPendingScrollOffset = 0;
         }
 
         if (mPendingScrollPosition != RecyclerView.NO_POSITION) {
             if (mPendingScrollPosition < 0 || mPendingScrollPosition >= state.getItemCount()) {
                 mPendingScrollPosition = RecyclerView.NO_POSITION;
+                mPendingScrollOffset = 0;
             }
         }
 
@@ -566,6 +569,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     public void scrollToPositionWithOffset(int position, int offset) {
         mPendingScrollPosition = position;
+        mPendingScrollOffset = offset;
         requestLayout();
     }
 
