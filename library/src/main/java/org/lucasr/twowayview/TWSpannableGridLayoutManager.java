@@ -160,7 +160,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+    protected ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {
         SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
             final LayoutParams lp = (LayoutParams) child.getLayoutParams();
@@ -170,6 +170,8 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
             entry = new SpannableItemEntry(lane, colSpan, rowSpan);
             setItemEntryForPosition(position, entry);
         }
+
+        return entry;
     }
 
     @Override

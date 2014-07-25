@@ -355,8 +355,9 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         ensureItemEntry(child, position, lane, childFrame);
     }
 
-    protected void ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+    protected ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {
         // Do nothing by default
+        return null;
     }
 
     protected abstract int getLaneCount();
