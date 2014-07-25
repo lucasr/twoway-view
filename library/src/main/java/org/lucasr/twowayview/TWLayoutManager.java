@@ -571,7 +571,6 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     @Override
     public void scrollToPosition(int position) {
-        Log.d("BOOM", "scrollToPosition called: " + position);
         scrollToPositionWithOffset(position, 0);
     }
 
