@@ -58,7 +58,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     private SavedState mPendingSavedState = null;
 
-    private int mPendingItemPosition = RecyclerView.NO_POSITION;
+    private int mPendingScrollPosition = RecyclerView.NO_POSITION;
 
     private final Rect mTempRect = new Rect();
 
@@ -491,19 +491,19 @@ public abstract class TWLayoutManager extends LayoutManager {
     @Override
     public void onLayoutChildren(Recycler recycler, State state) {
         if (mPendingSavedState != null) {
-            mPendingItemPosition = mPendingSavedState.anchorItemPosition;
+            mPendingScrollPosition = mPendingSavedState.anchorItemPosition;
         }
 
-        if (mPendingItemPosition != RecyclerView.NO_POSITION) {
-            if (mPendingItemPosition < 0 || mPendingItemPosition >= state.getItemCount()) {
-                mPendingItemPosition = RecyclerView.NO_POSITION;
+        if (mPendingScrollPosition != RecyclerView.NO_POSITION) {
+            if (mPendingScrollPosition < 0 || mPendingScrollPosition >= state.getItemCount()) {
+                mPendingScrollPosition = RecyclerView.NO_POSITION;
             }
         }
 
         int anchorItemPosition;
 
-        if (mPendingItemPosition != RecyclerView.NO_POSITION) {
-            anchorItemPosition = mPendingItemPosition;
+        if (mPendingScrollPosition != RecyclerView.NO_POSITION) {
+            anchorItemPosition = mPendingScrollPosition;
         } else if (getChildCount() > 0) {
             anchorItemPosition = mFirstPosition;
         } else {
@@ -514,7 +514,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         fillSpecific(anchorItemPosition, recycler, state);
         fillScrapViewsIfNeeded(recycler, state);
 
-        mPendingItemPosition = RecyclerView.NO_POSITION;
+        mPendingScrollPosition = RecyclerView.NO_POSITION;
         mPendingSavedState = null;
     }
 
@@ -562,11 +562,12 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     @Override
     public void scrollToPosition(int position) {
+        Log.d("BOOM", "scrollToPosition called: " + position);
         scrollToPositionWithOffset(position, 0);
     }
 
     public void scrollToPositionWithOffset(int position, int offset) {
-        mPendingItemPosition = position;
+        mPendingScrollPosition = position;
         requestLayout();
     }
 
