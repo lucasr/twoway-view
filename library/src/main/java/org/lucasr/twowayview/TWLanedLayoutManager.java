@@ -193,7 +193,7 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         }
     }
 
-    protected void moveLayoutToPosition(int position, int offset) {
+    protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         mLanes.resetToOffset(offset);
     }
 
@@ -222,24 +222,20 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     @Override
-    public void scrollToPosition(int position) {
-        moveLayoutToPosition(position, 0);
-        super.scrollToPosition(position);
-    }
-
-    @Override
-    public void scrollToPositionWithOffset(int position, int offset) {
-        moveLayoutToPosition(position, offset);
-        super.scrollToPositionWithOffset(position, offset);
-    }
-
-    @Override
     public void onLayoutChildren(Recycler recycler, State state) {
         ensureLayoutState();
+
+        final int pendingPosition = getPendingScrollPosition();
+        final int pendingOffset = getPendingScrollOffset();
 
         if (canUseLanes(mLanesToRestore)) {
             mLanes = mLanesToRestore;
             mItemEntries = mItemEntriesToRestore;
+        }
+
+        if (pendingPosition != RecyclerView.NO_POSITION &&
+            pendingPosition != getFirstVisiblePosition()) {
+            moveLayoutToPosition(pendingPosition, pendingOffset, recycler, state);
         }
 
         mLanesToRestore = null;
