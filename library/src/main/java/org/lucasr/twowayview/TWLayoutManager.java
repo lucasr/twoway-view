@@ -526,6 +526,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         fillScrapViewsIfNeeded(recycler, state);
 
         mPendingScrollPosition = RecyclerView.NO_POSITION;
+        mPendingScrollOffset = 0;
         mPendingSavedState = null;
     }
 
