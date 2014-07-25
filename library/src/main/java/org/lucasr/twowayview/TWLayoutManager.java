@@ -128,17 +128,17 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
     }
 
-    private void recycleChildrenOutOfBounds(int delta, Flow flow, Recycler recycler) {
+    private void recycleChildrenOutOfBounds(Flow flow, Recycler recycler) {
         if (flow == Flow.FORWARD) {
-            recycleChildrenFromStart(delta, flow, recycler);
+            recycleChildrenFromStart(flow, recycler);
         } else {
-            recycleChildrenFromEnd(delta, flow, recycler);
+            recycleChildrenFromEnd(flow, recycler);
         }
     }
 
-    private void recycleChildrenFromStart(int delta, Flow flow, Recycler recycler) {
+    private void recycleChildrenFromStart(Flow flow, Recycler recycler) {
         final int childCount = getChildCount();
-        final int childrenStart = -delta + getStartEdge();
+        final int childrenStart = getStartEdge();
 
         int detachedCount = 0;
         for (int i = 0; i < childCount; i++) {
@@ -161,8 +161,8 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
     }
 
-    private void recycleChildrenFromEnd(int delta, Flow flow, Recycler recycler) {
-        final int childrenEnd = getEndEdge() - delta;
+    private void recycleChildrenFromEnd(Flow flow, Recycler recycler) {
+        final int childrenEnd = getEndEdge();
         final int childCount = getChildCount();
 
         int firstDetachedPos = 0;
@@ -216,10 +216,10 @@ public abstract class TWLayoutManager extends LayoutManager {
             return 0;
         }
 
-        final Flow flow = (delta < 0 ? Flow.FORWARD : Flow.BACKWARD);
-
-        recycleChildrenOutOfBounds(delta, flow, recycler);
         offsetChildren(delta);
+
+        final Flow flow = (delta < 0 ? Flow.FORWARD : Flow.BACKWARD);
+        recycleChildrenOutOfBounds(flow, recycler);
 
         final int spaceBefore = start - innerStart;
         final int spaceAfter = innerEnd - end;
