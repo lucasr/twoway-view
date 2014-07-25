@@ -177,10 +177,12 @@ class TWLanes {
     }
 
     public int getChildFrame(View child, int lane, Flow flow, Rect childFrame) {
-        final Rect laneRect = mLanes[lane];
+        return getChildFrame(child.getMeasuredWidth(), child.getMeasuredHeight(),
+                             lane, flow, childFrame);
+    }
 
-        final int childWidth = child.getMeasuredWidth();
-        final int childHeight = child.getMeasuredHeight();
+    public int getChildFrame(int childWidth, int childHeight, int lane, Flow flow, Rect childFrame) {
+        final Rect laneRect = mLanes[lane];
 
         final int delta;
 
