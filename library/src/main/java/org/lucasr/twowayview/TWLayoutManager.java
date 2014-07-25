@@ -477,6 +477,14 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
     }
 
+    protected int getPendingScrollPosition() {
+        return mPendingScrollPosition;
+    }
+
+    protected int getPendingScrollOffset() {
+        return mPendingScrollOffset;
+    }
+
     @Override
     public void onAttachedToWindow(RecyclerView view) {
         super.onAttachedToWindow(view);
