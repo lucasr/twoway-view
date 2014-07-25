@@ -241,7 +241,7 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         mLanesToRestore = null;
         mItemEntriesToRestore = null;
 
-        mLanes.reset();
+        mLanes.resetToStart();
 
         super.onLayoutChildren(recycler, state);
     }

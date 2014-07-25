@@ -221,17 +221,33 @@ class TWLanes {
         return delta;
     }
 
-    public void reset() {
+    private void reset(boolean toStart) {
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
             if (mIsVertical) {
-                laneRect.bottom = laneRect.top;
+                if (toStart) {
+                    laneRect.bottom = laneRect.top;
+                } else {
+                    laneRect.top = laneRect.bottom;
+                }
             } else {
-                laneRect.right = laneRect.left;
+                if (toStart) {
+                    laneRect.right = laneRect.left;
+                } else {
+                    laneRect.left = laneRect.right;
+                }
             }
         }
 
         invalidateEdges();
+    }
+
+    public void resetToStart() {
+        reset(true);
+    }
+
+    public void resetToEnd() {
+        reset(false);
     }
 
     public void resetToOffset(int offset) {
