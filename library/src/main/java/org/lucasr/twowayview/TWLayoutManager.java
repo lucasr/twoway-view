@@ -50,8 +50,6 @@ public abstract class TWLayoutManager extends LayoutManager {
         FORWARD
     }
 
-    private static final int INVALID_OFFSET = Integer.MIN_VALUE;
-
     private int mFirstPosition;
 
     private boolean mIsVertical;
