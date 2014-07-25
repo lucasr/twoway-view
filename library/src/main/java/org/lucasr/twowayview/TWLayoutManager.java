@@ -478,10 +478,18 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     protected int getPendingScrollPosition() {
+        if (mPendingSavedState != null) {
+            return mPendingSavedState.anchorItemPosition;
+        }
+
         return mPendingScrollPosition;
     }
 
     protected int getPendingScrollOffset() {
+        if (mPendingSavedState != null) {
+            return 0;
+        }
+
         return mPendingScrollOffset;
     }
 
@@ -497,22 +505,16 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     @Override
     public void onLayoutChildren(Recycler recycler, State state) {
-        if (mPendingSavedState != null) {
-            mPendingScrollPosition = mPendingSavedState.anchorItemPosition;
-            mPendingScrollOffset = 0;
-        }
-
-        if (mPendingScrollPosition != RecyclerView.NO_POSITION) {
-            if (mPendingScrollPosition < 0 || mPendingScrollPosition >= state.getItemCount()) {
-                mPendingScrollPosition = RecyclerView.NO_POSITION;
-                mPendingScrollOffset = 0;
+        int pendingScrollPosition = getPendingScrollPosition();
+        if (pendingScrollPosition != RecyclerView.NO_POSITION) {
+            if (pendingScrollPosition < 0 || pendingScrollPosition >= state.getItemCount()) {
+                pendingScrollPosition = RecyclerView.NO_POSITION;
             }
         }
 
-        int anchorItemPosition;
-
-        if (mPendingScrollPosition != RecyclerView.NO_POSITION) {
-            anchorItemPosition = mPendingScrollPosition;
+        final int anchorItemPosition;
+        if (pendingScrollPosition != RecyclerView.NO_POSITION) {
+            anchorItemPosition = pendingScrollPosition;
         } else if (getChildCount() > 0) {
             anchorItemPosition = mFirstPosition;
         } else {
@@ -660,7 +662,11 @@ public abstract class TWLayoutManager extends LayoutManager {
         final Parcelable superState = super.onSaveInstanceState();
         final SavedState state = new SavedState(superState);
 
-        state.anchorItemPosition = mFirstPosition;
+        int anchorItemPosition = getPendingScrollPosition();
+        if (anchorItemPosition == RecyclerView.NO_POSITION) {
+            anchorItemPosition = mFirstPosition;
+        }
+        state.anchorItemPosition = anchorItemPosition;
 
         return state;
     }
