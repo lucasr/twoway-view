@@ -20,6 +20,8 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.v7.widget.RecyclerView.Recycler;
+import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -132,5 +134,64 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
         }
 
         return entry;
+    }
+
+    @Override
+    protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
+        final TWLanes lanes = getLanes();
+        final int firstVisiblePosition = getFirstVisiblePosition();
+        final int childCount = getChildCount();
+
+        final View visibleChild = findViewByPosition(position);
+        if (visibleChild != null) {
+            lanes.offset(offset - (isVertical() ? visibleChild.getTop() : visibleChild.getLeft()));
+
+            // TODO: handle extra space left after resetting lanes
+            for (int i = 0; i < position - firstVisiblePosition; i++) {
+                detachChildFromLayout(getChildAt(i), i, Flow.FORWARD);
+            }
+
+            lanes.resetToStart();
+            return;
+        }
+
+        lanes.resetToOffset(0);
+
+        for (int i = 0; i < position; i++) {
+            StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(i);
+            final int dimension;
+            if (entry != null) {
+                dimension = lanes.getChildFrame(entry.width, entry.height, entry.lane,
+                        Flow.FORWARD, mTempRect);
+            } else {
+                final View child = recycler.getViewForPosition(i);
+                if (child.isLayoutRequested()) {
+                    child.measure(getChildWidthMeasureSpec(child, i),
+                                  getChildHeightMeasureSpec(child, i));
+                }
+
+                final int lane = getLaneForPosition(position, Flow.FORWARD);
+                dimension = lanes.getChildFrame(child, lane, Flow.FORWARD, mTempRect);
+
+                entry = (StaggeredItemEntry) ensureItemEntry(child, i, lane, mTempRect);
+            }
+
+            lanes.addToLane(entry.lane, Flow.FORWARD, dimension);
+        }
+
+        lanes.resetToEnd();
+        lanes.getLane(getLaneForPosition(position, Flow.FORWARD), mTempRect);
+        lanes.offset(offset - (isVertical() ? mTempRect.bottom : mTempRect.right));
+    }
+
+    @Override
+    protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
+        final TWLanes lanes = getLanes();
+
+        final int lane = getLaneForPosition(position, flow);
+        final int dimension = lanes.getChildFrame(child, lane, flow, childFrame);
+        lanes.addToLane(lane, flow, dimension);
+
+        ensureItemEntry(child, position, lane, childFrame);
     }
 }
