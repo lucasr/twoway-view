@@ -138,22 +138,12 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
-        final TWLanes lanes = getLanes();
-        final boolean isVertical = isVertical();
-        final int firstVisiblePosition = getFirstVisiblePosition();
-
-        final View visibleChild = findViewByPosition(position);
-        if (visibleChild != null) {
-            lanes.offset(offset - (isVertical ? visibleChild.getTop() : visibleChild.getLeft()));
-
-            // TODO: handle extra space left after resetting lanes
-            for (int i = 0; i < position - firstVisiblePosition; i++) {
-                detachChildFromLayout(getChildAt(i), i, Flow.FORWARD);
-            }
-
-            lanes.resetToStart();
+        if (moveLayoutToVisiblePosition(position, offset)) {
             return;
         }
+
+        final TWLanes lanes = getLanes();
+        final boolean isVertical = isVertical();
 
         lanes.resetToOffset(0);
 
