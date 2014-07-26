@@ -117,13 +117,13 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     private int getChildLaneAndFrame(View child, int position, Flow flow,
-                                     int laneSpan, Rect frame) {
+                                     int laneSpan, Rect childFrame) {
         final TWLanes lanes = getLanes();
         int lane = TWLanes.NO_LANE;
 
         final ItemEntry entry = getItemEntryForPosition(position);
         if (entry != null && entry.lane != TWLanes.NO_LANE) {
-            lanes.getChildFrame(child, entry.lane, flow, frame);
+            lanes.getChildFrame(child, entry.lane, flow, childFrame);
             return entry.lane;
         }
 
@@ -137,7 +137,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
                 (flow == Flow.BACKWARD && childStart > targetEdge)) {
 
                 final int targetLane =
-                        getLaneThatFitsFrame(child, childStart, flow, laneSpan, frame);
+                        getLaneThatFitsFrame(child, childStart, flow, laneSpan, childFrame);
 
                 if (targetLane != TWLanes.NO_LANE) {
                     targetEdge = childStart;
