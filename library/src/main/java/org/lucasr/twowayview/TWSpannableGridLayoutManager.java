@@ -149,6 +149,14 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return lane;
     }
 
+    private int getChildWidth(int colSpan) {
+        return getLanes().getLaneSize() * colSpan + getHorizontalSpacing() * (colSpan - 1);
+    }
+
+    private int getChildHeight(int rowSpan) {
+        return getLanes().getLaneSize() * rowSpan + getVerticalSpacing() * (rowSpan- 1);
+    }
+
     @Override
     protected int getLaneForPosition(int position, Flow flow) {
         final SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
@@ -176,20 +184,14 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     protected int getChildWidthMeasureSpec(View child, int position) {
-        final LayoutParams spannableLp = (LayoutParams) child.getLayoutParams();
-        final int span = spannableLp.colSpan;
-
-        final int width = getLanes().getLaneSize() * span + getHorizontalSpacing() * (span - 1);
-        return MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        return MeasureSpec.makeMeasureSpec(getChildWidth(lp.colSpan), MeasureSpec.EXACTLY);
     }
 
     @Override
     protected int getChildHeightMeasureSpec(View child, int position) {
-        final LayoutParams spannableLp = (LayoutParams) child.getLayoutParams();
-        final int span = spannableLp.rowSpan;
-
-        final int height = getLanes().getLaneSize() * span + getVerticalSpacing() * (span - 1);
-        return MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        return MeasureSpec.makeMeasureSpec(getChildHeight(lp.rowSpan), MeasureSpec.EXACTLY);
     }
 
     @Override
