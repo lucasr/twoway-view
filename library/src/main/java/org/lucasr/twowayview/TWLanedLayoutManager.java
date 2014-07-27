@@ -253,10 +253,9 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         if (canUseLanes(mLanesToRestore)) {
             mLanes = mLanesToRestore;
             mItemEntries = mItemEntriesToRestore;
-        }
-
-        if (pendingPosition != RecyclerView.NO_POSITION &&
-            pendingPosition != getFirstVisiblePosition()) {
+        } else if (mLanesToRestore == null &&
+                   pendingPosition != RecyclerView.NO_POSITION &&
+                   pendingPosition != getFirstVisiblePosition()) {
             moveLayoutToPosition(pendingPosition, pendingOffset, recycler, state);
         }
 
