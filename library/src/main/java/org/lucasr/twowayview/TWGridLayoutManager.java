@@ -19,6 +19,9 @@ package org.lucasr.twowayview;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.Recycler;
+import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -67,14 +70,6 @@ public class TWGridLayoutManager extends TWLanedLayoutManager {
         mNumRows = numRows;
     }
 
-    private int getRectDimension(Rect r) {
-        if (isVertical()) {
-            return r.bottom - r.top;
-        } else {
-            return r.right - r.left;
-        }
-    }
-
     @Override
     protected int getLaneCount() {
         return (isVertical() ? mNumColumns : mNumRows);
@@ -86,18 +81,24 @@ public class TWGridLayoutManager extends TWLanedLayoutManager {
     }
 
     @Override
-    protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
-        super.attachChildToLayout(child, position, flow, childFrame);
+    protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
+        final TWLanes lanes = getLanes();
+        lanes.resetToOffset(offset);
 
-        final int previousLane = getLaneForPosition(position, flow) - 1;
-        if (previousLane >= 0) {
-            final int dimension = getRectDimension(childFrame);
+        final int lane = getLaneForPosition(position, Flow.FORWARD);
+        if (lane == 0) {
+            return;
+        }
 
-            final TWLanes lanes = getLanes();
-            lanes.getLane(previousLane, mTempRect);
-            if (getRectDimension(mTempRect) == 0) {
-                lanes.offset(previousLane, dimension);
-            }
+        final View child = recycler.getViewForPosition(position);
+        if (child.isLayoutRequested()) {
+            child.measure(getChildWidthMeasureSpec(child, position),
+                          getChildHeightMeasureSpec(child, position));
+        }
+
+        final int dimension = (isVertical() ? child.getMeasuredHeight() : child.getMeasuredWidth());
+        for (int i = lane - 1; i >= 0; i--) {
+            lanes.offset(i, dimension);
         }
     }
 

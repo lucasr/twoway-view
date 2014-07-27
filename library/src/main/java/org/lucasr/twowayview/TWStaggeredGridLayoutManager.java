@@ -173,15 +173,4 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
         lanes.getLane(getLaneForPosition(position, Flow.FORWARD), mTempRect);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
     }
-
-    @Override
-    protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
-        final TWLanes lanes = getLanes();
-
-        final int lane = getLaneForPosition(position, flow);
-        final int dimension = lanes.getChildFrame(child, lane, flow, childFrame);
-        lanes.addToLane(lane, flow, dimension);
-
-        ensureItemEntry(child, position, lane, childFrame);
-    }
 }
