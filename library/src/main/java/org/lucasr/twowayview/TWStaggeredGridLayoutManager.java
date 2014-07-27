@@ -138,21 +138,19 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
-        if (moveLayoutToVisiblePosition(position, offset)) {
-            return;
-        }
-
-        final TWLanes lanes = getLanes();
         final boolean isVertical = isVertical();
+        final TWLanes lanes = getLanes();
+        final Rect childFrame = new Rect();
 
         lanes.resetToOffset(0);
 
         for (int i = 0; i < position; i++) {
             StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(i);
+
             final int dimension;
             if (entry != null) {
                 dimension = lanes.getChildFrame(entry.width, entry.height, entry.lane,
-                        Flow.FORWARD, mTempRect);
+                        Flow.FORWARD, childFrame);
             } else {
                 final View child = recycler.getViewForPosition(i);
                 if (child.isLayoutRequested()) {
@@ -161,16 +159,22 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
                 }
 
                 final int lane = getLaneForPosition(position, Flow.FORWARD);
-                dimension = lanes.getChildFrame(child, lane, Flow.FORWARD, mTempRect);
+                dimension = lanes.getChildFrame(child, lane, Flow.FORWARD, childFrame);
 
-                entry = (StaggeredItemEntry) ensureItemEntry(child, i, lane, mTempRect);
+                entry = (StaggeredItemEntry) ensureItemEntry(child, i, lane, childFrame);
             }
 
             lanes.addToLane(entry.lane, Flow.FORWARD, dimension);
         }
 
+        final int lane = getLaneForPosition(position, Flow.FORWARD);
+        if (position >= lanes.getCount()) {
+            final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
+            lanes.addToLane(lane, Flow.FORWARD, spacing);
+        }
+
         lanes.resetToEnd();
-        lanes.getLane(getLaneForPosition(position, Flow.FORWARD), mTempRect);
+        lanes.getLane(lane, mTempRect);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
     }
 }

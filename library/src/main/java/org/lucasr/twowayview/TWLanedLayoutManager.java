@@ -193,28 +193,6 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         }
     }
 
-    protected boolean moveLayoutToVisiblePosition(int position, int offset) {
-        final View visibleChild = findViewByPosition(position);
-        if (visibleChild == null) {
-            return false;
-        }
-
-        final TWLanes lanes = getLanes();
-        final boolean isVertical = isVertical();
-        final int firstVisiblePosition = getFirstVisiblePosition();
-
-        lanes.offset(offset - (isVertical ? visibleChild.getTop() : visibleChild.getLeft()));
-
-        // TODO: handle extra space left after resetting lanes
-        for (int i = 0; i < position - firstVisiblePosition; i++) {
-            detachChildFromLayout(getChildAt(i), i, Flow.FORWARD);
-        }
-
-        lanes.resetToStart();
-
-        return true;
-    }
-
     protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         mLanes.resetToOffset(offset);
     }
@@ -254,8 +232,7 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
             mLanes = mLanesToRestore;
             mItemEntries = mItemEntriesToRestore;
         } else if (mLanesToRestore == null &&
-                   pendingPosition != RecyclerView.NO_POSITION &&
-                   pendingPosition != getFirstVisiblePosition()) {
+                   pendingPosition != RecyclerView.NO_POSITION) {
             moveLayoutToPosition(pendingPosition, pendingOffset, recycler, state);
         }
 
