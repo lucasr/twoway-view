@@ -322,21 +322,40 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     public boolean checkLayoutParams(RecyclerView.LayoutParams lp) {
-        return (lp != null && lp instanceof LayoutParams);
+        if (lp instanceof LayoutParams) {
+            final LayoutParams spannableLp = (LayoutParams) lp;
+            if (isVertical()) {
+                return (spannableLp.colSpan >= 1 && spannableLp.colSpan <= getLaneCount());
+            } else {
+                return (spannableLp.rowSpan >= 1 && spannableLp.rowSpan <= getLaneCount());
+            }
+        }
+
+        return false;
     }
 
     @Override
     public LayoutParams generateDefaultLayoutParams() {
-        if (isVertical()) {
-            return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        } else {
-            return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
-        }
+        return new LayoutParams(0, 0);
     }
 
     @Override
     public LayoutParams generateLayoutParams(ViewGroup.LayoutParams lp) {
-        return new LayoutParams(lp);
+        final LayoutParams spannableLp = generateDefaultLayoutParams();
+        if (!(lp instanceof LayoutParams)) {
+            return spannableLp;
+        }
+
+        final LayoutParams other = (LayoutParams) lp;
+        if (isVertical()) {
+            spannableLp.colSpan = Math.max(1, Math.min(other.colSpan, getLaneCount()));
+            spannableLp.rowSpan = Math.max(1, other.rowSpan);
+        } else {
+            spannableLp.colSpan = Math.max(1, other.colSpan);
+            spannableLp.rowSpan = Math.max(1, Math.min(other.rowSpan, getLaneCount()));
+        }
+
+        return spannableLp;
     }
 
     @Override
