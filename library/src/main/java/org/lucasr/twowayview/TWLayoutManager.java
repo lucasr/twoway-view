@@ -449,22 +449,12 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     private View makeAndAddView(int position, Flow flow, Recycler recycler) {
         final View child = recycler.getViewForPosition(position);
-        final boolean needToMeasure = child.isLayoutRequested();
-
         addView(child, (flow == Flow.FORWARD ? -1 : 0));
 
-        if (needToMeasure) {
-            measureChild(child, position);
-        }
+        measureChild(child, position);
 
         attachChildToLayout(child, position, flow, mTempRect);
-
-        if (needToMeasure) {
-            child.layout(mTempRect.left, mTempRect.top, mTempRect.right, mTempRect.bottom);
-        } else {
-            child.offsetLeftAndRight(mTempRect.left - child.getLeft());
-            child.offsetTopAndBottom(mTempRect.top - child.getTop());
-        }
+        child.layout(mTempRect.left, mTempRect.top, mTempRect.right, mTempRect.bottom);
 
         return child;
     }

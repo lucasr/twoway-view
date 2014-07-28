@@ -153,10 +153,8 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
                         Flow.FORWARD, childFrame);
             } else {
                 final View child = recycler.getViewForPosition(i);
-                if (child.isLayoutRequested()) {
-                    child.measure(getChildWidthMeasureSpec(child, i),
-                                  getChildHeightMeasureSpec(child, i));
-                }
+                child.measure(getChildWidthMeasureSpec(child, i),
+                              getChildHeightMeasureSpec(child, i));
 
                 final int lane = getLaneForPosition(position, Flow.FORWARD);
                 dimension = lanes.getChildFrame(child, lane, Flow.FORWARD, childFrame);
