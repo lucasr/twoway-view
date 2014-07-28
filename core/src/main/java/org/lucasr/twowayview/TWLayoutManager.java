@@ -196,17 +196,17 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
 
         final boolean cannotScrollBackward = (mFirstPosition == 0 &&
-                outerStart >= start && delta >= 0);
+                outerStart >= start && delta <= 0);
         final boolean cannotScrollForward = (mFirstPosition + childCount == state.getItemCount() &&
-                outerEnd <= end && delta <= 0);
+                outerEnd <= end && delta >= 0);
 
         if (cannotScrollForward || cannotScrollBackward) {
             return 0;
         }
 
-        offsetChildren(delta);
+        offsetChildren(-delta);
 
-        final Direction direction = (delta < 0 ? Direction.END : Direction.START);
+        final Direction direction = (delta > 0 ? Direction.END : Direction.START);
         recycleChildrenOutOfBounds(direction, recycler);
 
         final int spaceBefore = start - innerStart;
@@ -531,7 +531,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             return 0;
         }
 
-        return -scrollBy(-dx, recycler, state);
+        return scrollBy(dx, recycler, state);
     }
 
     @Override
@@ -540,7 +540,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             return 0;
         }
 
-        return -scrollBy(-dy, recycler, state);
+        return scrollBy(dy, recycler, state);
     }
 
     @Override
