@@ -29,6 +29,8 @@ import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
 
+import org.lucasr.twowayview.TWView;
+
 public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     private static final String LOGTAG = "TWSpannableGridLayoutManager";
 

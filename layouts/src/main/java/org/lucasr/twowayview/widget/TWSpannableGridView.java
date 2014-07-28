@@ -19,6 +19,8 @@ package org.lucasr.twowayview.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 
+import org.lucasr.twowayview.TWView;
+
 public class TWSpannableGridView extends TWView {
     private static final String LOGTAG = "TWSpannableGridView";
 

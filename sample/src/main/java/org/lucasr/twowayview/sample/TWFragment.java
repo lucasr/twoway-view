@@ -37,7 +37,7 @@ import org.lucasr.twowayview.TWItemClickListener.OnItemClickListener;
 import org.lucasr.twowayview.TWItemClickListener.OnItemLongClickListener;
 import org.lucasr.twowayview.TWLayoutManager.Orientation;
 import org.lucasr.twowayview.widget.TWSpannableGridLayoutManager;
-import org.lucasr.twowayview.widget.TWView;
+import org.lucasr.twowayview.TWView;
 
 public class TWFragment extends Fragment {
     private static final String ARG_LAYOUT_ID = "layout_id";

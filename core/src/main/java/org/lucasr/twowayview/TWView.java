@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.lucasr.twowayview.widget;
+package org.lucasr.twowayview;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
