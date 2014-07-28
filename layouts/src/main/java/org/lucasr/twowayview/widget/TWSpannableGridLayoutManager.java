@@ -214,11 +214,11 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return MeasureSpec.makeMeasureSpec(getChildHeight(lp.rowSpan), MeasureSpec.EXACTLY);
     }
 
-    private int getFirstChildCountInLanes(int laneCount, int itemCount) {
+    private int getFirstChildCountInLanes(int laneCount, int maxPosition) {
         final boolean isVertical = isVertical();
 
         int childCount = 0, i = 0;
-        while (i < itemCount && i < laneCount) {
+        while (i < maxPosition && i < laneCount) {
             SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(i);
             i += (isVertical ? entry.colSpan : entry.rowSpan);
             childCount++;
@@ -259,7 +259,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
         final SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
         final int laneCount = lanes.getCount();
-        if (position >= getFirstChildCountInLanes(laneCount, state.getItemCount())) {
+        if (position >= getFirstChildCountInLanes(laneCount, position)) {
             final int spacing = getLaneSpacing(isVertical);
             for (int i = entry.lane; i < laneCount; i++) {
                 lanes.addToLane(i, Flow.FORWARD, spacing);
