@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package org.lucasr.twowayview;
+package org.lucasr.twowayview.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
 
-public class TWStaggeredGridView extends TWView {
-    private static final String LOGTAG = "TWStaggeredGridView";
+public class TWSpannableGridView extends TWView {
+    private static final String LOGTAG = "TWSpannableGridView";
 
-    public TWStaggeredGridView(Context context) {
+    public TWSpannableGridView(Context context) {
         this(context, null);
     }
 
-    public TWStaggeredGridView(Context context, AttributeSet attrs) {
+    public TWSpannableGridView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWStaggeredGridView(Context context, AttributeSet attrs, int defStyle) {
+    public TWSpannableGridView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        setLayoutManager(new TWStaggeredGridLayoutManager(context, attrs, defStyle));
+        setLayoutManager(new TWSpannableGridLayoutManager(context, attrs, defStyle));
     }
 }

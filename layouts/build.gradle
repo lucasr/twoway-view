@@ -1,4 +1,4 @@
-apply plugin: 'android'
+apply plugin: 'android-library'
 
 repositories {
     mavenCentral()
@@ -11,7 +11,7 @@ android {
 
 dependencies {
     compile project(':core')
-    compile project(':layouts')
     compile 'com.android.support:recyclerview-v7:+'
-    compile 'com.android.support:appcompat-v7:19.+'
 }
+
+//apply from: 'https://raw.github.com/chrisbanes/gradle-mvn-push/master/gradle-mvn-push.gradle'

@@ -14,33 +14,24 @@
  * limitations under the License.
  */
 
-package org.lucasr.twowayview;
+package org.lucasr.twowayview.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
 
-public class TWListLayoutManager extends TWLanedLayoutManager {
-    private static final String LOGTAG = "TWListLayoutManager";
+public class TWGridView extends TWView {
+    private static final String LOGTAG = "TWGridView";
 
-    public TWListLayoutManager(Context context, AttributeSet attrs) {
+    public TWGridView(Context context) {
+        this(context, null);
+    }
+
+    public TWGridView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWListLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+    public TWGridView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-    }
-
-    public TWListLayoutManager(Context context, Orientation orientation) {
-        super(context, orientation);
-    }
-
-    @Override
-    protected int getLaneCount() {
-        return 1;
-    }
-
-    @Override
-    protected int getLaneForPosition(int position, Flow flow) {
-        return 0;
+        setLayoutManager(new TWGridLayoutManager(context, attrs, defStyle));
     }
 }

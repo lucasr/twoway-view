@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.lucasr.twowayview;
+package org.lucasr.twowayview.widget;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 
+import org.lucasr.twowayview.TWLayoutManager;
 import org.lucasr.twowayview.TWLayoutManager.Orientation;
 
 public class TWView extends RecyclerView {

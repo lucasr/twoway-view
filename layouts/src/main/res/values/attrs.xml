@@ -17,10 +17,6 @@
 
 <resources>
 
-    <declare-styleable name="TWLayoutManager">
-        <attr name="android:orientation"/>
-    </declare-styleable>
-
     <declare-styleable name="TWLanedLayoutManager">
         <attr name="android:horizontalSpacing"/>
         <attr name="android:verticalSpacing"/>

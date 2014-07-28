@@ -45,7 +45,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         VERTICAL
     }
 
-    protected static enum Flow {
+    public static enum Flow {
         BACKWARD,
         FORWARD
     }
@@ -94,18 +94,6 @@ public abstract class TWLayoutManager extends LayoutManager {
             return getHeight() - getPaddingBottom() - getPaddingTop();
         } else {
             return getWidth() - getPaddingRight() - getPaddingLeft();
-        }
-    }
-
-    int getStartEdge() {
-        return (mIsVertical ? getPaddingTop() : getPaddingLeft());
-    }
-
-    int getEndEdge() {
-        if (mIsVertical) {
-            return (getHeight() - getPaddingBottom());
-        } else {
-            return (getWidth() - getPaddingRight());
         }
     }
 
@@ -685,6 +673,18 @@ public abstract class TWLayoutManager extends LayoutManager {
 
         this.mIsVertical = isVertical;
         requestLayout();
+    }
+
+    public int getStartEdge() {
+        return (mIsVertical ? getPaddingTop() : getPaddingLeft());
+    }
+
+    public int getEndEdge() {
+        if (mIsVertical) {
+            return (getHeight() - getPaddingBottom());
+        } else {
+            return (getWidth() - getPaddingRight());
+        }
     }
 
     public int getFirstVisiblePosition() {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.lucasr.twowayview;
+package org.lucasr.twowayview.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -30,6 +30,8 @@ import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
+
+import org.lucasr.twowayview.TWLayoutManager;
 
 public abstract class TWLanedLayoutManager extends TWLayoutManager {
     private static final String LOGTAG = "TWLanedLayoutManager";

@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 
-<org.lucasr.twowayview.TWListView
+<org.lucasr.twowayview.widget.TWListView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/list"
     style="@style/TWView"

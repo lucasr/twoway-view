@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-   Copyright (C) 2014 Lucas Rocha
+   Copyright (C) 2013 Lucas Rocha
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
    limitations under the License.
 -->
 
-<org.lucasr.twowayview.widget.TWSpannableGridView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/list"
-    style="@style/TWView"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    app:numColumns="3"
-    app:numRows="3" />
+<resources>
+
+    <declare-styleable name="TWLayoutManager">
+        <attr name="android:orientation"/>
+    </declare-styleable>
+
+</resources>
