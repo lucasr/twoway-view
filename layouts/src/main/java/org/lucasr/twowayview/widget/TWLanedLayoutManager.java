@@ -77,8 +77,8 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     private SparseArray<ItemEntry> mItemEntries;
     private SparseArray<ItemEntry> mItemEntriesToRestore;
 
-    private int mHorizontalSpacing;
-    private int mVerticalSpacing;
+    private int mHorizontalSpacing = 0;
+    private int mVerticalSpacing = 0;
 
     protected final Rect mTempRect = new Rect();
 
