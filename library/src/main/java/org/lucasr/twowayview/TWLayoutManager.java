@@ -51,6 +51,7 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private int mFirstPosition;
+    private int mFirstVisiblePosition;
 
     private boolean mIsVertical;
 
@@ -227,6 +228,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
         if (spaceBefore < absDelta || spaceAfter < absDelta) {
             fillGap(flow, recycler, state);
+            mFirstVisiblePosition = mFirstPosition;
         }
 
         return delta;
@@ -513,6 +515,8 @@ public abstract class TWLayoutManager extends LayoutManager {
 
         detachAndScrapAttachedViews(recycler);
         fillSpecific(anchorItemPosition, recycler, state);
+
+        mFirstVisiblePosition = mFirstPosition;
         fillScrapViewsIfNeeded(recycler, state);
 
         mPendingScrollPosition = RecyclerView.NO_POSITION;
@@ -655,7 +659,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
         int anchorItemPosition = getPendingScrollPosition();
         if (anchorItemPosition == RecyclerView.NO_POSITION) {
-            anchorItemPosition = mFirstPosition;
+            anchorItemPosition = mFirstVisiblePosition;
         }
         state.anchorItemPosition = anchorItemPosition;
 
