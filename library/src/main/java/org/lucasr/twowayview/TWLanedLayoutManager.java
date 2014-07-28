@@ -225,15 +225,14 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     public void onLayoutChildren(Recycler recycler, State state) {
         ensureLayoutState();
 
-        final int pendingPosition = getPendingScrollPosition();
-        final int pendingOffset = getPendingScrollOffset();
-
         if (canUseLanes(mLanesToRestore)) {
             mLanes = mLanesToRestore;
             mItemEntries = mItemEntriesToRestore;
-        } else if (mLanesToRestore == null &&
-                   pendingPosition != RecyclerView.NO_POSITION) {
-            moveLayoutToPosition(pendingPosition, pendingOffset, recycler, state);
+        } else {
+            final int pendingPosition = getPendingScrollPosition();
+            if (pendingPosition != RecyclerView.NO_POSITION) {
+                moveLayoutToPosition(pendingPosition, getPendingScrollOffset(), recycler, state);
+            }
         }
 
         mLanesToRestore = null;
