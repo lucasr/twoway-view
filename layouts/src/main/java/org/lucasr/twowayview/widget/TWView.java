@@ -38,6 +38,16 @@ public class TWView extends RecyclerView {
         super(context, attrs, defStyle);
     }
 
+    @Override
+    public void setLayoutManager(LayoutManager layout) {
+        if (!(layout instanceof  TWLayoutManager)) {
+            throw new IllegalArgumentException("TWView can only use TWLayoutManager subclasses " +
+                                               "as its layout manager");
+        }
+
+        super.setLayoutManager(layout);
+    }
+
     public Orientation getOrientation() {
         TWLayoutManager layout = (TWLayoutManager) getLayoutManager();
         return layout.getOrientation();
