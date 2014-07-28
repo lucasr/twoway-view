@@ -17,6 +17,10 @@
 
 <resources>
 
+    <declare-styleable name="TWView">
+        <attr name="layoutManager" format="string"/>
+    </declare-styleable>
+
     <declare-styleable name="TWLayoutManager">
         <attr name="android:orientation"/>
     </declare-styleable>
