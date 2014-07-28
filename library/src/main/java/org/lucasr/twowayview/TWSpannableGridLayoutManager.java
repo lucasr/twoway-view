@@ -30,7 +30,7 @@ import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
 
 public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
-    private static final String LOGTAG = "TWSpannableGridView";
+    private static final String LOGTAG = "TWSpannableGridLayoutManager";
 
     private static final int DEFAULT_NUM_COLS = 3;
     private static final int DEFAULT_NUM_ROWS = 3;
