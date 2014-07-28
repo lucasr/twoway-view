@@ -159,16 +159,16 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return getLanes().getLaneSize() * rowSpan + getVerticalSpacing() * (rowSpan- 1);
     }
 
-    private int getLaneSpan(View child) {
-        return getLaneSpan((LayoutParams) child.getLayoutParams());
+    private static int getLaneSpan(boolean isVertical, View child) {
+        return getLaneSpan(isVertical, (LayoutParams) child.getLayoutParams());
     }
 
-    private int getLaneSpan(LayoutParams lp) {
-        return (isVertical() ? lp.colSpan : lp.rowSpan);
+    private static int getLaneSpan(boolean isVertical, LayoutParams lp) {
+        return (isVertical ? lp.colSpan : lp.rowSpan);
     }
 
-    private int getLaneSpan(SpannableItemEntry entry) {
-        return (isVertical() ? entry.colSpan : entry.rowSpan);
+    private static int getLaneSpan(boolean isVertical, SpannableItemEntry entry) {
+        return (isVertical ? entry.colSpan : entry.rowSpan);
     }
 
     @Override
@@ -229,13 +229,14 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
                 final View child = recycler.getViewForPosition(i);
 
                 final int lane = getChildLaneAndFrame(child, i, Flow.FORWARD,
-                        getLaneSpan(child), childFrame);
+                        getLaneSpan(isVertical, child), childFrame);
 
                 entry = (SpannableItemEntry) ensureItemEntry(child, i, lane, childFrame);
             }
 
             if (i != position) {
-                appendChildFrame(childFrame, Flow.FORWARD, entry.lane, getLaneSpan(entry));
+                appendChildFrame(childFrame, Flow.FORWARD, entry.lane,
+                        getLaneSpan(isVertical, entry));
             }
         }
 
@@ -247,7 +248,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     @Override
     protected void detachChildFromLayout(View child, int position, Flow flow) {
         final boolean isVertical = isVertical();
-        final int laneSpan = getLaneSpan(child);
+        final int laneSpan = getLaneSpan(isVertical, child);
 
         final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
         final int dimension = (isVertical ? child.getHeight() : child.getWidth());
@@ -284,7 +285,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
-        final int laneSpan = getLaneSpan(child);
+        final int laneSpan = getLaneSpan(isVertical(), child);
 
         final int lane = getChildLaneAndFrame(child, position, flow, laneSpan, childFrame);
         appendChildFrame(childFrame, flow, lane, laneSpan);
