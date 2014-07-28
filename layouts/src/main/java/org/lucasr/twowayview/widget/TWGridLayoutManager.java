@@ -74,7 +74,7 @@ public class TWGridLayoutManager extends TWLanedLayoutManager {
     }
 
     @Override
-    protected int getLaneForPosition(int position, Flow flow) {
+    protected int getLaneForPosition(int position, Direction direction) {
         return (position % getLaneCount());
     }
 
@@ -83,7 +83,7 @@ public class TWGridLayoutManager extends TWLanedLayoutManager {
         final TWLanes lanes = getLanes();
         lanes.resetToOffset(offset);
 
-        final int lane = getLaneForPosition(position, Flow.FORWARD);
+        final int lane = getLaneForPosition(position, Direction.END);
         if (lane == 0) {
             return;
         }

@@ -336,20 +336,20 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     @Override
-    protected void detachChildFromLayout(View child, int position, Flow flow) {
+    protected void detachChildFromLayout(View child, int position, Direction direction) {
         final boolean isVertical = isVertical();
         final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
         final int dimension = (isVertical ? child.getHeight() : child.getWidth());
 
-        final int lane = getLaneForPosition(position, flow);
-        mLanes.removeFromLane(lane, flow, dimension + spacing);
+        final int lane = getLaneForPosition(position, direction);
+        mLanes.removeFromLane(lane, direction, dimension + spacing);
     }
 
     @Override
-    protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
-        final int lane = getLaneForPosition(position, flow);
-        final int dimension = mLanes.getChildFrame(child, lane, flow, childFrame);
-        mLanes.addToLane(lane, flow, dimension);
+    protected void attachChildToLayout(View child, int position, Direction direction, Rect childFrame) {
+        final int lane = getLaneForPosition(position, direction);
+        final int dimension = mLanes.getChildFrame(child, lane, direction, childFrame);
+        mLanes.addToLane(lane, direction, dimension);
 
         ensureItemEntry(child, position, lane, childFrame);
     }
@@ -360,7 +360,7 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     protected abstract int getLaneCount();
-    protected abstract int getLaneForPosition(int position, Flow flow);
+    protected abstract int getLaneForPosition(int position, Direction direction);
 
     public void setHorizontalSpacing(int horizontalSpacing) {
         if (mHorizontalSpacing == horizontalSpacing) {

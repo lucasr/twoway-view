@@ -31,7 +31,6 @@ import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.View.BaseSavedState;
 
@@ -45,9 +44,9 @@ public abstract class TWLayoutManager extends LayoutManager {
         VERTICAL
     }
 
-    public static enum Flow {
-        BACKWARD,
-        FORWARD
+    public static enum Direction {
+        START,
+        END
     }
 
     private int mFirstPosition;
@@ -117,15 +116,15 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
     }
 
-    private void recycleChildrenOutOfBounds(Flow flow, Recycler recycler) {
-        if (flow == Flow.FORWARD) {
-            recycleChildrenFromStart(flow, recycler);
+    private void recycleChildrenOutOfBounds(Direction direction, Recycler recycler) {
+        if (direction == Direction.END) {
+            recycleChildrenFromStart(direction, recycler);
         } else {
-            recycleChildrenFromEnd(flow, recycler);
+            recycleChildrenFromEnd(direction, recycler);
         }
     }
 
-    private void recycleChildrenFromStart(Flow flow, Recycler recycler) {
+    private void recycleChildrenFromStart(Direction direction, Recycler recycler) {
         final int childCount = getChildCount();
         final int childrenStart = getStartEdge();
 
@@ -140,7 +139,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
             detachedCount++;
 
-            detachChildFromLayout(child, getPosition(child), flow);
+            detachChildFromLayout(child, getPosition(child), direction);
         }
 
         mFirstPosition += detachedCount;
@@ -150,7 +149,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
     }
 
-    private void recycleChildrenFromEnd(Flow flow, Recycler recycler) {
+    private void recycleChildrenFromEnd(Direction direction, Recycler recycler) {
         final int childrenEnd = getEndEdge();
         final int childCount = getChildCount();
 
@@ -167,7 +166,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             firstDetachedPos = i;
             detachedCount++;
 
-            detachChildFromLayout(child, getPosition(child), flow);
+            detachChildFromLayout(child, getPosition(child), direction);
         }
 
         while (--detachedCount >= 0) {
@@ -207,26 +206,26 @@ public abstract class TWLayoutManager extends LayoutManager {
 
         offsetChildren(delta);
 
-        final Flow flow = (delta < 0 ? Flow.FORWARD : Flow.BACKWARD);
-        recycleChildrenOutOfBounds(flow, recycler);
+        final Direction direction = (delta < 0 ? Direction.END : Direction.START);
+        recycleChildrenOutOfBounds(direction, recycler);
 
         final int spaceBefore = start - innerStart;
         final int spaceAfter = innerEnd - end;
         final int absDelta = Math.abs(delta);
 
         if (spaceBefore < absDelta || spaceAfter < absDelta) {
-            fillGap(flow, recycler, state);
+            fillGap(direction, recycler, state);
             mFirstVisiblePosition = mFirstPosition;
         }
 
         return delta;
     }
 
-    private void fillGap(Flow flow, Recycler recycler, State state) {
+    private void fillGap(Direction direction, Recycler recycler, State state) {
         final int childCount = getChildCount();
         final int extraSpace = getExtraLayoutSpace(state);
 
-        if (flow == Flow.FORWARD) {
+        if (direction == Direction.END) {
             fillAfter(mFirstPosition + childCount, recycler, state, extraSpace);
             correctTooHigh(childCount, recycler, state);
         } else {
@@ -244,7 +243,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         int nextOffset = getInnerStartEdge();
 
         while (nextOffset > start && position >= 0) {
-            makeAndAddView(position, Flow.BACKWARD, recycler);
+            makeAndAddView(position, Direction.START, recycler);
             nextOffset = getInnerStartEdge();
             position--;
         }
@@ -262,14 +261,14 @@ public abstract class TWLayoutManager extends LayoutManager {
 
         final int itemCount = state.getItemCount();
         while (nextOffset < end && position < itemCount) {
-            makeAndAddView(position, Flow.FORWARD, recycler);
+            makeAndAddView(position, Direction.END, recycler);
             nextOffset = getInnerEndEdge();
             position++;
         }
     }
 
     private View fillSpecific(int position, Recycler recycler, State state) {
-        makeAndAddView(position, Flow.FORWARD, recycler);
+        makeAndAddView(position, Direction.END, recycler);
 
         // Possibly changed again in fillBefore if we add children
         // before this one.
@@ -437,13 +436,13 @@ public abstract class TWLayoutManager extends LayoutManager {
         child.measure(widthSpec, heightSpec);
     }
 
-    private View makeAndAddView(int position, Flow flow, Recycler recycler) {
+    private View makeAndAddView(int position, Direction direction, Recycler recycler) {
         final View child = recycler.getViewForPosition(position);
-        addView(child, (flow == Flow.FORWARD ? -1 : 0));
+        addView(child, (direction == Direction.END ? -1 : 0));
 
         measureChild(child, position);
 
-        attachChildToLayout(child, position, flow, mTempRect);
+        attachChildToLayout(child, position, direction, mTempRect);
         child.layout(mTempRect.left, mTempRect.top, mTempRect.right, mTempRect.bottom);
 
         return child;
@@ -699,8 +698,8 @@ public abstract class TWLayoutManager extends LayoutManager {
     protected abstract int getChildWidthMeasureSpec(View child, int position);
     protected abstract int getChildHeightMeasureSpec(View child, int position);
 
-    protected abstract void detachChildFromLayout(View child, int position, Flow flow);
-    protected abstract void attachChildToLayout(View child, int position, Flow flow, Rect childFrame);
+    protected abstract void detachChildFromLayout(View child, int position, Direction direction);
+    protected abstract void attachChildToLayout(View child, int position, Direction direction, Rect childFrame);
 
     protected static class SavedState extends BaseSavedState {
         private int anchorItemPosition;

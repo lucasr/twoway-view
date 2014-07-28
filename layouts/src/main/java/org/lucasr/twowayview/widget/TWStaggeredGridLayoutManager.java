@@ -86,7 +86,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected int getLaneForPosition(int position, Flow flow) {
+    protected int getLaneForPosition(int position, Direction direction) {
         int lane = TWLanes.NO_LANE;
 
         final StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
@@ -99,7 +99,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
         }
 
         final TWLanes lanes = getLanes();
-        int targetEdge = (flow == Flow.FORWARD ? Integer.MAX_VALUE : Integer.MIN_VALUE);
+        int targetEdge = (direction == Direction.END ? Integer.MAX_VALUE : Integer.MIN_VALUE);
 
         final int laneCount = lanes.getCount();
         for (int i = 0; i < laneCount; i++) {
@@ -107,13 +107,13 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
 
             final int laneEdge;
             if (isVertical()) {
-                laneEdge = (flow == Flow.FORWARD ? mTempRect.bottom : mTempRect.top);
+                laneEdge = (direction == Direction.END ? mTempRect.bottom : mTempRect.top);
             } else {
-                laneEdge = (flow == Flow.FORWARD ? mTempRect.right : mTempRect.left);
+                laneEdge = (direction == Direction.END ? mTempRect.right : mTempRect.left);
             }
 
-            if ((flow == Flow.FORWARD && laneEdge < targetEdge) ||
-                (flow == Flow.BACKWARD && laneEdge > targetEdge)) {
+            if ((direction == Direction.END && laneEdge < targetEdge) ||
+                (direction == Direction.START && laneEdge > targetEdge)) {
                 targetEdge = laneEdge;
                 lane = i;
             }
@@ -150,25 +150,25 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
             final int dimension;
             if (entry != null) {
                 dimension = lanes.getChildFrame(entry.width, entry.height, entry.lane,
-                        Flow.FORWARD, childFrame);
+                        Direction.END, childFrame);
             } else {
                 final View child = recycler.getViewForPosition(i);
                 child.measure(getChildWidthMeasureSpec(child, i),
                               getChildHeightMeasureSpec(child, i));
 
-                final int lane = getLaneForPosition(position, Flow.FORWARD);
-                dimension = lanes.getChildFrame(child, lane, Flow.FORWARD, childFrame);
+                final int lane = getLaneForPosition(position, Direction.END);
+                dimension = lanes.getChildFrame(child, lane, Direction.END, childFrame);
 
                 entry = (StaggeredItemEntry) ensureItemEntry(child, i, lane, childFrame);
             }
 
-            lanes.addToLane(entry.lane, Flow.FORWARD, dimension);
+            lanes.addToLane(entry.lane, Direction.END, dimension);
         }
 
-        final int lane = getLaneForPosition(position, Flow.FORWARD);
+        final int lane = getLaneForPosition(position, Direction.END);
         if (position >= lanes.getCount()) {
             final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
-            lanes.addToLane(lane, Flow.FORWARD, spacing);
+            lanes.addToLane(lane, Direction.END, spacing);
         }
 
         lanes.resetToEnd();

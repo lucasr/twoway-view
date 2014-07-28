@@ -19,7 +19,7 @@ package org.lucasr.twowayview.widget;
 import android.graphics.Rect;
 import android.view.View;
 
-import org.lucasr.twowayview.TWLayoutManager.Flow;
+import org.lucasr.twowayview.TWLayoutManager;
 import org.lucasr.twowayview.TWLayoutManager.Orientation;
 
 import java.util.EnumMap;
@@ -136,10 +136,10 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public void addToLane(int lane, Flow flow, int dimension) {
+    public void addToLane(int lane, TWLayoutManager.Direction direction, int dimension) {
         final Rect laneRect = mLanes[lane];
 
-        if (flow == Flow.FORWARD) {
+        if (direction == TWLayoutManager.Direction.END) {
             if (mIsVertical) {
                 laneRect.bottom += dimension;
             } else {
@@ -156,10 +156,10 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public void removeFromLane(int lane, Flow flow, int dimension) {
+    public void removeFromLane(int lane, TWLayoutManager.Direction direction, int dimension) {
         final Rect laneRect = mLanes[lane];
 
-        if (flow == Flow.FORWARD) {
+        if (direction == TWLayoutManager.Direction.END) {
             if (mIsVertical) {
                 laneRect.top += dimension;
             } else {
@@ -176,12 +176,12 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public int getChildFrame(View child, int lane, Flow flow, Rect childFrame) {
+    public int getChildFrame(View child, int lane, TWLayoutManager.Direction direction, Rect childFrame) {
         return getChildFrame(child.getMeasuredWidth(), child.getMeasuredHeight(),
-                             lane, flow, childFrame);
+                             lane, direction, childFrame);
     }
 
-    public int getChildFrame(int childWidth, int childHeight, int lane, Flow flow, Rect childFrame) {
+    public int getChildFrame(int childWidth, int childHeight, int lane, TWLayoutManager.Direction direction, Rect childFrame) {
         final Rect laneRect = mLanes[lane];
 
         final int delta;
@@ -192,7 +192,7 @@ class TWLanes {
 
             final int spacing = mLayout.getVerticalSpacing();
             final boolean shouldHaveSpacing = (laneRect.top != laneRect.bottom);
-            if (flow == Flow.FORWARD) {
+            if (direction == TWLayoutManager.Direction.END) {
                 childFrame.top = laneRect.bottom + (shouldHaveSpacing ? spacing : 0);
                 childFrame.bottom = childFrame.top + childHeight;
                 delta = childFrame.bottom - laneRect.bottom;
@@ -207,7 +207,7 @@ class TWLanes {
 
             final int spacing = mLayout.getHorizontalSpacing();
             final boolean shouldHaveSpacing = (laneRect.left != laneRect.right);
-            if (flow == Flow.FORWARD) {
+            if (direction == TWLayoutManager.Direction.END) {
                 childFrame.left = laneRect.right + (shouldHaveSpacing ? spacing : 0);
                 childFrame.right = childFrame.left + childWidth;
                 delta = childFrame.right - laneRect.right;

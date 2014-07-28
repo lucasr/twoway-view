@@ -95,19 +95,19 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         mContext = context;
     }
 
-    private int getChildStartInLane(int childWidth, int childHeight, int lane, Flow flow) {
-        getLanes().getChildFrame(childWidth, childHeight, lane, flow, mTempRect);
+    private int getChildStartInLane(int childWidth, int childHeight, int lane, Direction direction) {
+        getLanes().getChildFrame(childWidth, childHeight, lane, direction, mTempRect);
         return (isVertical() ? mTempRect.top : mTempRect.left);
     }
 
-    private int getLaneThatFitsFrame(int childWidth, int childHeight, int anchor, Flow flow,
+    private int getLaneThatFitsFrame(int childWidth, int childHeight, int anchor, Direction direction,
                                      int laneSpan, Rect frame) {
         final TWLanes lanes = getLanes();
         final boolean isVertical = isVertical();
 
         final int count = getLaneCount() - laneSpan + 1;
         for (int l = 0; l < count; l++) {
-            lanes.getChildFrame(childWidth, childHeight, l, flow, frame);
+            lanes.getChildFrame(childWidth, childHeight, l, direction, frame);
 
             frame.offsetTo(isVertical ? frame.left : anchor,
                            isVertical ? anchor : frame.top);
@@ -120,28 +120,28 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return TWLanes.NO_LANE;
     }
 
-    private int getChildLaneAndFrame(int childWith, int childHeight, int position, Flow flow,
+    private int getChildLaneAndFrame(int childWith, int childHeight, int position, Direction direction,
                                      int laneSpan, Rect childFrame) {
         final TWLanes lanes = getLanes();
         int lane = TWLanes.NO_LANE;
 
         final ItemEntry entry = getItemEntryForPosition(position);
         if (entry != null && entry.lane != TWLanes.NO_LANE) {
-            lanes.getChildFrame(childWith, childHeight, entry.lane, flow, childFrame);
+            lanes.getChildFrame(childWith, childHeight, entry.lane, direction, childFrame);
             return entry.lane;
         }
 
-        int targetEdge = (flow == Flow.FORWARD ? Integer.MAX_VALUE : Integer.MIN_VALUE);
+        int targetEdge = (direction == Direction.END ? Integer.MAX_VALUE : Integer.MIN_VALUE);
 
         final int count = getLaneCount() - laneSpan + 1;
         for (int l = 0; l < count; l++) {
-            final int childStart = getChildStartInLane(childWith, childHeight, l, flow);
+            final int childStart = getChildStartInLane(childWith, childHeight, l, direction);
 
-            if ((flow == Flow.FORWARD && childStart < targetEdge) ||
-                (flow == Flow.BACKWARD && childStart > targetEdge)) {
+            if ((direction == Direction.END && childStart < targetEdge) ||
+                (direction == Direction.START && childStart > targetEdge)) {
 
                 final int targetLane = getLaneThatFitsFrame(childWith, childHeight, childStart,
-                        flow, laneSpan, childFrame);
+                        direction, laneSpan, childFrame);
 
                 if (targetLane != TWLanes.NO_LANE) {
                     targetEdge = childStart;
@@ -178,7 +178,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected int getLaneForPosition(int position, Flow flow) {
+    protected int getLaneForPosition(int position, Direction direction) {
         final SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
         if (entry != null) {
             return entry.lane;
@@ -239,20 +239,20 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
             SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(i);
             if (entry != null) {
                 lanes.getChildFrame(getChildWidth(entry.colSpan), getChildHeight(entry.rowSpan),
-                        entry.lane, Flow.FORWARD, childFrame);
+                        entry.lane, Direction.END, childFrame);
             } else {
                 final View child = recycler.getViewForPosition(i);
                 LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
                 final int lane = getChildLaneAndFrame(getChildWidth(lp.colSpan),
-                        getChildHeight(lp.rowSpan), i, Flow.FORWARD, getLaneSpan(isVertical, lp),
+                        getChildHeight(lp.rowSpan), i, Direction.END, getLaneSpan(isVertical, lp),
                         childFrame);
 
                 entry = (SpannableItemEntry) ensureItemEntry(child, i, lane, childFrame);
             }
 
             if (i != position) {
-                appendChildFrame(childFrame, Flow.FORWARD, entry.lane,
+                appendChildFrame(childFrame, Direction.END, entry.lane,
                         getLaneSpan(isVertical, entry));
             }
         }
@@ -262,7 +262,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         if (position >= getFirstChildCountInLanes(laneCount, position)) {
             final int spacing = getLaneSpacing(isVertical);
             for (int i = entry.lane; i < laneCount; i++) {
-                lanes.addToLane(i, Flow.FORWARD, spacing);
+                lanes.addToLane(i, Direction.END, spacing);
             }
         }
 
@@ -272,7 +272,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void detachChildFromLayout(View child, int position, Flow flow) {
+    protected void detachChildFromLayout(View child, int position, Direction direction) {
         final boolean isVertical = isVertical();
         final int laneSpan = getLaneSpan(isVertical, child);
 
@@ -280,13 +280,13 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         final int dimension = (isVertical ? child.getHeight() : child.getWidth());
 
         final TWLanes lanes = getLanes();
-        final int lane = getLaneForPosition(position, flow);
+        final int lane = getLaneForPosition(position, direction);
         for (int i = lane; i < lane + laneSpan; i++) {
-            lanes.removeFromLane(i, flow, dimension + spacing);
+            lanes.removeFromLane(i, direction, dimension + spacing);
         }
     }
 
-    private void appendChildFrame(Rect childFrame, Flow flow, int lane, int laneSpan) {
+    private void appendChildFrame(Rect childFrame, Direction direction, int lane, int laneSpan) {
         final TWLanes lanes = getLanes();
         final boolean isVertical = isVertical();
 
@@ -296,13 +296,13 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
             final int l, t, r, b;
             if (isVertical) {
                 l = mTempRect.left;
-                t = (flow == Flow.FORWARD ? mTempRect.top : childFrame.top);
+                t = (direction == Direction.END ? mTempRect.top : childFrame.top);
                 r = mTempRect.right;
-                b = (flow == Flow.FORWARD ? childFrame.bottom : mTempRect.bottom);
+                b = (direction == Direction.END ? childFrame.bottom : mTempRect.bottom);
             } else {
-                l = (flow == Flow.FORWARD ? mTempRect.left : childFrame.left);
+                l = (direction == Direction.END ? mTempRect.left : childFrame.left);
                 t = mTempRect.top;
-                r = (flow == Flow.FORWARD ? childFrame.right : mTempRect.right);
+                r = (direction == Direction.END ? childFrame.right : mTempRect.right);
                 b = mTempRect.bottom;
             }
             lanes.setLane(i, l, t, r, b);
@@ -310,12 +310,12 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void attachChildToLayout(View child, int position, Flow flow, Rect childFrame) {
+    protected void attachChildToLayout(View child, int position, Direction direction, Rect childFrame) {
         final int laneSpan = getLaneSpan(isVertical(), child);
 
         final int lane = getChildLaneAndFrame(child.getMeasuredWidth(), child.getMeasuredHeight(),
-                position, flow, laneSpan, childFrame);
-        appendChildFrame(childFrame, flow, lane, laneSpan);
+                position, direction, laneSpan, childFrame);
+        appendChildFrame(childFrame, direction, lane, laneSpan);
 
         ensureItemEntry(child, position, lane, childFrame);
     }

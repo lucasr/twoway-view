@@ -40,7 +40,7 @@ public class TWListLayoutManager extends TWLanedLayoutManager {
     }
 
     @Override
-    protected int getLaneForPosition(int position, Flow flow) {
+    protected int getLaneForPosition(int position, Direction direction) {
         return 0;
     }
 }
