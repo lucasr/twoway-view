@@ -159,6 +159,10 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return getLanes().getLaneSize() * rowSpan + getVerticalSpacing() * (rowSpan- 1);
     }
 
+    private int getLaneSpacing(boolean isVertical) {
+        return (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
+    }
+
     private static int getLaneSpan(boolean isVertical, View child) {
         return getLaneSpan(isVertical, (LayoutParams) child.getLayoutParams());
     }
@@ -250,7 +254,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         final boolean isVertical = isVertical();
         final int laneSpan = getLaneSpan(isVertical, child);
 
-        final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
+        final int spacing = getLaneSpacing(isVertical);
         final int dimension = (isVertical ? child.getHeight() : child.getWidth());
 
         final TWLanes lanes = getLanes();
