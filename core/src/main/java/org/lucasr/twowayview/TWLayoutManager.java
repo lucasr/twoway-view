@@ -53,7 +53,7 @@ public abstract class TWLayoutManager extends LayoutManager {
     private int mFirstPosition;
     private int mFirstVisiblePosition;
 
-    private boolean mIsVertical;
+    private boolean mIsVertical = true;
 
     private SavedState mPendingSavedState = null;
 
