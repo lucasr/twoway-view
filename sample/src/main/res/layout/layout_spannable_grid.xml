@@ -15,12 +15,13 @@
    limitations under the License.
 -->
 
-<org.lucasr.twowayview.widget.TWSpannableGridView
+<org.lucasr.twowayview.TWView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/list"
-    style="@style/TWView"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    style="@style/TWView"
+    app:layoutManager="org.lucasr.twowayview.widget.TWSpannableGridLayoutManager"
     app:numColumns="3"
     app:numRows="3" />
