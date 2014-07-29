@@ -68,11 +68,11 @@ public class TWGridLayoutManager extends TWBaseLayoutManager {
         mNumRows = numRows;
 
         if (mNumColumns < 1) {
-            throw new IllegalStateException("TWGridLayoutManager must have at least 1 column");
+            throw new IllegalArgumentException("TWGridLayoutManager must have at least 1 column");
         }
 
         if (mNumRows < 1) {
-            throw new IllegalStateException("TWGridLayoutManager must have at least 1 row");
+            throw new IllegalArgumentException("TWGridLayoutManager must have at least 1 row");
         }
     }
 
