@@ -116,24 +116,24 @@ public abstract class TWLanedLayoutManager extends TWAbsLayoutManager {
         return (isVertical() ? getPaddingTop() : getPaddingLeft());
     }
 
-    protected boolean isVertical() {
+    boolean isVertical() {
         return (getOrientation() == Orientation.VERTICAL);
     }
 
-    protected void forceCreateLanes() {
+    void forceCreateLanes() {
         mLanes = null;
         ensureLayoutState();
     }
 
-    protected TWLanes getLanes() {
+    TWLanes getLanes() {
         return mLanes;
     }
 
-    protected void setItemEntryForPosition(int position, ItemEntry entry) {
+    void setItemEntryForPosition(int position, ItemEntry entry) {
         mItemEntries.put(position, entry);
     }
 
-    protected ItemEntry getItemEntryForPosition(int position) {
+    ItemEntry getItemEntryForPosition(int position) {
         return mItemEntries.get(position, null);
     }
 
@@ -176,7 +176,7 @@ public abstract class TWLanedLayoutManager extends TWAbsLayoutManager {
         }
     }
 
-    protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
+    void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         mLanes.resetToOffset(offset);
     }
 
@@ -377,13 +377,13 @@ public abstract class TWLanedLayoutManager extends TWAbsLayoutManager {
         return new LayoutParams(c, attrs);
     }
 
-    protected ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+    ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {
         // Do nothing by default
         return null;
     }
 
-    protected abstract int getLaneCount();
-    protected abstract int getLaneForPosition(int position, Direction direction);
+    abstract int getLaneCount();
+    abstract int getLaneForPosition(int position, Direction direction);
 
     protected static class LanedSavedState extends SavedState {
         private Orientation orientation;
