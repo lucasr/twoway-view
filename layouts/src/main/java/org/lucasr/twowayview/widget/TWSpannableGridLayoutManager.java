@@ -252,8 +252,8 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
             }
 
             if (i != position) {
-                appendChildFrame(childFrame, Direction.END, entry.lane,
-                        getLaneSpan(isVertical, entry));
+                lanes.pushChildFrame(entry.lane, entry.lane + getLaneSpan(isVertical, entry),
+                        Direction.END, childFrame);
             }
         }
 
@@ -264,40 +264,20 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     protected void detachChild(View child, Direction direction) {
-        final boolean isVertical = isVertical();
-        final int laneSpan = getLaneSpan(isVertical, child);
+        super.detachChild(child, direction);
 
-        final int dimension =
-                (isVertical ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
+        final int laneSpan = getLaneSpan(isVertical(), child);
+        if (laneSpan == 1) {
+            return;
+        }
 
-        final TWLanes lanes = getLanes();
         final int lane = getLaneForPosition(getPosition(child), direction);
-        for (int i = lane; i < lane + laneSpan; i++) {
-            lanes.removeFromLane(i, direction, dimension);
-        }
-    }
 
-    private void appendChildFrame(Rect childFrame, Direction direction, int lane, int laneSpan) {
-        final TWLanes lanes = getLanes();
-        final boolean isVertical = isVertical();
-
-        for (int i = lane; i < lane + laneSpan; i++) {
-            lanes.getLane(i, mTempRect);
-
-            final int l, t, r, b;
-            if (isVertical) {
-                l = mTempRect.left;
-                t = (direction == Direction.END ? mTempRect.top : childFrame.top);
-                r = mTempRect.right;
-                b = (direction == Direction.END ? childFrame.bottom : mTempRect.bottom);
-            } else {
-                l = (direction == Direction.END ? mTempRect.left : childFrame.left);
-                t = mTempRect.top;
-                r = (direction == Direction.END ? childFrame.right : mTempRect.right);
-                b = mTempRect.bottom;
-            }
-            lanes.setLane(i, l, t, r, b);
-        }
+        // The parent class has already popped the frame from
+        // the main lane. Now we pop it from the remaining lanes
+        // within the item's span.
+        getDecoratedChildFrame(child, mChildFrame);
+        getLanes().popChildFrame(lane + 1, lane + laneSpan, direction, mChildFrame);
     }
 
     @Override
@@ -307,7 +287,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
         final int lane = getChildLaneAndFrame(getDecoratedMeasuredWidth(child),
                 getDecoratedMeasuredHeight(child), position, direction, laneSpan, mChildFrame);
-        appendChildFrame(mChildFrame, direction, lane, laneSpan);
+        getLanes().pushChildFrame(lane, lane + laneSpan, direction, mChildFrame);
 
         final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
         layoutDecorated(child, mChildFrame.left + lp.leftMargin, mChildFrame.top + lp.topMargin,

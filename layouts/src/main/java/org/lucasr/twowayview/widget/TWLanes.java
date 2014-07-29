@@ -120,96 +120,77 @@ class TWLanes {
         laneRect.set(mLanes[lane]);
     }
 
-    public void setLane(int lane, int l, int t, int r, int b) {
+    public void pushChildFrame(int lane, Direction direction, Rect childFrame) {
         final Rect laneRect = mLanes[lane];
-        laneRect.left = l;
-        laneRect.top = t;
-        laneRect.right = r;
-        laneRect.bottom = b;
-
-        invalidateEdges();
-    }
-
-    public void addToLane(int lane, Direction direction, int dimension) {
-        final Rect laneRect = mLanes[lane];
-
-        if (direction == Direction.END) {
-            if (mIsVertical) {
-                laneRect.bottom += dimension;
+        if (mIsVertical) {
+            if (direction == Direction.END) {
+                laneRect.bottom = childFrame.bottom;
             } else {
-                laneRect.right += dimension;
+                laneRect.top = childFrame.top;
             }
         } else {
-            if (mIsVertical) {
-                laneRect.top -= dimension;
+            if (direction == Direction.END) {
+                laneRect.right = childFrame.right;
             } else {
-                laneRect.left -= dimension;
+                laneRect.left = childFrame.left;
             }
         }
 
         invalidateEdges();
     }
 
-    public void removeFromLane(int lane, Direction direction, int dimension) {
-        final Rect laneRect = mLanes[lane];
+    public void pushChildFrame(int start, int end, Direction direction, Rect childFrame) {
+        for (int i = start; i < end; i++) {
+            pushChildFrame(i, direction, childFrame);
+        }
+    }
 
-        if (direction == Direction.END) {
-            if (mIsVertical) {
-                laneRect.top += dimension;
+    public void popChildFrame(int lane, Direction direction, Rect childFrame) {
+        final Rect laneRect = mLanes[lane];
+        if (mIsVertical) {
+            if (direction == Direction.END) {
+                laneRect.top = childFrame.bottom;
             } else {
-                laneRect.left += dimension;
+                laneRect.bottom = childFrame.top;
             }
         } else {
-            if (mIsVertical) {
-                laneRect.bottom -= dimension;
+            if (direction == Direction.END) {
+                laneRect.left = childFrame.right;
             } else {
-                laneRect.right -= dimension;
+                laneRect.right = childFrame.left;
             }
         }
 
         invalidateEdges();
     }
 
-    public int getChildFrame(View child, int lane, Direction direction, Rect childFrame) {
-        return getChildFrame(mLayout.getDecoratedMeasuredWidth(child),
+    public void popChildFrame(int start, int end, Direction direction, Rect childFrame) {
+        for (int i = start; i < end; i++) {
+            popChildFrame(i, direction, childFrame);
+        }
+    }
+
+    public void getChildFrame(View child, int lane, Direction direction, Rect childFrame) {
+        getChildFrame(mLayout.getDecoratedMeasuredWidth(child),
                 mLayout.getDecoratedMeasuredHeight(child), lane, direction, childFrame);
     }
 
-    public int getChildFrame(int childWidth, int childHeight, int lane, Direction direction,
-                             Rect childFrame) {
+    public void getChildFrame(int childWidth, int childHeight, int lane, Direction direction,
+                              Rect childFrame) {
         final Rect laneRect = mLanes[lane];
-
-        final int delta;
 
         if (mIsVertical) {
             childFrame.left = laneRect.left;
-            childFrame.right = laneRect.left + childWidth;
-
-            if (direction == Direction.END) {
-                childFrame.top = laneRect.bottom;
-                childFrame.bottom = childFrame.top + childHeight;
-                delta = childFrame.bottom - laneRect.bottom;
-            } else {
-                childFrame.top = laneRect.top - childHeight;
-                childFrame.bottom = childFrame.top + childHeight;
-                delta = laneRect.top - childFrame.top;
-            }
+            childFrame.top =
+                    (direction == Direction.END ? laneRect.bottom : laneRect.top - childHeight);
         } else {
             childFrame.top = laneRect.top;
-            childFrame.bottom = laneRect.top + childHeight;
-
-            if (direction == Direction.END) {
-                childFrame.left = laneRect.right;
-                childFrame.right = childFrame.left + childWidth;
-                delta = childFrame.right - laneRect.right;
-            } else {
-                childFrame.left = laneRect.left - childWidth;
-                childFrame.right = childFrame.left + childWidth;
-                delta = laneRect.left - childFrame.left;
-            }
+            childFrame.left =
+                    (direction == Direction.END ? laneRect.right : laneRect.left - childWidth);
         }
 
-        return delta;
+        childFrame.right = childFrame.left + childWidth;
+        childFrame.bottom = childFrame.top + childHeight;
     }
 
     private void reset(boolean toStart) {

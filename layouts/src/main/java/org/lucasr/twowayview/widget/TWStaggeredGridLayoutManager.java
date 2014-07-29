@@ -147,21 +147,20 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
         for (int i = 0; i < position; i++) {
             StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(i);
 
-            final int dimension;
             if (entry != null) {
-                dimension = lanes.getChildFrame(entry.width, entry.height, entry.lane,
+                lanes.getChildFrame(entry.width, entry.height, entry.lane,
                         Direction.END, childFrame);
             } else {
                 final View child = recycler.getViewForPosition(i);
                 measureChild(child);
 
                 final int lane = getLaneForPosition(position, Direction.END);
-                dimension = lanes.getChildFrame(child, lane, Direction.END, childFrame);
+                lanes.getChildFrame(child, lane, Direction.END, childFrame);
 
                 entry = (StaggeredItemEntry) ensureItemEntry(child, i, lane, childFrame);
             }
 
-            lanes.addToLane(entry.lane, Direction.END, dimension);
+            lanes.pushChildFrame(entry.lane, Direction.END, childFrame);
         }
 
         lanes.resetToEnd();

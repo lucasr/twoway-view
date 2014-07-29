@@ -116,6 +116,13 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         return (isVertical() ? getPaddingTop() : getPaddingLeft());
     }
 
+    void getDecoratedChildFrame(View child, Rect childFrame) {
+        childFrame.left = getDecoratedLeft(child);
+        childFrame.top = getDecoratedTop(child);
+        childFrame.right = getDecoratedRight(child);
+        childFrame.bottom = getDecoratedBottom(child);
+    }
+
     boolean isVertical() {
         return (getOrientation() == Orientation.VERTICAL);
     }
@@ -316,13 +323,10 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
 
     @Override
     protected void detachChild(View child, Direction direction) {
-        final boolean isVertical = isVertical();
-
-        final int dimension =
-                (isVertical ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
-
         final int lane = getLaneForPosition(getPosition(child), direction);
-        mLanes.removeFromLane(lane, direction, dimension);
+
+        getDecoratedChildFrame(child, mChildFrame);
+        mLanes.popChildFrame(lane, direction, mChildFrame);
     }
 
     @Override
@@ -330,8 +334,8 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         final int position = getPosition(child);
         final int lane = getLaneForPosition(position, direction);
 
-        final int dimension = mLanes.getChildFrame(child, lane, direction, mChildFrame);
-        mLanes.addToLane(lane, direction, dimension);
+        mLanes.getChildFrame(child, lane, direction, mChildFrame);
+        mLanes.pushChildFrame(lane, direction, mChildFrame);
 
         final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
         layoutDecorated(child, mChildFrame.left + lp.leftMargin, mChildFrame.top + lp.topMargin,
