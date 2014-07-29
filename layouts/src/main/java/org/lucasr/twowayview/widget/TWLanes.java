@@ -256,7 +256,7 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public int getOuterStartEdge() {
+    public int getOuterStart() {
         Integer outerStart = mCachedEdges.get(Edge.OUTER_START);
         if (outerStart != null) {
             return outerStart;
@@ -272,7 +272,7 @@ class TWLanes {
         return outerStart;
     }
 
-    public int getInnerStartEdge() {
+    public int getInnerStart() {
         Integer innerStart = mCachedEdges.get(Edge.INNER_START);
         if (innerStart != null) {
             return innerStart;
@@ -288,7 +288,7 @@ class TWLanes {
         return innerStart;
     }
 
-    public int getInnerEndEdge() {
+    public int getInnerEnd() {
         Integer innerEnd = mCachedEdges.get(Edge.INNER_END);
         if (innerEnd != null) {
             return innerEnd;
@@ -304,7 +304,7 @@ class TWLanes {
         return innerEnd;
     }
 
-    public int getOuterEndEdge() {
+    public int getOuterEnd() {
         Integer outerEnd = mCachedEdges.get(Edge.OUTER_END);
         if (outerEnd != null) {
             return outerEnd;

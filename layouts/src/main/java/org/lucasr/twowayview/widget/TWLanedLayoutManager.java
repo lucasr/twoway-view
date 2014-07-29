@@ -17,7 +17,6 @@
 package org.lucasr.twowayview.widget;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Parcel;
@@ -272,20 +271,20 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     @Override
     protected boolean canAddMoreViews(Direction direction, int limit) {
         if (direction == Direction.START) {
-            return (mLanes.getInnerStartEdge() > limit);
+            return (mLanes.getInnerStart() > limit);
         } else {
-            return (mLanes.getInnerEndEdge() < limit);
+            return (mLanes.getInnerEnd() < limit);
         }
     }
 
     @Override
     protected int getLayoutStart() {
-        return mLanes.getOuterStartEdge();
+        return mLanes.getOuterStart();
     }
 
     @Override
     protected int getLayoutEnd() {
-        return mLanes.getOuterEndEdge();
+        return mLanes.getOuterEnd();
     }
 
     private int getWidthUsed(View child) {
