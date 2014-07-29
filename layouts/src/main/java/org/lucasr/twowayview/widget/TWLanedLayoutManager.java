@@ -31,6 +31,7 @@ import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.MarginLayoutParams;
 
 import org.lucasr.twowayview.TWLayoutManager;
 
@@ -337,8 +338,10 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     @Override
     protected void detachChildFromLayout(View child, int position, Direction direction) {
         final boolean isVertical = isVertical();
+
         final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
-        final int dimension = (isVertical ? child.getHeight() : child.getWidth());
+        final int dimension =
+                (isVertical ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
 
         final int lane = getLaneForPosition(position, direction);
         mLanes.removeFromLane(lane, direction, dimension + spacing);
@@ -378,6 +381,14 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
             lanedLp.height = lp.height;
         } else {
             lanedLp.width = lp.width;
+        }
+
+        if (lp instanceof MarginLayoutParams) {
+            final MarginLayoutParams marginLp = (MarginLayoutParams) lp;
+            lanedLp.leftMargin = marginLp.leftMargin;
+            lanedLp.topMargin = marginLp.topMargin;
+            lanedLp.rightMargin = marginLp.rightMargin;
+            lanedLp.bottomMargin = marginLp.bottomMargin;
         }
 
         return lanedLp;

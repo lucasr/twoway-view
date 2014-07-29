@@ -18,6 +18,11 @@ package org.lucasr.twowayview.sample;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
@@ -123,6 +128,7 @@ public class TWFragment extends Fragment {
             }
         });
 
+        mRecyclerView.addItemDecoration(new SimpleDecoration(getActivity()));
         mRecyclerView.setAdapter(new SimpleAdapter(activity, mRecyclerView, mLayoutId));
 
 //        mRecyclerView.postDelayed(new Runnable() {
@@ -232,6 +238,48 @@ public class TWFragment extends Fragment {
         @Override
         public int getItemCount() {
             return 100;
+        }
+    }
+
+    private static class SimpleDecoration extends RecyclerView.ItemDecoration {
+        private final int mBorderWidth;
+        private final Paint mPaint;
+        private final Rect mTempRect = new Rect();
+
+        public SimpleDecoration(Context context) {
+            final Resources res = context.getResources();
+            mBorderWidth = res.getDimensionPixelSize(R.dimen.item_border_width);
+
+            mPaint = new Paint();
+            mPaint.setStyle(Paint.Style.STROKE);
+            mPaint.setStrokeWidth(mBorderWidth);
+            mPaint.setColor(res.getColor(R.color.item_border_color));
+        }
+
+        private static void getDecoratedRect(RecyclerView parent, View child, Rect decoratedRect) {
+            RecyclerView.LayoutManager lm = parent.getLayoutManager();
+            decoratedRect.left = lm.getDecoratedLeft(child);
+            decoratedRect.top = lm.getDecoratedTop(child);
+            decoratedRect.right = lm.getDecoratedRight(child);
+            decoratedRect.bottom = lm.getDecoratedBottom(child);
+        }
+
+        @Override
+        public void onDrawOver(Canvas c, RecyclerView parent) {
+            final int childCount = parent.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                getDecoratedRect(parent, parent.getChildAt(i), mTempRect);
+                c.drawRect(mTempRect.left, mTempRect.top, mTempRect.right,
+                        mTempRect.bottom, mPaint);
+            }
+        }
+
+        @Override
+        public void getItemOffsets(Rect outRect, int itemPosition, RecyclerView parent) {
+            outRect.left = mBorderWidth;
+            outRect.top = mBorderWidth;
+            outRect.right = mBorderWidth;
+            outRect.bottom = mBorderWidth;
         }
     }
 }

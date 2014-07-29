@@ -21,6 +21,7 @@
     <color name="titlestrip_background_color">#DEDEDE</color>
     <color name="titlestrip_text_color">#999999</color>
 
+    <color name="item_border_color">#cccccc</color>
     <color name="item_default_color">#eeeeee</color>
     <color name="item_pressed_color">#cccccc</color>
 

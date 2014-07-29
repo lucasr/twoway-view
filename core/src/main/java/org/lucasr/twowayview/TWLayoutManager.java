@@ -31,8 +31,10 @@ import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.View.BaseSavedState;
+import android.view.ViewGroup.MarginLayoutParams;
 
 import java.util.List;
 
@@ -97,15 +99,25 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private int getChildStartEdge(View child) {
-        return (mIsVertical ? child.getTop() : child.getLeft());
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        if (mIsVertical) {
+            return getDecoratedTop(child) - lp.topMargin;
+        } else {
+            return getDecoratedLeft(child) - lp.leftMargin;
+        }
     }
 
     private int getChildEndEdge(View child) {
-        return (mIsVertical ? child.getBottom() : child.getRight());
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        if (mIsVertical) {
+            return getDecoratedBottom(child) + lp.bottomMargin;
+        } else {
+            return getDecoratedRight(child) + lp.rightMargin;
+        }
     }
 
     private int getChildMeasurement(View child) {
-        return (mIsVertical ? child.getMeasuredHeight() : child.getMeasuredWidth());
+        return (mIsVertical ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
     }
 
     private void offsetChildren(int offset) {
@@ -435,7 +447,10 @@ public abstract class TWLayoutManager extends LayoutManager {
         measureChild(child, position);
 
         attachChildToLayout(child, position, direction, mTempRect);
-        child.layout(mTempRect.left, mTempRect.top, mTempRect.right, mTempRect.bottom);
+
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        layoutDecorated(child, mTempRect.left + lp.leftMargin, mTempRect.top + lp.topMargin,
+                mTempRect.right - lp.rightMargin, mTempRect.bottom - lp.bottomMargin);
 
         return child;
     }
@@ -465,13 +480,15 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     @Override
-    public void onAttachedToWindow(RecyclerView view) {
-        super.onAttachedToWindow(view);
+    public int getDecoratedMeasuredWidth(View child) {
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        return super.getDecoratedMeasuredWidth(child) + lp.leftMargin + lp.rightMargin;
     }
 
     @Override
-    public void onDetachedFromWindow(RecyclerView view) {
-        super.onDetachedFromWindow(view);
+    public int getDecoratedMeasuredHeight(View child) {
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        return super.getDecoratedMeasuredHeight(child) + lp.topMargin + lp.bottomMargin;
     }
 
     @Override

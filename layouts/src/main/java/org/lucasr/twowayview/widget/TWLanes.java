@@ -17,6 +17,7 @@
 package org.lucasr.twowayview.widget;
 
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.View;
 
 import org.lucasr.twowayview.TWLayoutManager;
@@ -176,9 +177,10 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public int getChildFrame(View child, int lane, TWLayoutManager.Direction direction, Rect childFrame) {
-        return getChildFrame(child.getMeasuredWidth(), child.getMeasuredHeight(),
-                             lane, direction, childFrame);
+    public int getChildFrame(View child, int lane, TWLayoutManager.Direction direction,
+                             Rect childFrame) {
+        return getChildFrame(mLayout.getDecoratedMeasuredWidth(child),
+                mLayout.getDecoratedMeasuredHeight(child), lane, direction, childFrame);
     }
 
     public int getChildFrame(int childWidth, int childHeight, int lane, TWLayoutManager.Direction direction, Rect childFrame) {

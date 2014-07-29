@@ -91,7 +91,9 @@ public class TWGridLayoutManager extends TWLanedLayoutManager {
         final View child = recycler.getViewForPosition(position);
         measureChild(child, position);
 
-        final int dimension = (isVertical() ? child.getMeasuredHeight() : child.getMeasuredWidth());
+        final int dimension =
+                (isVertical() ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
+
         for (int i = lane - 1; i >= 0; i--) {
             lanes.offset(i, dimension);
         }
