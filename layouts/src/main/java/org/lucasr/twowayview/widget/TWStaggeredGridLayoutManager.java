@@ -164,14 +164,8 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
             lanes.addToLane(entry.lane, Direction.END, dimension);
         }
 
-        final int lane = getLaneForPosition(position, Direction.END);
-        if (position >= lanes.getCount()) {
-            final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
-            lanes.addToLane(lane, Direction.END, spacing);
-        }
-
         lanes.resetToEnd();
-        lanes.getLane(lane, mTempRect);
+        lanes.getLane(getLaneForPosition(position, Direction.END), mTempRect);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
     }
 }

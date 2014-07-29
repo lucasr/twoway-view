@@ -22,7 +22,7 @@
     <dimen name="titlestrip_height">32dp</dimen>
     <dimen name="titlestrip_text_size">16sp</dimen>
 
-    <dimen name="item_border_width">2dp</dimen>
+    <dimen name="item_border_width">1dp</dimen>
 
     <dimen name="staggered_child_small">120dp</dimen>
     <dimen name="staggered_child_medium">230dp</dimen>

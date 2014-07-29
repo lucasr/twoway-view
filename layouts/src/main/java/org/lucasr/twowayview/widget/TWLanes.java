@@ -62,22 +62,16 @@ class TWLanes {
         final int paddingRight = layout.getPaddingRight();
         final int paddingBottom = layout.getPaddingBottom();
 
-        final int verticalSpacing = layout.getVerticalSpacing();
-        final int horizontalSpacing = layout.getHorizontalSpacing();
-
         if (mIsVertical) {
             final int width = layout.getWidth() - paddingLeft - paddingRight;
-            final int spacing = horizontalSpacing * (laneCount - 1);
-            mLaneSize = (width - spacing) / laneCount;
+            mLaneSize = width / laneCount;
         } else {
             final int height = layout.getHeight() - paddingTop - paddingBottom;
-            final int spacing = verticalSpacing * (laneCount - 1);
-            mLaneSize = (height - spacing) / laneCount;
+            mLaneSize = height / laneCount;
         }
 
         for (int i = 0; i < laneCount; i++) {
-            final int spacing = i * (mIsVertical ? horizontalSpacing : verticalSpacing);
-            final int laneStart = (i * mLaneSize) + spacing;
+            final int laneStart = i * mLaneSize;
 
             final int l = paddingLeft + (mIsVertical ? laneStart : layout.getStartWithPadding());
             final int t = paddingTop + (mIsVertical ? layout.getStartWithPadding() : laneStart);
@@ -191,14 +185,12 @@ class TWLanes {
             childFrame.left = laneRect.left;
             childFrame.right = laneRect.left + childWidth;
 
-            final int spacing = mLayout.getVerticalSpacing();
-            final boolean shouldHaveSpacing = (laneRect.top != laneRect.bottom);
             if (direction == TWLayoutManager.Direction.END) {
-                childFrame.top = laneRect.bottom + (shouldHaveSpacing ? spacing : 0);
+                childFrame.top = laneRect.bottom;
                 childFrame.bottom = childFrame.top + childHeight;
                 delta = childFrame.bottom - laneRect.bottom;
             } else {
-                childFrame.top = laneRect.top - childHeight - (shouldHaveSpacing ? spacing : 0);
+                childFrame.top = laneRect.top - childHeight;
                 childFrame.bottom = childFrame.top + childHeight;
                 delta = laneRect.top - childFrame.top;
             }
@@ -206,14 +198,12 @@ class TWLanes {
             childFrame.top = laneRect.top;
             childFrame.bottom = laneRect.top + childHeight;
 
-            final int spacing = mLayout.getHorizontalSpacing();
-            final boolean shouldHaveSpacing = (laneRect.left != laneRect.right);
             if (direction == TWLayoutManager.Direction.END) {
-                childFrame.left = laneRect.right + (shouldHaveSpacing ? spacing : 0);
+                childFrame.left = laneRect.right;
                 childFrame.right = childFrame.left + childWidth;
                 delta = childFrame.right - laneRect.right;
             } else {
-                childFrame.left = laneRect.left - childWidth - (shouldHaveSpacing ? spacing : 0);
+                childFrame.left = laneRect.left - childWidth;
                 childFrame.right = childFrame.left + childWidth;
                 delta = laneRect.left - childFrame.left;
             }

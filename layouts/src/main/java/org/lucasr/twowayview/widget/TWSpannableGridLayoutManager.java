@@ -154,15 +154,11 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     private int getChildWidth(int colSpan) {
-        return getLanes().getLaneSize() * colSpan + getHorizontalSpacing() * (colSpan - 1);
+        return getLanes().getLaneSize() * colSpan;
     }
 
     private int getChildHeight(int rowSpan) {
-        return getLanes().getLaneSize() * rowSpan + getVerticalSpacing() * (rowSpan- 1);
-    }
-
-    private int getLaneSpacing(boolean isVertical) {
-        return (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
+        return getLanes().getLaneSize() * rowSpan;
     }
 
     private static int getLaneSpan(boolean isVertical, View child) {
@@ -274,17 +270,8 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
             }
         }
 
-        final SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
-        final int laneCount = lanes.getCount();
-        if (position >= getFirstChildCountInLanes(laneCount, position)) {
-            final int spacing = getLaneSpacing(isVertical);
-            for (int i = entry.lane; i < laneCount; i++) {
-                lanes.addToLane(i, Direction.END, spacing);
-            }
-        }
-
         lanes.resetToEnd();
-        lanes.getLane(entry.lane, mTempRect);
+        lanes.getLane(getLaneForPosition(position, Direction.END), mTempRect);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
     }
 
@@ -293,14 +280,13 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         final boolean isVertical = isVertical();
         final int laneSpan = getLaneSpan(isVertical, child);
 
-        final int spacing = getLaneSpacing(isVertical);
         final int dimension =
                 (isVertical ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
 
         final TWLanes lanes = getLanes();
         final int lane = getLaneForPosition(getPosition(child), direction);
         for (int i = lane; i < lane + laneSpan; i++) {
-            lanes.removeFromLane(i, direction, dimension + spacing);
+            lanes.removeFromLane(i, direction, dimension);
         }
     }
 

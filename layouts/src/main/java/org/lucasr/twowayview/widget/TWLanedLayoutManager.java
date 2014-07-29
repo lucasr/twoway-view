@@ -79,9 +79,6 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     private SparseArray<ItemEntry> mItemEntries;
     private SparseArray<ItemEntry> mItemEntriesToRestore;
 
-    private int mHorizontalSpacing = 0;
-    private int mVerticalSpacing = 0;
-
     protected final Rect mChildFrame = new Rect();
     protected final Rect mTempRect = new Rect();
 
@@ -91,28 +88,6 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
 
     public TWLanedLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
-        final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TWLanedLayoutManager, defStyle, 0);
-
-        final int indexCount = a.getIndexCount();
-        for (int i = 0; i < indexCount; i++) {
-            final int attr = a.getIndex(i);
-
-            if (attr == R.styleable.TWLanedLayoutManager_android_horizontalSpacing) {
-                final int spacing = a.getDimensionPixelSize(attr, -1);
-                if (spacing >= 0) {
-                    setHorizontalSpacing(spacing);
-                }
-            } else if (attr == R.styleable.TWLanedLayoutManager_android_verticalSpacing) {
-                final int spacing = a.getDimensionPixelSize(attr, -1);
-                if (spacing >= 0) {
-                    setVerticalSpacing(spacing);
-                }
-            }
-        }
-
-        a.recycle();
     }
 
     public TWLanedLayoutManager(Context context, Orientation orientation) {
@@ -340,12 +315,11 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     protected void detachChild(View child, Direction direction) {
         final boolean isVertical = isVertical();
 
-        final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
         final int dimension =
                 (isVertical ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
 
         final int lane = getLaneForPosition(getPosition(child), direction);
-        mLanes.removeFromLane(lane, direction, dimension + spacing);
+        mLanes.removeFromLane(lane, direction, dimension);
     }
 
     @Override
@@ -413,32 +387,6 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
 
     protected abstract int getLaneCount();
     protected abstract int getLaneForPosition(int position, Direction direction);
-
-    public void setHorizontalSpacing(int horizontalSpacing) {
-        if (mHorizontalSpacing == horizontalSpacing) {
-            return;
-        }
-
-        mHorizontalSpacing = horizontalSpacing;
-        requestLayout();
-    }
-
-    public int getHorizontalSpacing() {
-        return mHorizontalSpacing;
-    }
-
-    public void setVerticalSpacing(int verticalSpacing) {
-        if (mVerticalSpacing == verticalSpacing) {
-            return;
-        }
-
-        mVerticalSpacing = verticalSpacing;
-        requestLayout();
-    }
-
-    public int getVerticalSpacing() {
-        return mVerticalSpacing;
-    }
 
     protected static class LanedSavedState extends SavedState {
         private Orientation orientation;

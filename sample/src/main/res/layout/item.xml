@@ -19,6 +19,7 @@
     android:id="@+id/title"
     android:layout_width="70dp"
     android:layout_height="130dp"
+    android:layout_margin="3dp"
     android:gravity="center"
     android:textColor="#999999"
     android:textStyle="bold"

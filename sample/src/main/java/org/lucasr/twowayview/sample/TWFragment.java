@@ -256,21 +256,13 @@ public class TWFragment extends Fragment {
             mPaint.setColor(res.getColor(R.color.item_border_color));
         }
 
-        private static void getDecoratedRect(RecyclerView parent, View child, Rect decoratedRect) {
-            RecyclerView.LayoutManager lm = parent.getLayoutManager();
-            decoratedRect.left = lm.getDecoratedLeft(child);
-            decoratedRect.top = lm.getDecoratedTop(child);
-            decoratedRect.right = lm.getDecoratedRight(child);
-            decoratedRect.bottom = lm.getDecoratedBottom(child);
-        }
-
         @Override
         public void onDrawOver(Canvas c, RecyclerView parent) {
             final int childCount = parent.getChildCount();
             for (int i = 0; i < childCount; i++) {
-                getDecoratedRect(parent, parent.getChildAt(i), mTempRect);
-                c.drawRect(mTempRect.left, mTempRect.top, mTempRect.right,
-                        mTempRect.bottom, mPaint);
+                final View child = parent.getChildAt(i);
+                c.drawRect(child.getLeft(), child.getTop(), child.getRight(),
+                        child.getBottom(), mPaint);
             }
         }
 
