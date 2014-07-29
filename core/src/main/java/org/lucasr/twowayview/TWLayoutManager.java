@@ -150,7 +150,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
             detachedCount++;
 
-            detachChild(child, getPosition(child), direction);
+            detachChild(child, direction);
         }
 
         mFirstPosition += detachedCount;
@@ -177,7 +177,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             firstDetachedPos = i;
             detachedCount++;
 
-            detachChild(child, getPosition(child), direction);
+            detachChild(child, direction);
         }
 
         while (--detachedCount >= 0) {
@@ -443,8 +443,8 @@ public abstract class TWLayoutManager extends LayoutManager {
         final View child = recycler.getViewForPosition(position);
         addView(child, (direction == Direction.END ? -1 : 0));
 
-        measureChild(child, position);
-        layoutChild(child, position, direction);
+        measureChild(child);
+        layoutChild(child, direction);
 
         return child;
     }
@@ -698,9 +698,9 @@ public abstract class TWLayoutManager extends LayoutManager {
     protected abstract int getOuterStartEdge();
     protected abstract int getOuterEndEdge();
 
-    protected abstract void measureChild(View child, int position);
-    protected abstract void layoutChild(View child, int position, Direction direction);
-    protected abstract void detachChild(View child, int position, Direction direction);
+    protected abstract void measureChild(View child);
+    protected abstract void layoutChild(View child, Direction direction);
+    protected abstract void detachChild(View child, Direction direction);
 
     protected static class SavedState extends BaseSavedState {
         private int anchorItemPosition;

@@ -332,24 +332,25 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     @Override
-    protected void measureChild(View child, int position) {
+    protected void measureChild(View child) {
         measureChildWithMargins(child, getWidthUsed(child), getHeightUsed(child));
     }
 
     @Override
-    protected void detachChild(View child, int position, Direction direction) {
+    protected void detachChild(View child, Direction direction) {
         final boolean isVertical = isVertical();
 
         final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
         final int dimension =
                 (isVertical ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
 
-        final int lane = getLaneForPosition(position, direction);
+        final int lane = getLaneForPosition(getPosition(child), direction);
         mLanes.removeFromLane(lane, direction, dimension + spacing);
     }
 
     @Override
-    protected void layoutChild(View child, int position, Direction direction) {
+    protected void layoutChild(View child, Direction direction) {
+        final int position = getPosition(child);
         final int lane = getLaneForPosition(position, direction);
 
         final int dimension = mLanes.getChildFrame(child, lane, direction, mChildFrame);

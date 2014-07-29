@@ -223,7 +223,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void measureChild(View child, int position) {
+    protected void measureChild(View child) {
         // XXX: This will disable scrolling while measuring this child to ensure that
         // both width and height can use MATCH_PARENT properly.
         mMeasuring = true;
@@ -289,7 +289,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void detachChild(View child, int position, Direction direction) {
+    protected void detachChild(View child, Direction direction) {
         final boolean isVertical = isVertical();
         final int laneSpan = getLaneSpan(isVertical, child);
 
@@ -298,7 +298,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
                 (isVertical ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
 
         final TWLanes lanes = getLanes();
-        final int lane = getLaneForPosition(position, direction);
+        final int lane = getLaneForPosition(getPosition(child), direction);
         for (int i = lane; i < lane + laneSpan; i++) {
             lanes.removeFromLane(i, direction, dimension + spacing);
         }
@@ -328,7 +328,8 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void layoutChild(View child, int position, Direction direction) {
+    protected void layoutChild(View child, Direction direction) {
+        final int position = getPosition(child);
         final int laneSpan = getLaneSpan(isVertical(), child);
 
         final int lane = getChildLaneAndFrame(getDecoratedMeasuredWidth(child),

@@ -89,7 +89,7 @@ public class TWGridLayoutManager extends TWLanedLayoutManager {
         }
 
         final View child = recycler.getViewForPosition(position);
-        measureChild(child, position);
+        measureChild(child);
 
         final int dimension =
                 (isVertical() ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
