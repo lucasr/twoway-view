@@ -274,6 +274,10 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     }
 
     private void fillSpecific(int position, Recycler recycler, State state) {
+        if (state.getItemCount() == 0) {
+            return;
+        }
+
         makeAndAddView(position, Direction.END, recycler);
 
         // Possibly changed again in fillBefore if we add children
