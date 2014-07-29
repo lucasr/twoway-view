@@ -128,7 +128,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
         final TWLanes lanes = getLanes();
         final Rect childFrame = new Rect();
 
-        lanes.resetToOffset(0);
+        lanes.reset(0);
 
         for (int i = 0; i < position; i++) {
             StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(i);
@@ -149,7 +149,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
             lanes.pushChildFrame(entry.lane, Direction.END, childFrame);
         }
 
-        lanes.resetToEnd();
+        lanes.reset(Direction.END);
         lanes.getLane(getLaneForPosition(position, Direction.END), mTempRect);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
     }

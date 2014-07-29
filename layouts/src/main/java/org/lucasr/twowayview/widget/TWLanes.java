@@ -193,17 +193,17 @@ class TWLanes {
         childFrame.bottom = childFrame.top + childHeight;
     }
 
-    private void reset(boolean toStart) {
+    public void reset(Direction direction) {
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
             if (mIsVertical) {
-                if (toStart) {
+                if (direction == Direction.START) {
                     laneRect.bottom = laneRect.top;
                 } else {
                     laneRect.top = laneRect.bottom;
                 }
             } else {
-                if (toStart) {
+                if (direction == Direction.START) {
                     laneRect.right = laneRect.left;
                 } else {
                     laneRect.left = laneRect.right;
@@ -214,22 +214,16 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public void resetToStart() {
-        reset(true);
-    }
-
-    public void resetToEnd() {
-        reset(false);
-    }
-
-    public void resetToOffset(int offset) {
+    public void reset(int offset) {
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
+
+            laneRect.offsetTo(mIsVertical ? laneRect.left : offset,
+                              mIsVertical ? offset : laneRect.top);
+
             if (mIsVertical) {
-                laneRect.top = offset;
                 laneRect.bottom = laneRect.top;
             } else {
-                laneRect.left = offset;
                 laneRect.right = laneRect.left;
             }
         }

@@ -89,7 +89,7 @@ public class TWGridLayoutManager extends TWBaseLayoutManager {
     @Override
     void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final TWLanes lanes = getLanes();
-        lanes.resetToOffset(offset);
+        lanes.reset(offset);
 
         final int lane = getLaneForPosition(position, Direction.END);
         if (lane == 0) {

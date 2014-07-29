@@ -224,7 +224,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         mLanesToRestore = null;
         mItemEntriesToRestore = null;
 
-        mLanes.resetToStart();
+        mLanes.reset(Direction.START);
 
         super.onLayoutChildren(recycler, state);
     }
@@ -340,7 +340,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
     }
 
     void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
-        mLanes.resetToOffset(offset);
+        mLanes.reset(offset);
     }
 
     ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {

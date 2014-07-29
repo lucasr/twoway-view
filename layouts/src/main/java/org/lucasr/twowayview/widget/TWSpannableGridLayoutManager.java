@@ -251,7 +251,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         final TWLanes lanes = getLanes();
         final Rect childFrame = new Rect();
 
-        lanes.resetToOffset(0);
+        lanes.reset(0);
 
         for (int i = 0; i <= position; i++) {
             SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(i);
@@ -275,7 +275,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
             }
         }
 
-        lanes.resetToEnd();
+        lanes.reset(Direction.END);
         lanes.getLane(getLaneForPosition(position, Direction.END), mTempRect);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
     }
