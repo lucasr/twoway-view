@@ -123,6 +123,16 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         childFrame.bottom = getDecoratedBottom(child);
     }
 
+    protected int getChildLaneAndFrame(View child, int position, Direction direction,
+                                       Rect childFrame) {
+        final int lane = getLaneForPosition(position, direction);
+
+        mLanes.getChildFrame(getDecoratedMeasuredWidth(child), getDecoratedMeasuredHeight(child),
+                lane, direction, childFrame);
+
+        return lane;
+    }
+
     boolean isVertical() {
         return (getOrientation() == Orientation.VERTICAL);
     }
@@ -320,9 +330,8 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
     @Override
     protected void layoutChild(View child, Direction direction) {
         final int position = getPosition(child);
-        final int lane = getLaneForPosition(position, direction);
 
-        mLanes.getChildFrame(child, lane, direction, mChildFrame);
+        final int lane = getChildLaneAndFrame(child, position, direction, mChildFrame);
         mLanes.pushChildFrame(lane, direction, mChildFrame);
 
         layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,

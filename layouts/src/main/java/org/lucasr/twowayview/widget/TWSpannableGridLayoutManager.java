@@ -141,8 +141,16 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return TWLanes.NO_LANE;
     }
 
-    private int getChildLaneAndFrame(int childWith, int childHeight, int position, Direction direction,
-                                     int laneSpan, Rect childFrame) {
+    @Override
+    protected int getChildLaneAndFrame(View child, int position, Direction direction,
+                                       Rect childFrame) {
+        return getChildLaneAndFrame(getDecoratedMeasuredWidth(child),
+                getDecoratedMeasuredHeight(child), position, direction,
+                getLaneSpan(isVertical(), child), childFrame);
+    }
+
+    private int getChildLaneAndFrame(int childWith, int childHeight, int position,
+                                     Direction direction, int laneSpan, Rect childFrame) {
         final TWLanes lanes = getLanes();
         int lane = TWLanes.NO_LANE;
 
@@ -214,17 +222,20 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     protected void layoutChild(View child, Direction direction) {
-        final int position = getPosition(child);
+        super.layoutChild(child, direction);
+
         final int laneSpan = getLaneSpan(isVertical(), child);
+        if (laneSpan == 1) {
+            return;
+        }
 
-        final int lane = getChildLaneAndFrame(getDecoratedMeasuredWidth(child),
-                getDecoratedMeasuredHeight(child), position, direction, laneSpan, mChildFrame);
-        getLanes().pushChildFrame(lane, lane + laneSpan, direction, mChildFrame);
+        final int lane = getLaneForPosition(getPosition(child), direction);
 
-        layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
-                mChildFrame.bottom);
-
-        cacheItemEntry(child, position, lane, mChildFrame);
+        // The parent class has already pushed the frame to
+        // the main lane. Now we push it to the remaining lanes
+        // within the item's span.
+        getDecoratedChildFrame(child, mChildFrame);
+        getLanes().pushChildFrame(lane + 1, lane + laneSpan, direction, mChildFrame);
     }
 
     @Override

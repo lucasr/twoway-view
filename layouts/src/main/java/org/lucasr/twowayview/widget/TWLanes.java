@@ -17,6 +17,7 @@
 package org.lucasr.twowayview.widget;
 
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.View;
 
 import org.lucasr.twowayview.TWAbsLayoutManager.Direction;
