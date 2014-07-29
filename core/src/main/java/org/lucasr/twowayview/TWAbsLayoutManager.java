@@ -273,7 +273,7 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         }
     }
 
-    private View fillSpecific(int position, Recycler recycler, State state) {
+    private void fillSpecific(int position, Recycler recycler, State state) {
         makeAndAddView(position, Direction.END, recycler);
 
         // Possibly changed again in fillBefore if we add children
@@ -300,8 +300,6 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
 
         fillAfter(position + 1, recycler, state, extraSpaceAfter);
         correctTooHigh(getChildCount(), recycler, state);
-
-        return null;
     }
 
     private void fillScrapViewsIfNeeded(Recycler recycler, State state) {
