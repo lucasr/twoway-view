@@ -358,7 +358,9 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     public LayoutParams generateLayoutParams(ViewGroup.LayoutParams lp) {
-        final LayoutParams spannableLp = generateDefaultLayoutParams();
+        final LayoutParams spannableLp = new LayoutParams((MarginLayoutParams) lp);
+        spannableLp.width = LayoutParams.MATCH_PARENT;
+        spannableLp.height = LayoutParams.MATCH_PARENT;
 
         if (lp instanceof LayoutParams) {
             final LayoutParams other = (LayoutParams) lp;
@@ -369,14 +371,6 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
                 spannableLp.colSpan = Math.max(1, other.colSpan);
                 spannableLp.rowSpan = Math.max(1, Math.min(other.rowSpan, getLaneCount()));
             }
-        }
-
-        if (lp instanceof MarginLayoutParams) {
-            final MarginLayoutParams marginLp = (MarginLayoutParams) lp;
-            spannableLp.leftMargin = marginLp.leftMargin;
-            spannableLp.topMargin = marginLp.topMargin;
-            spannableLp.rightMargin = marginLp.rightMargin;
-            spannableLp.bottomMargin = marginLp.bottomMargin;
         }
 
         return spannableLp;
@@ -412,7 +406,15 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
         public LayoutParams(ViewGroup.LayoutParams other) {
             super(other);
+            init(other);
+        }
 
+        public LayoutParams(MarginLayoutParams other) {
+            super(other);
+            init(other);
+        }
+
+        private void init(ViewGroup.LayoutParams other) {
             if (other instanceof LayoutParams) {
                 final LayoutParams lp = (LayoutParams) other;
                 rowSpan = lp.rowSpan;

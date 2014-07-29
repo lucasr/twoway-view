@@ -357,19 +357,13 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
 
     @Override
     public LayoutParams generateLayoutParams(ViewGroup.LayoutParams lp) {
-        final LayoutParams lanedLp = generateDefaultLayoutParams();
+        final LayoutParams lanedLp = new LayoutParams((MarginLayoutParams) lp);
         if (isVertical()) {
+            lanedLp.width = LayoutParams.MATCH_PARENT;
             lanedLp.height = lp.height;
         } else {
             lanedLp.width = lp.width;
-        }
-
-        if (lp instanceof MarginLayoutParams) {
-            final MarginLayoutParams marginLp = (MarginLayoutParams) lp;
-            lanedLp.leftMargin = marginLp.leftMargin;
-            lanedLp.topMargin = marginLp.topMargin;
-            lanedLp.rightMargin = marginLp.rightMargin;
-            lanedLp.bottomMargin = marginLp.bottomMargin;
+            lanedLp.height = LayoutParams.MATCH_PARENT;
         }
 
         return lanedLp;
