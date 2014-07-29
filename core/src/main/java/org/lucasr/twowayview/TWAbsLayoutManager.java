@@ -68,13 +68,13 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
 
     public TWAbsLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TWLayoutManager, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.TWAbsLayoutManager, defStyle, 0);
 
         final int indexCount = a.getIndexCount();
         for (int i = 0; i < indexCount; i++) {
             final int attr = a.getIndex(i);
 
-            if (attr == R.styleable.TWLayoutManager_android_orientation) {
+            if (attr == R.styleable.TWAbsLayoutManager_android_orientation) {
                 final int orientation = a.getInt(attr, -1);
                 if (orientation >= 0) {
                     setOrientation(Orientation.values()[orientation]);
