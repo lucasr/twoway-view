@@ -249,9 +249,9 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private void fillBefore(int position, Recycler recycler, int extraSpace) {
-        final int edge = getStartWithPadding() - extraSpace;
+        final int limit = getStartWithPadding() - extraSpace;
 
-        while (canAddMoreViews(Direction.START, edge) && position >= 0) {
+        while (canAddMoreViews(Direction.START, limit) && position >= 0) {
             makeAndAddView(position, Direction.START, recycler);
             position--;
         }
@@ -264,10 +264,10 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private void fillAfter(int position, Recycler recycler, State state, int extraSpace) {
-        final int edge = getEndWithPadding() + extraSpace;
+        final int limit = getEndWithPadding() + extraSpace;
 
         final int itemCount = state.getItemCount();
-        while (canAddMoreViews(Direction.END, edge) && position < itemCount) {
+        while (canAddMoreViews(Direction.END, limit) && position < itemCount) {
             makeAndAddView(position, Direction.END, recycler);
             position++;
         }
