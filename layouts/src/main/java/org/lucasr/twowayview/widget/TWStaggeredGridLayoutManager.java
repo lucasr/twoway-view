@@ -86,7 +86,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected int getLaneForPosition(int position, Direction direction) {
+    int getLaneForPosition(int position, Direction direction) {
         int lane = TWLanes.NO_LANE;
 
         final StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
@@ -123,7 +123,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+    ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {
         StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
             final int width = childFrame.right - childFrame.left;
@@ -137,7 +137,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
+    void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final boolean isVertical = isVertical();
         final TWLanes lanes = getLanes();
         final Rect childFrame = new Rect();

@@ -35,12 +35,12 @@ public class TWListLayoutManager extends TWBaseLayoutManager {
     }
 
     @Override
-    protected int getLaneCount() {
+    int getLaneCount() {
         return 1;
     }
 
     @Override
-    protected int getLaneForPosition(int position, Direction direction) {
+    int getLaneForPosition(int position, Direction direction) {
         return 0;
     }
 }

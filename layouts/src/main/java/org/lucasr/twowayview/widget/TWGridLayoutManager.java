@@ -69,17 +69,17 @@ public class TWGridLayoutManager extends TWBaseLayoutManager {
     }
 
     @Override
-    protected int getLaneCount() {
+    int getLaneCount() {
         return (isVertical() ? mNumColumns : mNumRows);
     }
 
     @Override
-    protected int getLaneForPosition(int position, Direction direction) {
+    int getLaneForPosition(int position, Direction direction) {
         return (position % getLaneCount());
     }
 
     @Override
-    protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
+    void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final TWLanes lanes = getLanes();
         lanes.resetToOffset(offset);
 
