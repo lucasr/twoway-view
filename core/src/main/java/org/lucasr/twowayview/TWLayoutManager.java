@@ -707,14 +707,14 @@ public abstract class TWLayoutManager extends LayoutManager {
         return mFirstPosition;
     }
 
-    protected abstract boolean canAddMoreViews(Direction direction, int limit);
-
     protected abstract int getLayoutStart();
     protected abstract int getLayoutEnd();
 
     protected abstract void measureChild(View child);
     protected abstract void layoutChild(View child, Direction direction);
     protected abstract void detachChild(View child, Direction direction);
+
+    protected abstract boolean canAddMoreViews(Direction direction, int limit);
 
     protected static class SavedState extends BaseSavedState {
         private int anchorItemPosition;
