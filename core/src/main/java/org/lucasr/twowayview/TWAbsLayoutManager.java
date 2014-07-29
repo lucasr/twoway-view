@@ -60,8 +60,6 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     private int mPendingScrollPosition = RecyclerView.NO_POSITION;
     private int mPendingScrollOffset = 0;
 
-    private final Rect mTempRect = new Rect();
-
     public TWAbsLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
