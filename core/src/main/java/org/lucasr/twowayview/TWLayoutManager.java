@@ -693,7 +693,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         return mFirstPosition;
     }
 
-    protected abstract boolean canAddMoreViews(Direction direction, int edge);
+    protected abstract boolean canAddMoreViews(Direction direction, int limit);
 
     protected abstract int getLayoutStart();
     protected abstract int getLayoutEnd();

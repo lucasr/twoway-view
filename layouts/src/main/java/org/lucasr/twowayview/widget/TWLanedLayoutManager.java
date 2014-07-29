@@ -291,11 +291,11 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     @Override
-    protected boolean canAddMoreViews(Direction direction, int edge) {
+    protected boolean canAddMoreViews(Direction direction, int limit) {
         if (direction == Direction.START) {
-            return (mLanes.getInnerStartEdge() > edge);
+            return (mLanes.getInnerStartEdge() > limit);
         } else {
-            return (mLanes.getInnerEndEdge() < edge);
+            return (mLanes.getInnerEndEdge() < limit);
         }
     }
 
