@@ -353,11 +353,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     public LayoutParams generateDefaultLayoutParams() {
-        if (isVertical()) {
-            return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        } else {
-            return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        }
+        return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
     }
 
     @Override
