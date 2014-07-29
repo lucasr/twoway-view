@@ -183,10 +183,6 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         }
     }
 
-    void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
-        mLanes.resetToOffset(offset);
-    }
-
     @Override
     public void onAdapterChanged(Adapter oldAdapter, Adapter newAdapter) {
         super.onAdapterChanged(oldAdapter, newAdapter);
@@ -322,14 +318,6 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
     }
 
     @Override
-    protected void detachChild(View child, Direction direction) {
-        final int lane = getLaneForPosition(getPosition(child), direction);
-
-        getDecoratedChildFrame(child, mChildFrame);
-        mLanes.popChildFrame(lane, direction, mChildFrame);
-    }
-
-    @Override
     protected void layoutChild(View child, Direction direction) {
         final int position = getPosition(child);
         final int lane = getLaneForPosition(position, direction);
@@ -341,6 +329,23 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
                 mChildFrame.bottom);
 
         cacheItemEntry(child, position, lane, mChildFrame);
+    }
+
+    @Override
+    protected void detachChild(View child, Direction direction) {
+        final int lane = getLaneForPosition(getPosition(child), direction);
+
+        getDecoratedChildFrame(child, mChildFrame);
+        mLanes.popChildFrame(lane, direction, mChildFrame);
+    }
+
+    void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
+        mLanes.resetToOffset(offset);
+    }
+
+    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
+        // Do nothing by default
+        return null;
     }
 
     @Override
@@ -378,11 +383,6 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
     @Override
     public LayoutParams generateLayoutParams(Context c, AttributeSet attrs) {
         return new LayoutParams(c, attrs);
-    }
-
-    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
-        // Do nothing by default
-        return null;
     }
 
     abstract int getLaneCount();

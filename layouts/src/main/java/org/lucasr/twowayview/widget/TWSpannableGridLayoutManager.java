@@ -96,6 +96,26 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         mContext = context;
     }
 
+    private int getChildWidth(int colSpan) {
+        return getLanes().getLaneSize() * colSpan;
+    }
+
+    private int getChildHeight(int rowSpan) {
+        return getLanes().getLaneSize() * rowSpan;
+    }
+
+    private static int getLaneSpan(boolean isVertical, View child) {
+        return getLaneSpan(isVertical, (LayoutParams) child.getLayoutParams());
+    }
+
+    private static int getLaneSpan(boolean isVertical, LayoutParams lp) {
+        return (isVertical ? lp.colSpan : lp.rowSpan);
+    }
+
+    private static int getLaneSpan(boolean isVertical, SpannableItemEntry entry) {
+        return (isVertical ? entry.colSpan : entry.rowSpan);
+    }
+
     private int getChildStartInLane(int childWidth, int childHeight, int lane, Direction direction) {
         getLanes().getChildFrame(childWidth, childHeight, lane, direction, mTempRect);
         return (isVertical() ? mTempRect.top : mTempRect.left);
@@ -153,26 +173,6 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return lane;
     }
 
-    private int getChildWidth(int colSpan) {
-        return getLanes().getLaneSize() * colSpan;
-    }
-
-    private int getChildHeight(int rowSpan) {
-        return getLanes().getLaneSize() * rowSpan;
-    }
-
-    private static int getLaneSpan(boolean isVertical, View child) {
-        return getLaneSpan(isVertical, (LayoutParams) child.getLayoutParams());
-    }
-
-    private static int getLaneSpan(boolean isVertical, LayoutParams lp) {
-        return (isVertical ? lp.colSpan : lp.rowSpan);
-    }
-
-    private static int getLaneSpan(boolean isVertical, SpannableItemEntry entry) {
-        return (isVertical ? entry.colSpan : entry.rowSpan);
-    }
-
     @Override
     public boolean canScrollHorizontally() {
         return super.canScrollHorizontally() && !mMeasuring;
@@ -193,21 +193,6 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return TWLanes.NO_LANE;
     }
 
-    @Override
-    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
-        SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
-        if (entry == null) {
-            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-            final int colSpan = lp.colSpan;
-            final int rowSpan = lp.rowSpan;
-
-            entry = new SpannableItemEntry(lane, colSpan, rowSpan);
-            setItemEntryForPosition(position, entry);
-        }
-
-        return entry;
-    }
-
     private int getWidthUsed(View child) {
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         return getWidth() - getChildWidth(lp.colSpan);
@@ -225,6 +210,39 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         mMeasuring = true;
         measureChildWithMargins(child, getWidthUsed(child), getHeightUsed(child));
         mMeasuring = false;
+    }
+
+    @Override
+    protected void layoutChild(View child, Direction direction) {
+        final int position = getPosition(child);
+        final int laneSpan = getLaneSpan(isVertical(), child);
+
+        final int lane = getChildLaneAndFrame(getDecoratedMeasuredWidth(child),
+                getDecoratedMeasuredHeight(child), position, direction, laneSpan, mChildFrame);
+        getLanes().pushChildFrame(lane, lane + laneSpan, direction, mChildFrame);
+
+        layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
+                mChildFrame.bottom);
+
+        cacheItemEntry(child, position, lane, mChildFrame);
+    }
+
+    @Override
+    protected void detachChild(View child, Direction direction) {
+        super.detachChild(child, direction);
+
+        final int laneSpan = getLaneSpan(isVertical(), child);
+        if (laneSpan == 1) {
+            return;
+        }
+
+        final int lane = getLaneForPosition(getPosition(child), direction);
+
+        // The parent class has already popped the frame from
+        // the main lane. Now we pop it from the remaining lanes
+        // within the item's span.
+        getDecoratedChildFrame(child, mChildFrame);
+        getLanes().popChildFrame(lane + 1, lane + laneSpan, direction, mChildFrame);
     }
 
     @Override
@@ -263,36 +281,18 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void detachChild(View child, Direction direction) {
-        super.detachChild(child, direction);
+    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
+        SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
+        if (entry == null) {
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            final int colSpan = lp.colSpan;
+            final int rowSpan = lp.rowSpan;
 
-        final int laneSpan = getLaneSpan(isVertical(), child);
-        if (laneSpan == 1) {
-            return;
+            entry = new SpannableItemEntry(lane, colSpan, rowSpan);
+            setItemEntryForPosition(position, entry);
         }
 
-        final int lane = getLaneForPosition(getPosition(child), direction);
-
-        // The parent class has already popped the frame from
-        // the main lane. Now we pop it from the remaining lanes
-        // within the item's span.
-        getDecoratedChildFrame(child, mChildFrame);
-        getLanes().popChildFrame(lane + 1, lane + laneSpan, direction, mChildFrame);
-    }
-
-    @Override
-    protected void layoutChild(View child, Direction direction) {
-        final int position = getPosition(child);
-        final int laneSpan = getLaneSpan(isVertical(), child);
-
-        final int lane = getChildLaneAndFrame(getDecoratedMeasuredWidth(child),
-                getDecoratedMeasuredHeight(child), position, direction, laneSpan, mChildFrame);
-        getLanes().pushChildFrame(lane, lane + laneSpan, direction, mChildFrame);
-
-        layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
-                mChildFrame.bottom);
-
-        cacheItemEntry(child, position, lane, mChildFrame);
+        return entry;
     }
 
     @Override

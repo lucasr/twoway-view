@@ -123,20 +123,6 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
-        StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
-        if (entry == null) {
-            final int width = childFrame.right - childFrame.left;
-            final int height = childFrame.bottom - childFrame.top;
-
-            entry = new StaggeredItemEntry(lane, width, height);
-            setItemEntryForPosition(position, entry);
-        }
-
-        return entry;
-    }
-
-    @Override
     void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final boolean isVertical = isVertical();
         final TWLanes lanes = getLanes();
@@ -166,5 +152,19 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
         lanes.resetToEnd();
         lanes.getLane(getLaneForPosition(position, Direction.END), mTempRect);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
+    }
+
+    @Override
+    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
+        StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
+        if (entry == null) {
+            final int width = childFrame.right - childFrame.left;
+            final int height = childFrame.bottom - childFrame.top;
+
+            entry = new StaggeredItemEntry(lane, width, height);
+            setItemEntryForPosition(position, entry);
+        }
+
+        return entry;
     }
 }
