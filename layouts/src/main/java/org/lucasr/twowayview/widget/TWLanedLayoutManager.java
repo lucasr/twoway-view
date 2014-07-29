@@ -24,12 +24,13 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Adapter;
+import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.View;
-import android.view.ViewGroup.LayoutParams;
+import android.view.ViewGroup;
 
 import org.lucasr.twowayview.TWLayoutManager;
 
@@ -306,32 +307,31 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         return mLanes.getOuterEndEdge();
     }
 
-    @Override
-    protected int getChildWidthMeasureSpec(View child, int position) {
-        final LayoutParams lp = child.getLayoutParams();
+    private int getWidthUsed(View child) {
         final boolean isVertical = isVertical();
-
-        if (!isVertical && lp.width == LayoutParams.WRAP_CONTENT) {
-            return View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
-        } else if (isVertical) {
-            return View.MeasureSpec.makeMeasureSpec(mLanes.getLaneSize(), View.MeasureSpec.EXACTLY);
-        } else {
-            return View.MeasureSpec.makeMeasureSpec(lp.width, View.MeasureSpec.EXACTLY);
+        if (!isVertical) {
+            return 0;
         }
+
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        final int size = (isVertical ? mLanes.getLaneSize() : lp.width);
+        return getWidth() - size;
+    }
+
+    private int getHeightUsed(View child) {
+        final boolean isVertical = isVertical();
+        if (isVertical) {
+            return 0;
+        }
+
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        final int size = (isVertical ? lp.height : mLanes.getLaneSize());
+        return getHeight() - size;
     }
 
     @Override
-    protected int getChildHeightMeasureSpec(View child, int position) {
-        final LayoutParams lp = child.getLayoutParams();
-        final boolean isVertical = isVertical();
-
-        if (isVertical && lp.height == LayoutParams.WRAP_CONTENT) {
-            return View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
-        } else if (!isVertical) {
-            return View.MeasureSpec.makeMeasureSpec(mLanes.getLaneSize(), View.MeasureSpec.EXACTLY);
-        } else {
-            return View.MeasureSpec.makeMeasureSpec(lp.height, View.MeasureSpec.EXACTLY);
-        }
+    protected void measureChild(View child, int position) {
+        measureChildWithMargins(child, getWidthUsed(child), getHeightUsed(child));
     }
 
     @Override
@@ -351,6 +351,41 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         mLanes.addToLane(lane, direction, dimension);
 
         ensureItemEntry(child, position, lane, childFrame);
+    }
+
+    @Override
+    public boolean checkLayoutParams(LayoutParams lp) {
+        if (isVertical()) {
+            return (lp.width == LayoutParams.MATCH_PARENT);
+        } else {
+            return (lp.height == LayoutParams.MATCH_PARENT);
+        }
+    }
+
+    @Override
+    public LayoutParams generateDefaultLayoutParams() {
+        if (isVertical()) {
+            return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        } else {
+            return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
+        }
+    }
+
+    @Override
+    public LayoutParams generateLayoutParams(ViewGroup.LayoutParams lp) {
+        final LayoutParams lanedLp = generateDefaultLayoutParams();
+        if (isVertical()) {
+            lanedLp.height = lp.height;
+        } else {
+            lanedLp.width = lp.width;
+        }
+
+        return lanedLp;
+    }
+
+    @Override
+    public LayoutParams generateLayoutParams(Context c, AttributeSet attrs) {
+        return new LayoutParams(c, attrs);
     }
 
     protected ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {

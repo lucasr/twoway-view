@@ -423,12 +423,6 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
     }
 
-    private void measureChild(View child, int position) {
-        final int widthSpec = getChildWidthMeasureSpec(child, position);
-        final int heightSpec = getChildHeightMeasureSpec(child, position);
-        child.measure(widthSpec, heightSpec);
-    }
-
     private View makeAndAddView(int position, Direction direction, Recycler recycler) {
         final View child = recycler.getViewForPosition(position);
         addView(child, (direction == Direction.END ? -1 : 0));
@@ -688,11 +682,12 @@ public abstract class TWLayoutManager extends LayoutManager {
     protected abstract int getOuterStartEdge();
     protected abstract int getOuterEndEdge();
 
-    protected abstract int getChildWidthMeasureSpec(View child, int position);
-    protected abstract int getChildHeightMeasureSpec(View child, int position);
+    protected abstract void measureChild(View child, int position);
 
     protected abstract void detachChildFromLayout(View child, int position, Direction direction);
-    protected abstract void attachChildToLayout(View child, int position, Direction direction, Rect childFrame);
+
+    protected abstract void attachChildToLayout(View child, int position, Direction direction,
+                                                Rect childFrame);
 
     protected static class SavedState extends BaseSavedState {
         private int anchorItemPosition;

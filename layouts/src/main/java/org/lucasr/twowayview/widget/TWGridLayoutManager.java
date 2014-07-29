@@ -89,8 +89,7 @@ public class TWGridLayoutManager extends TWLanedLayoutManager {
         }
 
         final View child = recycler.getViewForPosition(position);
-        child.measure(getChildWidthMeasureSpec(child, position),
-                      getChildHeightMeasureSpec(child, position));
+        measureChild(child, position);
 
         final int dimension = (isVertical() ? child.getMeasuredHeight() : child.getMeasuredWidth());
         for (int i = lane - 1; i >= 0; i--) {

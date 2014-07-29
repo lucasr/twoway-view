@@ -202,16 +202,19 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return entry;
     }
 
-    @Override
-    protected int getChildWidthMeasureSpec(View child, int position) {
+    private int getWidthUsed(View child) {
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        return MeasureSpec.makeMeasureSpec(getChildWidth(lp.colSpan), MeasureSpec.EXACTLY);
+        return getWidth() - getChildWidth(lp.colSpan);
+    }
+
+    private int getHeightUsed(View child) {
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        return getHeight() - getChildHeight(lp.rowSpan);
     }
 
     @Override
-    protected int getChildHeightMeasureSpec(View child, int position) {
-        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        return MeasureSpec.makeMeasureSpec(getChildHeight(lp.rowSpan), MeasureSpec.EXACTLY);
+    protected void measureChild(View child, int position) {
+        measureChildWithMargins(child, getWidthUsed(child), getHeightUsed(child));
     }
 
     private int getFirstChildCountInLanes(int laneCount, int maxPosition) {
@@ -325,9 +328,13 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         if (lp instanceof LayoutParams) {
             final LayoutParams spannableLp = (LayoutParams) lp;
             if (isVertical()) {
-                return (spannableLp.colSpan >= 1 && spannableLp.colSpan <= getLaneCount());
+                return (spannableLp.rowSpan >= 1 && spannableLp.colSpan >= 1 &&
+                        spannableLp.colSpan <= getLaneCount() &&
+                        spannableLp.height == getChildHeight(spannableLp.rowSpan));
             } else {
-                return (spannableLp.rowSpan >= 1 && spannableLp.rowSpan <= getLaneCount());
+                return (spannableLp.colSpan >= 1 && spannableLp.rowSpan >= 1 &&
+                        spannableLp.rowSpan <= getLaneCount() &&
+                        spannableLp.width == getChildWidth(spannableLp.colSpan));
             }
         }
 
@@ -336,7 +343,11 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
     @Override
     public LayoutParams generateDefaultLayoutParams() {
-        return new LayoutParams(0, 0);
+        if (isVertical()) {
+            return new LayoutParams(LayoutParams.MATCH_PARENT, getLanes().getLaneSize());
+        } else {
+            return new LayoutParams(getLanes().getLaneSize(), LayoutParams.MATCH_PARENT);
+        }
     }
 
     @Override
@@ -350,16 +361,18 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         if (isVertical()) {
             spannableLp.colSpan = Math.max(1, Math.min(other.colSpan, getLaneCount()));
             spannableLp.rowSpan = Math.max(1, other.rowSpan);
+            spannableLp.height = getChildHeight(spannableLp.rowSpan);
         } else {
             spannableLp.colSpan = Math.max(1, other.colSpan);
             spannableLp.rowSpan = Math.max(1, Math.min(other.rowSpan, getLaneCount()));
+            spannableLp.width = getChildWidth(spannableLp.colSpan);
         }
 
         return spannableLp;
     }
 
     @Override
-    public RecyclerView.LayoutParams generateLayoutParams(Context c, AttributeSet attrs) {
+    public LayoutParams generateLayoutParams(Context c, AttributeSet attrs) {
         return new LayoutParams(c, attrs);
     }
 
