@@ -300,12 +300,12 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     @Override
-    protected int getOuterStartEdge() {
+    protected int getLayoutStart() {
         return mLanes.getOuterStartEdge();
     }
 
     @Override
-    protected int getOuterEndEdge() {
+    protected int getLayoutEnd() {
         return mLanes.getOuterEndEdge();
     }
 

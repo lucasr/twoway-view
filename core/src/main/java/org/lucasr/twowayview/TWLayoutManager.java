@@ -191,8 +191,8 @@ public abstract class TWLayoutManager extends LayoutManager {
             return 0;
         }
 
-        final int outerStart = getOuterStartEdge();
-        final int outerEnd = getOuterEndEdge();
+        final int outerStart = getLayoutStart();
+        final int outerEnd = getLayoutEnd();
 
         final int start = getStartEdge();
         final int end = getEndEdge();
@@ -343,7 +343,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
 
         // Get the last end edge.
-        final int lastEnd = getOuterEndEdge();
+        final int lastEnd = getLayoutEnd();
 
         // This is bottom of our drawable area.
         final int start = getStartEdge();
@@ -353,7 +353,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         // drawable area.
         int endOffset = end - lastEnd;
 
-        int firstStart = getOuterStartEdge();
+        int firstStart = getLayoutStart();
 
         // Make sure we are 1) Too high, and 2) Either there are more rows above the
         // first row or the first row is scrolled off the top of the drawable area
@@ -384,7 +384,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             return;
         }
 
-        final int firstStart = getOuterStartEdge();
+        final int firstStart = getLayoutStart();
         final int start = getStartEdge();
         final int end = getEndEdge();
         final int itemCount = state.getItemCount();
@@ -393,7 +393,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         // drawable area.
         int startOffset = firstStart - start;
 
-        int lastEnd = getOuterEndEdge();
+        int lastEnd = getLayoutEnd();
         final int lastPosition = mFirstPosition + childCount - 1;
 
         // Make sure we are 1) Too low, and 2) Either there are more columns/rows below the
@@ -428,7 +428,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             return;
         }
 
-        int delta = getOuterStartEdge() - getStartEdge();
+        int delta = getLayoutStart() - getStartEdge();
         if (delta < 0) {
             // We only are looking to see if we are too low, not too high
             delta = 0;
@@ -695,8 +695,8 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     protected abstract boolean canAddMoreViews(Direction direction, int edge);
 
-    protected abstract int getOuterStartEdge();
-    protected abstract int getOuterEndEdge();
+    protected abstract int getLayoutStart();
+    protected abstract int getLayoutEnd();
 
     protected abstract void measureChild(View child);
     protected abstract void layoutChild(View child, Direction direction);
