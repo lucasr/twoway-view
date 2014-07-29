@@ -17,7 +17,6 @@
 package org.lucasr.twowayview.widget;
 
 import android.graphics.Rect;
-import android.util.Log;
 import android.view.View;
 
 import org.lucasr.twowayview.TWLayoutManager;
@@ -80,8 +79,8 @@ class TWLanes {
             final int spacing = i * (mIsVertical ? horizontalSpacing : verticalSpacing);
             final int laneStart = (i * mLaneSize) + spacing;
 
-            final int l = paddingLeft + (mIsVertical ? laneStart : layout.getStartEdge());
-            final int t = paddingTop + (mIsVertical ? layout.getStartEdge() : laneStart);
+            final int l = paddingLeft + (mIsVertical ? laneStart : layout.getStartWithPadding());
+            final int t = paddingTop + (mIsVertical ? layout.getStartWithPadding() : laneStart);
             final int r = (mIsVertical ? l + mLaneSize : l);
             final int b = (mIsVertical ? t : t + mLaneSize);
 

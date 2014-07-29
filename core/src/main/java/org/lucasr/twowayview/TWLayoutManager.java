@@ -97,7 +97,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
     }
 
-    private int getChildStartEdge(View child) {
+    private int getChildStart(View child) {
         final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
         if (mIsVertical) {
             return getDecoratedTop(child) - lp.topMargin;
@@ -106,7 +106,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
     }
 
-    private int getChildEndEdge(View child) {
+    private int getChildEnd(View child) {
         final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
         if (mIsVertical) {
             return getDecoratedBottom(child) + lp.bottomMargin;
@@ -137,12 +137,12 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     private void recycleChildrenFromStart(Direction direction, Recycler recycler) {
         final int childCount = getChildCount();
-        final int childrenStart = getStartEdge();
+        final int childrenStart = getStartWithPadding();
 
         int detachedCount = 0;
         for (int i = 0; i < childCount; i++) {
             final View child = getChildAt(i);
-            final int childEnd = getChildEndEdge(child);
+            final int childEnd = getChildEnd(child);
 
             if (childEnd >= childrenStart) {
                 break;
@@ -161,14 +161,14 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private void recycleChildrenFromEnd(Direction direction, Recycler recycler) {
-        final int childrenEnd = getEndEdge();
+        final int childrenEnd = getEndWithPadding();
         final int childCount = getChildCount();
 
         int firstDetachedPos = 0;
         int detachedCount = 0;
         for (int i = childCount - 1; i >= 0; i--) {
             final View child = getChildAt(i);
-            final int childStart = getChildStartEdge(child);
+            final int childStart = getChildStart(child);
 
             if (childStart <= childrenEnd) {
                 break;
@@ -194,8 +194,8 @@ public abstract class TWLayoutManager extends LayoutManager {
         final int outerStart = getLayoutStart();
         final int outerEnd = getLayoutEnd();
 
-        final int start = getStartEdge();
-        final int end = getEndEdge();
+        final int start = getStartWithPadding();
+        final int end = getEndWithPadding();
 
         final int totalSpace = getTotalSpace();
         if (delta < 0) {
@@ -247,7 +247,7 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private void fillBefore(int position, Recycler recycler, int extraSpace) {
-        final int edge = getStartEdge() - extraSpace;
+        final int edge = getStartWithPadding() - extraSpace;
 
         while (canAddMoreViews(Direction.START, edge) && position >= 0) {
             makeAndAddView(position, Direction.START, recycler);
@@ -262,7 +262,7 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private void fillAfter(int position, Recycler recycler, State state, int extraSpace) {
-        final int edge = getEndEdge() + extraSpace;
+        final int edge = getEndWithPadding() + extraSpace;
 
         final int itemCount = state.getItemCount();
         while (canAddMoreViews(Direction.END, edge) && position < itemCount) {
@@ -346,8 +346,8 @@ public abstract class TWLayoutManager extends LayoutManager {
         final int lastEnd = getLayoutEnd();
 
         // This is bottom of our drawable area.
-        final int start = getStartEdge();
-        final int end = getEndEdge();
+        final int start = getStartWithPadding();
+        final int end = getEndWithPadding();
 
         // This is how far the end edge of the last view is from the end of the
         // drawable area.
@@ -385,8 +385,8 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
 
         final int firstStart = getLayoutStart();
-        final int start = getStartEdge();
-        final int end = getEndEdge();
+        final int start = getStartWithPadding();
+        final int end = getEndWithPadding();
         final int itemCount = state.getItemCount();
 
         // This is how far the start edge of the first view is from the start of the
@@ -428,7 +428,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             return;
         }
 
-        int delta = getLayoutStart() - getStartEdge();
+        int delta = getLayoutStart() - getStartWithPadding();
         if (delta < 0) {
             // We only are looking to see if we are too low, not too high
             delta = 0;
@@ -677,11 +677,11 @@ public abstract class TWLayoutManager extends LayoutManager {
         requestLayout();
     }
 
-    public int getStartEdge() {
+    public int getStartWithPadding() {
         return (mIsVertical ? getPaddingTop() : getPaddingLeft());
     }
 
-    public int getEndEdge() {
+    public int getEndWithPadding() {
         if (mIsVertical) {
             return (getHeight() - getPaddingBottom());
         } else {
