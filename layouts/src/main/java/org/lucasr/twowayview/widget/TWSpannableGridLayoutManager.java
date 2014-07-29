@@ -328,14 +328,18 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void attachChildToLayout(View child, int position, Direction direction, Rect childFrame) {
+    protected void layoutChild(View child, int position, Direction direction) {
         final int laneSpan = getLaneSpan(isVertical(), child);
 
         final int lane = getChildLaneAndFrame(getDecoratedMeasuredWidth(child),
-                getDecoratedMeasuredHeight(child), position, direction, laneSpan, childFrame);
-        appendChildFrame(childFrame, direction, lane, laneSpan);
+                getDecoratedMeasuredHeight(child), position, direction, laneSpan, mChildFrame);
+        appendChildFrame(mChildFrame, direction, lane, laneSpan);
 
-        ensureItemEntry(child, position, lane, childFrame);
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        layoutDecorated(child, mChildFrame.left + lp.leftMargin, mChildFrame.top + lp.topMargin,
+                mChildFrame.right - lp.rightMargin, mChildFrame.bottom - lp.bottomMargin);
+
+        ensureItemEntry(child, position, lane, mChildFrame);
     }
 
     @Override

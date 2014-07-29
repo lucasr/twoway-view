@@ -31,7 +31,6 @@ import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.View.BaseSavedState;
 import android.view.ViewGroup.MarginLayoutParams;
@@ -445,12 +444,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         addView(child, (direction == Direction.END ? -1 : 0));
 
         measureChild(child, position);
-
-        attachChildToLayout(child, position, direction, mTempRect);
-
-        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
-        layoutDecorated(child, mTempRect.left + lp.leftMargin, mTempRect.top + lp.topMargin,
-                mTempRect.right - lp.rightMargin, mTempRect.bottom - lp.bottomMargin);
+        layoutChild(child, position, direction);
 
         return child;
     }
@@ -705,11 +699,10 @@ public abstract class TWLayoutManager extends LayoutManager {
     protected abstract int getOuterEndEdge();
 
     protected abstract void measureChild(View child, int position);
+    protected abstract void layoutChild(View child, int position, Direction direction);
 
     protected abstract void detachChildFromLayout(View child, int position, Direction direction);
 
-    protected abstract void attachChildToLayout(View child, int position, Direction direction,
-                                                Rect childFrame);
 
     protected static class SavedState extends BaseSavedState {
         private int anchorItemPosition;

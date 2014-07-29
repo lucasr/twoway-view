@@ -82,6 +82,7 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     private int mHorizontalSpacing = 0;
     private int mVerticalSpacing = 0;
 
+    protected final Rect mChildFrame = new Rect();
     protected final Rect mTempRect = new Rect();
 
     public TWLanedLayoutManager(Context context, AttributeSet attrs) {
@@ -348,12 +349,17 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     @Override
-    protected void attachChildToLayout(View child, int position, Direction direction, Rect childFrame) {
+    protected void layoutChild(View child, int position, Direction direction) {
         final int lane = getLaneForPosition(position, direction);
-        final int dimension = mLanes.getChildFrame(child, lane, direction, childFrame);
+
+        final int dimension = mLanes.getChildFrame(child, lane, direction, mChildFrame);
         mLanes.addToLane(lane, direction, dimension);
 
-        ensureItemEntry(child, position, lane, childFrame);
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        layoutDecorated(child, mChildFrame.left + lp.leftMargin, mChildFrame.top + lp.topMargin,
+                mChildFrame.right - lp.rightMargin, mChildFrame.bottom - lp.bottomMargin);
+
+        ensureItemEntry(child, position, lane, mChildFrame);
     }
 
     @Override
