@@ -150,7 +150,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
             detachedCount++;
 
-            detachChildFromLayout(child, getPosition(child), direction);
+            detachChild(child, getPosition(child), direction);
         }
 
         mFirstPosition += detachedCount;
@@ -177,7 +177,7 @@ public abstract class TWLayoutManager extends LayoutManager {
             firstDetachedPos = i;
             detachedCount++;
 
-            detachChildFromLayout(child, getPosition(child), direction);
+            detachChild(child, getPosition(child), direction);
         }
 
         while (--detachedCount >= 0) {
@@ -700,9 +700,7 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     protected abstract void measureChild(View child, int position);
     protected abstract void layoutChild(View child, int position, Direction direction);
-
-    protected abstract void detachChildFromLayout(View child, int position, Direction direction);
-
+    protected abstract void detachChild(View child, int position, Direction direction);
 
     protected static class SavedState extends BaseSavedState {
         private int anchorItemPosition;

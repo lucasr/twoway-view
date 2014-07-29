@@ -289,7 +289,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected void detachChildFromLayout(View child, int position, Direction direction) {
+    protected void detachChild(View child, int position, Direction direction) {
         final boolean isVertical = isVertical();
         final int laneSpan = getLaneSpan(isVertical, child);
 

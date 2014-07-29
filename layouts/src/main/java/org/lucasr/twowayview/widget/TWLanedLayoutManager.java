@@ -337,7 +337,7 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     @Override
-    protected void detachChildFromLayout(View child, int position, Direction direction) {
+    protected void detachChild(View child, int position, Direction direction) {
         final boolean isVertical = isVertical();
 
         final int spacing = (isVertical ? getVerticalSpacing() : getHorizontalSpacing());
