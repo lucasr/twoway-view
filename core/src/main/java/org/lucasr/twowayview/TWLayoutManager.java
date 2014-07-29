@@ -182,8 +182,6 @@ public abstract class TWLayoutManager extends LayoutManager {
 
         final int outerStart = getOuterStartEdge();
         final int outerEnd = getOuterEndEdge();
-        final int innerStart = getInnerStartEdge();
-        final int innerEnd = getInnerEndEdge();
 
         final int start = getStartEdge();
         final int end = getEndEdge();
@@ -209,14 +207,13 @@ public abstract class TWLayoutManager extends LayoutManager {
         final Direction direction = (delta > 0 ? Direction.END : Direction.START);
         recycleChildrenOutOfBounds(direction, recycler);
 
-        final int spaceBefore = start - innerStart;
-        final int spaceAfter = innerEnd - end;
         final int absDelta = Math.abs(delta);
-
-        if (spaceBefore < absDelta || spaceAfter < absDelta) {
+        if (canAddMoreViews(Direction.START, start - absDelta) ||
+            canAddMoreViews(Direction.END, end + absDelta)) {
             fillGap(direction, recycler, state);
-            mFirstVisiblePosition = mFirstPosition;
         }
+
+        mFirstVisiblePosition = mFirstPosition;
 
         return delta;
     }
@@ -239,12 +236,10 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private void fillBefore(int position, Recycler recycler, int extraSpace) {
-        final int start = getStartEdge() - extraSpace;
-        int nextOffset = getInnerStartEdge();
+        final int edge = getStartEdge() - extraSpace;
 
-        while (nextOffset > start && position >= 0) {
+        while (canAddMoreViews(Direction.START, edge) && position >= 0) {
             makeAndAddView(position, Direction.START, recycler);
-            nextOffset = getInnerStartEdge();
             position--;
         }
 
@@ -256,13 +251,11 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private void fillAfter(int position, Recycler recycler, State state, int extraSpace) {
-        final int end = getEndEdge() + extraSpace;
-        int nextOffset = getInnerEndEdge();
+        final int edge = getEndEdge() + extraSpace;
 
         final int itemCount = state.getItemCount();
-        while (nextOffset < end && position < itemCount) {
+        while (canAddMoreViews(Direction.END, edge) && position < itemCount) {
             makeAndAddView(position, Direction.END, recycler);
-            nextOffset = getInnerEndEdge();
             position++;
         }
     }
@@ -690,9 +683,9 @@ public abstract class TWLayoutManager extends LayoutManager {
         return mFirstPosition;
     }
 
+    protected abstract boolean canAddMoreViews(Direction direction, int edge);
+
     protected abstract int getOuterStartEdge();
-    protected abstract int getInnerStartEdge();
-    protected abstract int getInnerEndEdge();
     protected abstract int getOuterEndEdge();
 
     protected abstract int getChildWidthMeasureSpec(View child, int position);

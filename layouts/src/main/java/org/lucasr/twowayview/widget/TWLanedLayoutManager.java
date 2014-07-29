@@ -288,18 +288,17 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
     }
 
     @Override
+    protected boolean canAddMoreViews(Direction direction, int edge) {
+        if (direction == Direction.START) {
+            return (mLanes.getInnerStartEdge() > edge);
+        } else {
+            return (mLanes.getInnerEndEdge() < edge);
+        }
+    }
+
+    @Override
     protected int getOuterStartEdge() {
         return mLanes.getOuterStartEdge();
-    }
-
-    @Override
-    protected int getInnerStartEdge() {
-        return mLanes.getInnerStartEdge();
-    }
-
-    @Override
-    protected int getInnerEndEdge() {
-        return mLanes.getInnerEndEdge();
     }
 
     @Override
