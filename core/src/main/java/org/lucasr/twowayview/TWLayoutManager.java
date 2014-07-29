@@ -97,6 +97,18 @@ public abstract class TWLayoutManager extends LayoutManager {
         }
     }
 
+    private int getStartWithPadding() {
+        return (mIsVertical ? getPaddingTop() : getPaddingLeft());
+    }
+
+    private int getEndWithPadding() {
+        if (mIsVertical) {
+            return (getHeight() - getPaddingBottom());
+        } else {
+            return (getWidth() - getPaddingRight());
+        }
+    }
+
     private int getChildStart(View child) {
         return (mIsVertical ? getDecoratedTop(child) : getDecoratedLeft(child));
     }
@@ -689,18 +701,6 @@ public abstract class TWLayoutManager extends LayoutManager {
 
         this.mIsVertical = isVertical;
         requestLayout();
-    }
-
-    public int getStartWithPadding() {
-        return (mIsVertical ? getPaddingTop() : getPaddingLeft());
-    }
-
-    public int getEndWithPadding() {
-        if (mIsVertical) {
-            return (getHeight() - getPaddingBottom());
-        } else {
-            return (getWidth() - getPaddingRight());
-        }
     }
 
     public int getFirstVisiblePosition() {

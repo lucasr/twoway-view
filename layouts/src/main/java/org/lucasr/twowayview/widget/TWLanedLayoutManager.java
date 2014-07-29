@@ -113,6 +113,10 @@ public abstract class TWLanedLayoutManager extends TWLayoutManager {
         return itemLanes;
     }
 
+    int getStartWithPadding() {
+        return (isVertical() ? getPaddingTop() : getPaddingLeft());
+    }
+
     protected boolean isVertical() {
         return (getOrientation() == Orientation.VERTICAL);
     }
