@@ -314,8 +314,13 @@ public abstract class TWLayoutManager extends LayoutManager {
             }
         }
 
-        fillBefore(mFirstPosition - 1, recycler, extraSpaceBefore);
-        fillAfter(childCount, recycler, state, extraSpaceAfter);
+        if (extraSpaceBefore > 0) {
+            fillBefore(mFirstPosition - 1, recycler, extraSpaceBefore);
+        }
+
+        if (extraSpaceAfter > 0) {
+            fillAfter(childCount, recycler, state, extraSpaceAfter);
+        }
     }
 
     private void correctTooHigh(int childCount, Recycler recycler, State state) {
