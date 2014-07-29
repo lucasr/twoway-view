@@ -244,7 +244,6 @@ public class TWFragment extends Fragment {
     private static class SimpleDecoration extends RecyclerView.ItemDecoration {
         private final int mBorderWidth;
         private final Paint mPaint;
-        private final Rect mTempRect = new Rect();
 
         public SimpleDecoration(Context context) {
             final Resources res = context.getResources();
