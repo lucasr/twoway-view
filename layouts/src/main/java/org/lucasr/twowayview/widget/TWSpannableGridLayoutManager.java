@@ -227,19 +227,6 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         mMeasuring = false;
     }
 
-    private int getFirstChildCountInLanes(int laneCount, int maxPosition) {
-        final boolean isVertical = isVertical();
-
-        int childCount = 0, i = 0;
-        while (i < maxPosition && i < laneCount) {
-            SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(i);
-            i += (isVertical ? entry.colSpan : entry.rowSpan);
-            childCount++;
-        }
-
-        return childCount;
-    }
-
     @Override
     protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final boolean isVertical = isVertical();
