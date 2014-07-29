@@ -337,9 +337,8 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         mLanes.getChildFrame(child, lane, direction, mChildFrame);
         mLanes.pushChildFrame(lane, direction, mChildFrame);
 
-        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
-        layoutDecorated(child, mChildFrame.left + lp.leftMargin, mChildFrame.top + lp.topMargin,
-                mChildFrame.right - lp.rightMargin, mChildFrame.bottom - lp.bottomMargin);
+        layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
+                mChildFrame.bottom);
 
         cacheItemEntry(child, position, lane, mChildFrame);
     }

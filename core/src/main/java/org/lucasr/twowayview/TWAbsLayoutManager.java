@@ -512,6 +512,13 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     }
 
     @Override
+    public void layoutDecorated(View child, int left, int top, int right, int bottom) {
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        super.layoutDecorated(child, left + lp.leftMargin, top + lp.topMargin,
+                right - lp.rightMargin, bottom - lp.bottomMargin);
+    }
+
+    @Override
     public void onLayoutChildren(Recycler recycler, State state) {
         int pendingScrollPosition = getPendingScrollPosition();
         if (pendingScrollPosition != RecyclerView.NO_POSITION) {

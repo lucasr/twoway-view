@@ -289,9 +289,8 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
                 getDecoratedMeasuredHeight(child), position, direction, laneSpan, mChildFrame);
         getLanes().pushChildFrame(lane, lane + laneSpan, direction, mChildFrame);
 
-        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
-        layoutDecorated(child, mChildFrame.left + lp.leftMargin, mChildFrame.top + lp.topMargin,
-                mChildFrame.right - lp.rightMargin, mChildFrame.bottom - lp.bottomMargin);
+        layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
+                mChildFrame.bottom);
 
         cacheItemEntry(child, position, lane, mChildFrame);
     }
