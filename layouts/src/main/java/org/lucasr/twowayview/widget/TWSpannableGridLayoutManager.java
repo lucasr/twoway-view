@@ -37,7 +37,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     private static final int DEFAULT_NUM_COLS = 3;
     private static final int DEFAULT_NUM_ROWS = 3;
 
-    protected static class SpannableItemEntry extends TWLanedLayoutManager.ItemEntry {
+    protected static class SpannableItemEntry extends TWBaseLayoutManager.ItemEntry {
         private final int colSpan;
         private final int rowSpan;
 

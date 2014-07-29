@@ -19,7 +19,7 @@ package org.lucasr.twowayview.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 
-public class TWListLayoutManager extends TWLanedLayoutManager {
+public class TWListLayoutManager extends TWBaseLayoutManager {
     private static final String LOGTAG = "TWListLayoutManager";
 
     public TWListLayoutManager(Context context, AttributeSet attrs) {

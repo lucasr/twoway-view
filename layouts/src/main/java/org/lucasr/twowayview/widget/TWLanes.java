@@ -27,7 +27,7 @@ import java.util.EnumMap;
 class TWLanes {
     public static final int NO_LANE = -1;
 
-    private final TWLanedLayoutManager mLayout;
+    private final TWBaseLayoutManager mLayout;
     private final boolean mIsVertical;
     private final Rect[] mLanes;
     private final int mLaneSize;
@@ -41,14 +41,14 @@ class TWLanes {
 
     private final EnumMap<Edge, Integer> mCachedEdges = new EnumMap(Edge.class);
 
-    public TWLanes(TWLanedLayoutManager layout, Orientation orientation, Rect[] lanes, int laneSize) {
+    public TWLanes(TWBaseLayoutManager layout, Orientation orientation, Rect[] lanes, int laneSize) {
         mLayout = layout;
         mIsVertical = (orientation == Orientation.VERTICAL);
         mLanes = lanes;
         mLaneSize = laneSize;
     }
 
-    public TWLanes(TWLanedLayoutManager layout, int laneCount) {
+    public TWLanes(TWBaseLayoutManager layout, int laneCount) {
         mLayout = layout;
         mIsVertical = (layout.getOrientation() == Orientation.VERTICAL);
 

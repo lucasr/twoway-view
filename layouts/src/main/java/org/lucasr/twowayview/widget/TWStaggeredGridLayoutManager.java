@@ -31,7 +31,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     private static final int DEFAULT_NUM_COLS = 2;
     private static final int DEFAULT_NUM_ROWS = 2;
 
-    protected static class StaggeredItemEntry extends TWLanedLayoutManager.ItemEntry {
+    protected static class StaggeredItemEntry extends TWBaseLayoutManager.ItemEntry {
         private final int width;
         private final int height;
 

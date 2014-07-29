@@ -34,7 +34,7 @@ import android.view.ViewGroup.MarginLayoutParams;
 
 import org.lucasr.twowayview.TWAbsLayoutManager;
 
-public abstract class TWLanedLayoutManager extends TWAbsLayoutManager {
+public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
     private static final String LOGTAG = "TWLanedLayoutManager";
 
     protected static class ItemEntry implements Parcelable {
@@ -81,15 +81,15 @@ public abstract class TWLanedLayoutManager extends TWAbsLayoutManager {
     protected final Rect mChildFrame = new Rect();
     protected final Rect mTempRect = new Rect();
 
-    public TWLanedLayoutManager(Context context, AttributeSet attrs) {
+    public TWBaseLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWLanedLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+    public TWBaseLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
-    public TWLanedLayoutManager(Context context, Orientation orientation) {
+    public TWBaseLayoutManager(Context context, Orientation orientation) {
         super(context, orientation);
     }
 

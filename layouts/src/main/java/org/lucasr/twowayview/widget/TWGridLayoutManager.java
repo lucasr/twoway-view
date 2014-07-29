@@ -23,7 +23,7 @@ import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class TWGridLayoutManager extends TWLanedLayoutManager {
+public class TWGridLayoutManager extends TWBaseLayoutManager {
     private static final String LOGTAG = "TWGridLayoutManager";
 
     private static final int DEFAULT_NUM_COLS = 2;
