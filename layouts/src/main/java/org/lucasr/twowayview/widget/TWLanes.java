@@ -19,8 +19,8 @@ package org.lucasr.twowayview.widget;
 import android.graphics.Rect;
 import android.view.View;
 
-import org.lucasr.twowayview.TWLayoutManager;
-import org.lucasr.twowayview.TWLayoutManager.Orientation;
+import org.lucasr.twowayview.TWAbsLayoutManager.Direction;
+import org.lucasr.twowayview.TWAbsLayoutManager.Orientation;
 
 import java.util.EnumMap;
 
@@ -130,10 +130,10 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public void addToLane(int lane, TWLayoutManager.Direction direction, int dimension) {
+    public void addToLane(int lane, Direction direction, int dimension) {
         final Rect laneRect = mLanes[lane];
 
-        if (direction == TWLayoutManager.Direction.END) {
+        if (direction == Direction.END) {
             if (mIsVertical) {
                 laneRect.bottom += dimension;
             } else {
@@ -150,10 +150,10 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public void removeFromLane(int lane, TWLayoutManager.Direction direction, int dimension) {
+    public void removeFromLane(int lane, Direction direction, int dimension) {
         final Rect laneRect = mLanes[lane];
 
-        if (direction == TWLayoutManager.Direction.END) {
+        if (direction == Direction.END) {
             if (mIsVertical) {
                 laneRect.top += dimension;
             } else {
@@ -170,13 +170,13 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public int getChildFrame(View child, int lane, TWLayoutManager.Direction direction,
-                             Rect childFrame) {
+    public int getChildFrame(View child, int lane, Direction direction, Rect childFrame) {
         return getChildFrame(mLayout.getDecoratedMeasuredWidth(child),
                 mLayout.getDecoratedMeasuredHeight(child), lane, direction, childFrame);
     }
 
-    public int getChildFrame(int childWidth, int childHeight, int lane, TWLayoutManager.Direction direction, Rect childFrame) {
+    public int getChildFrame(int childWidth, int childHeight, int lane, Direction direction,
+                             Rect childFrame) {
         final Rect laneRect = mLanes[lane];
 
         final int delta;
@@ -185,7 +185,7 @@ class TWLanes {
             childFrame.left = laneRect.left;
             childFrame.right = laneRect.left + childWidth;
 
-            if (direction == TWLayoutManager.Direction.END) {
+            if (direction == Direction.END) {
                 childFrame.top = laneRect.bottom;
                 childFrame.bottom = childFrame.top + childHeight;
                 delta = childFrame.bottom - laneRect.bottom;
@@ -198,7 +198,7 @@ class TWLanes {
             childFrame.top = laneRect.top;
             childFrame.bottom = laneRect.top + childHeight;
 
-            if (direction == TWLayoutManager.Direction.END) {
+            if (direction == Direction.END) {
                 childFrame.left = laneRect.right;
                 childFrame.right = childFrame.left + childWidth;
                 delta = childFrame.right - laneRect.right;

@@ -20,7 +20,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -40,7 +39,7 @@ import static android.support.v7.widget.RecyclerView.SCROLL_STATE_SETTLING;
 import org.lucasr.twowayview.TWItemClickListener;
 import org.lucasr.twowayview.TWItemClickListener.OnItemClickListener;
 import org.lucasr.twowayview.TWItemClickListener.OnItemLongClickListener;
-import org.lucasr.twowayview.TWLayoutManager.Orientation;
+import org.lucasr.twowayview.TWAbsLayoutManager.Orientation;
 import org.lucasr.twowayview.widget.TWSpannableGridLayoutManager;
 import org.lucasr.twowayview.TWView;
 

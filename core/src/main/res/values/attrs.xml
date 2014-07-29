@@ -21,7 +21,7 @@
         <attr name="layoutManager" format="string"/>
     </declare-styleable>
 
-    <declare-styleable name="TWLayoutManager">
+    <declare-styleable name="TWAbsLayoutManager">
         <attr name="android:orientation"/>
     </declare-styleable>
 

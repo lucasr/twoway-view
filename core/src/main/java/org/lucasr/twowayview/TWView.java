@@ -22,12 +22,9 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 
-import org.lucasr.twowayview.TWLayoutManager;
-import org.lucasr.twowayview.TWLayoutManager.Orientation;
-import org.w3c.dom.Attr;
+import org.lucasr.twowayview.TWAbsLayoutManager.Orientation;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 public class TWView extends RecyclerView {
     private static final String LOGTAG = "TWView";
@@ -66,10 +63,10 @@ public class TWView extends RecyclerView {
                 name = packageName + name;
             }
 
-            Class<? extends TWLayoutManager> clazz =
-                    context.getClassLoader().loadClass(name).asSubclass(TWLayoutManager.class);
+            Class<? extends TWAbsLayoutManager> clazz =
+                    context.getClassLoader().loadClass(name).asSubclass(TWAbsLayoutManager.class);
 
-            Constructor<? extends TWLayoutManager> constructor =
+            Constructor<? extends TWAbsLayoutManager> constructor =
                     clazz.getConstructor(sConstructorSignature);
 
             sConstructorArgs[0] = context;
@@ -83,7 +80,7 @@ public class TWView extends RecyclerView {
 
     @Override
     public void setLayoutManager(LayoutManager layout) {
-        if (!(layout instanceof  TWLayoutManager)) {
+        if (!(layout instanceof TWAbsLayoutManager)) {
             throw new IllegalArgumentException("TWView can only use TWLayoutManager subclasses " +
                                                "as its layout manager");
         }
@@ -92,17 +89,17 @@ public class TWView extends RecyclerView {
     }
 
     public Orientation getOrientation() {
-        TWLayoutManager layout = (TWLayoutManager) getLayoutManager();
+        TWAbsLayoutManager layout = (TWAbsLayoutManager) getLayoutManager();
         return layout.getOrientation();
     }
 
     public void setOrientation(Orientation orientation) {
-        TWLayoutManager layout = (TWLayoutManager) getLayoutManager();
+        TWAbsLayoutManager layout = (TWAbsLayoutManager) getLayoutManager();
         layout.setOrientation(orientation);
     }
 
     public int getFirstVisiblePosition() {
-        TWLayoutManager layout = (TWLayoutManager) getLayoutManager();
+        TWAbsLayoutManager layout = (TWAbsLayoutManager) getLayoutManager();
         return layout.getFirstVisiblePosition();
     }
 }

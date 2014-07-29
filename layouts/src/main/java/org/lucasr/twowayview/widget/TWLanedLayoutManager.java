@@ -32,9 +32,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
-import org.lucasr.twowayview.TWLayoutManager;
+import org.lucasr.twowayview.TWAbsLayoutManager;
 
-public abstract class TWLanedLayoutManager extends TWLayoutManager {
+public abstract class TWLanedLayoutManager extends TWAbsLayoutManager {
     private static final String LOGTAG = "TWLanedLayoutManager";
 
     protected static class ItemEntry implements Parcelable {

@@ -37,7 +37,7 @@ import android.view.ViewGroup.MarginLayoutParams;
 
 import java.util.List;
 
-public abstract class TWLayoutManager extends LayoutManager {
+public abstract class TWAbsLayoutManager extends LayoutManager {
     private static final String LOGTAG = "TWLayoutManager";
 
     public static enum Orientation {
@@ -62,11 +62,11 @@ public abstract class TWLayoutManager extends LayoutManager {
 
     private final Rect mTempRect = new Rect();
 
-    public TWLayoutManager(Context context, AttributeSet attrs) {
+    public TWAbsLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+    public TWAbsLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         final TypedArray a =
                 context.obtainStyledAttributes(attrs, R.styleable.TWLayoutManager, defStyle, 0);
 
@@ -85,7 +85,7 @@ public abstract class TWLayoutManager extends LayoutManager {
         a.recycle();
     }
 
-    public TWLayoutManager(Context context, Orientation orientation) {
+    public TWAbsLayoutManager(Context context, Orientation orientation) {
         mIsVertical = (orientation == Orientation.VERTICAL);
     }
 
