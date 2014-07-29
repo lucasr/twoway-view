@@ -123,7 +123,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
         StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
             final int width = childFrame.right - childFrame.left;
@@ -157,7 +157,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
                 final int lane = getLaneForPosition(position, Direction.END);
                 lanes.getChildFrame(child, lane, Direction.END, childFrame);
 
-                entry = (StaggeredItemEntry) ensureItemEntry(child, i, lane, childFrame);
+                entry = (StaggeredItemEntry) cacheItemEntry(child, i, lane, childFrame);
             }
 
             lanes.pushChildFrame(entry.lane, Direction.END, childFrame);

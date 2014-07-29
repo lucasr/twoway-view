@@ -341,7 +341,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         layoutDecorated(child, mChildFrame.left + lp.leftMargin, mChildFrame.top + lp.topMargin,
                 mChildFrame.right - lp.rightMargin, mChildFrame.bottom - lp.bottomMargin);
 
-        ensureItemEntry(child, position, lane, mChildFrame);
+        cacheItemEntry(child, position, lane, mChildFrame);
     }
 
     @Override
@@ -381,7 +381,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         return new LayoutParams(c, attrs);
     }
 
-    ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
         // Do nothing by default
         return null;
     }

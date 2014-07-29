@@ -194,7 +194,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    ItemEntry ensureItemEntry(View child, int position, int lane, Rect childFrame) {
+    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
         SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
             final LayoutParams lp = (LayoutParams) child.getLayoutParams();
@@ -248,7 +248,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
                         getChildHeight(lp.rowSpan), i, Direction.END, getLaneSpan(isVertical, lp),
                         childFrame);
 
-                entry = (SpannableItemEntry) ensureItemEntry(child, i, lane, childFrame);
+                entry = (SpannableItemEntry) cacheItemEntry(child, i, lane, childFrame);
             }
 
             if (i != position) {
@@ -293,7 +293,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         layoutDecorated(child, mChildFrame.left + lp.leftMargin, mChildFrame.top + lp.topMargin,
                 mChildFrame.right - lp.rightMargin, mChildFrame.bottom - lp.bottomMargin);
 
-        ensureItemEntry(child, position, lane, mChildFrame);
+        cacheItemEntry(child, position, lane, mChildFrame);
     }
 
     @Override
