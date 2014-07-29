@@ -98,21 +98,11 @@ public abstract class TWLayoutManager extends LayoutManager {
     }
 
     private int getChildStart(View child) {
-        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
-        if (mIsVertical) {
-            return getDecoratedTop(child) - lp.topMargin;
-        } else {
-            return getDecoratedLeft(child) - lp.leftMargin;
-        }
+        return (mIsVertical ? getDecoratedTop(child) : getDecoratedLeft(child));
     }
 
     private int getChildEnd(View child) {
-        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
-        if (mIsVertical) {
-            return getDecoratedBottom(child) + lp.bottomMargin;
-        } else {
-            return getDecoratedRight(child) + lp.rightMargin;
-        }
+        return (mIsVertical ?  getDecoratedBottom(child) : getDecoratedRight(child));
     }
 
     private int getChildMeasurement(View child) {
@@ -483,6 +473,30 @@ public abstract class TWLayoutManager extends LayoutManager {
     public int getDecoratedMeasuredHeight(View child) {
         final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
         return super.getDecoratedMeasuredHeight(child) + lp.topMargin + lp.bottomMargin;
+    }
+
+    @Override
+    public int getDecoratedLeft(View child) {
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        return super.getDecoratedLeft(child) - lp.leftMargin;
+    }
+
+    @Override
+    public int getDecoratedTop(View child) {
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        return super.getDecoratedTop(child) - lp.topMargin;
+    }
+
+    @Override
+    public int getDecoratedRight(View child) {
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        return super.getDecoratedRight(child) + lp.rightMargin;
+    }
+
+    @Override
+    public int getDecoratedBottom(View child) {
+        final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+        return super.getDecoratedBottom(child) + lp.bottomMargin;
     }
 
     @Override
