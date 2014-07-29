@@ -52,9 +52,9 @@ public class TWGridLayoutManager extends TWBaseLayoutManager {
             final int attr = a.getIndex(i);
 
             if (attr == R.styleable.TWGridLayoutManager_numColumns) {
-                mNumColumns = Math.max(defaultNumColumns, a.getInt(attr, -1));
+                mNumColumns = Math.max(1, a.getInt(attr, defaultNumColumns));
             } else if (attr == R.styleable.TWGridLayoutManager_numRows) {
-                mNumRows = Math.max(defaultNumRows, a.getInt(attr, -1));
+                mNumRows = Math.max(1, a.getInt(attr, defaultNumRows));
             }
         }
 

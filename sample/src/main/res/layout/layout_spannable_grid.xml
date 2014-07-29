@@ -23,5 +23,5 @@
     android:layout_height="match_parent"
     style="@style/TWView"
     app:layoutManager="org.lucasr.twowayview.widget.TWSpannableGridLayoutManager"
-    app:numColumns="2"
-    app:numRows="2" />
+    app:numColumns="3"
+    app:numRows="3" />
