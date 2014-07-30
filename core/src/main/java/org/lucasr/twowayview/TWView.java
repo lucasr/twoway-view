@@ -58,7 +58,10 @@ public class TWView extends RecyclerView {
 
     private void loadLayoutManagerFromName(Context context, AttributeSet attrs, String name) {
         try {
-            if (name.startsWith(".")) {
+            final int dotIndex = name.indexOf('.');
+            if (dotIndex == -1) {
+                name = "org.lucasr.twowayview.widget." + name;
+            } else if (dotIndex == 0) {
                 final String packageName = context.getPackageName();
                 name = packageName + name;
             }
