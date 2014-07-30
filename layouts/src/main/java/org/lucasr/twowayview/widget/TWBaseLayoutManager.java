@@ -112,10 +112,6 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         return itemLanes;
     }
 
-    int getStartWithPadding() {
-        return (isVertical() ? getPaddingTop() : getPaddingLeft());
-    }
-
     void getDecoratedChildFrame(View child, Rect childFrame) {
         childFrame.left = getDecoratedLeft(child);
         childFrame.top = getDecoratedTop(child);

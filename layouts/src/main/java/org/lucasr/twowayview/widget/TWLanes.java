@@ -74,8 +74,8 @@ class TWLanes {
         for (int i = 0; i < laneCount; i++) {
             final int laneStart = i * mLaneSize;
 
-            final int l = paddingLeft + (mIsVertical ? laneStart : layout.getStartWithPadding());
-            final int t = paddingTop + (mIsVertical ? layout.getStartWithPadding() : laneStart);
+            final int l = paddingLeft + (mIsVertical ? laneStart : 0);
+            final int t = paddingTop + (mIsVertical ? 0 : laneStart);
             final int r = (mIsVertical ? l + mLaneSize : l);
             final int b = (mIsVertical ? t : t + mLaneSize);
 
