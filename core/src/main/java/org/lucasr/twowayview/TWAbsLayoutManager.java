@@ -30,9 +30,9 @@ import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.View.BaseSavedState;
-import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
 import java.util.List;
@@ -51,7 +51,6 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     }
 
     private int mFirstPosition;
-    private int mFirstVisiblePosition;
 
     private boolean mIsVertical = true;
 
@@ -113,10 +112,6 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
 
     private int getChildEnd(View child) {
         return (mIsVertical ?  getDecoratedBottom(child) : getDecoratedRight(child));
-    }
-
-    private int getChildMeasurement(View child) {
-        return (mIsVertical ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
     }
 
     private void offsetChildren(int offset) {
@@ -224,8 +219,6 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
             fillGap(direction, recycler, state);
         }
 
-        mFirstVisiblePosition = mFirstPosition;
-
         return delta;
     }
 
@@ -302,38 +295,6 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
 
         fillAfter(position + 1, recycler, state, extraSpaceAfter);
         correctTooHigh(getChildCount(), recycler, state);
-    }
-
-    private void fillScrapViewsIfNeeded(Recycler recycler, State state) {
-        final int childCount = getChildCount();
-        if (childCount == 0 || state.isPreLayout() || !supportsPredictiveItemAnimations()) {
-            return;
-        }
-
-        final List<ViewHolder> scrapList = recycler.getScrapList();
-        final int scrapCount = scrapList.size();
-
-        int extraSpaceBefore = 0;
-        int extraSpaceAfter = 0;
-
-        for (int i = 0; i < scrapCount; i++) {
-            final ViewHolder holder = scrapList.get(i);
-
-            final int childMeasurement = getChildMeasurement(holder.itemView);
-            if (holder.getPosition() < mFirstPosition) {
-                extraSpaceBefore += childMeasurement;
-            } else {
-                extraSpaceAfter += childMeasurement;
-            }
-        }
-
-        if (extraSpaceBefore > 0) {
-            fillBefore(mFirstPosition - 1, recycler, extraSpaceBefore);
-        }
-
-        if (extraSpaceAfter > 0) {
-            fillAfter(childCount, recycler, state, extraSpaceAfter);
-        }
     }
 
     private void correctTooHigh(int childCount, Recycler recycler, State state) {
@@ -441,6 +402,56 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         }
     }
 
+    private static View findNextScrapView(List<ViewHolder> scrapList, Direction direction,
+                                          int position) {
+        final int scrapCount = scrapList.size();
+
+        ViewHolder closest = null;
+        int closestDistance = Integer.MAX_VALUE;
+
+        for (int i = 0; i < scrapCount; i++) {
+            final ViewHolder holder = scrapList.get(i);
+
+            final int distance = holder.getPosition() - position;
+            if ((distance < 0 && direction == Direction.END) ||
+                    (distance > 0 && direction == Direction.START)) {
+                continue;
+            }
+
+            final int absDistance = Math.abs(distance);
+            if (absDistance < closestDistance) {
+                closest = holder;
+                closestDistance = absDistance;
+
+                if (distance == 0) {
+                    break;
+                }
+            }
+        }
+
+        if (closest != null) {
+            return closest.itemView;
+        }
+
+        return null;
+    }
+
+    private void fillFromScrapList(List<ViewHolder> scrapList, Direction direction) {
+        int position;
+        if (direction == Direction.END) {
+            position = mFirstPosition + getChildCount();
+        } else {
+            position = mFirstPosition - 1;
+        }
+
+        View scrapChild = null;
+        while ((scrapChild = findNextScrapView(scrapList, direction, position)) != null) {
+            measureChild(scrapChild);
+            layoutChild(scrapChild, direction);
+            position += (direction == Direction.END ? 1 : -1);
+        }
+    }
+
     private View makeAndAddView(int position, Direction direction, Recycler recycler) {
         final View child = recycler.getViewForPosition(position);
 
@@ -543,12 +554,22 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         detachAndScrapAttachedViews(recycler);
         fillSpecific(anchorItemPosition, recycler, state);
 
-        mFirstVisiblePosition = mFirstPosition;
-        fillScrapViewsIfNeeded(recycler, state);
+        onLayoutScrapList(recycler, state);
 
         mPendingScrollPosition = RecyclerView.NO_POSITION;
         mPendingScrollOffset = 0;
         mPendingSavedState = null;
+    }
+
+    protected void onLayoutScrapList(Recycler recycler, State state) {
+        final int childCount = getChildCount();
+        if (childCount == 0 || state.isPreLayout() || !supportsPredictiveItemAnimations()) {
+            return;
+        }
+
+        final List<ViewHolder> scrapList = recycler.getScrapList();
+        fillFromScrapList(scrapList, Direction.START);
+        fillFromScrapList(scrapList, Direction.END);
     }
 
     @Override
@@ -700,7 +721,7 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
 
         int anchorItemPosition = getPendingScrollPosition();
         if (anchorItemPosition == RecyclerView.NO_POSITION) {
-            anchorItemPosition = mFirstVisiblePosition;
+            anchorItemPosition = mFirstPosition;
         }
         state.anchorItemPosition = anchorItemPosition;
 
