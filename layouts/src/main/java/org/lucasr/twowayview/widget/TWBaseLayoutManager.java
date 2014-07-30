@@ -260,7 +260,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         final Parcelable superState = super.onSaveInstanceState();
         final LanedSavedState state = new LanedSavedState(superState);
 
-        final int laneCount = mLanes.getCount();
+        final int laneCount = (mLanes != null ? mLanes.getCount() : 0);
         state.lanes = new Rect[laneCount];
         for (int i = 0; i < laneCount; i++) {
             final Rect laneRect = new Rect();
@@ -269,7 +269,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         }
 
         state.orientation = getOrientation();
-        state.laneSize = mLanes.getLaneSize();
+        state.laneSize = (mLanes != null ? mLanes.getLaneSize() : 0);
         state.itemEntries = cloneItemEntries();
 
         return state;
