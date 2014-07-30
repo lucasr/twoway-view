@@ -63,7 +63,7 @@ public class TWView extends RecyclerView {
                 name = "org.lucasr.twowayview.widget." + name;
             } else if (dotIndex == 0) {
                 final String packageName = context.getPackageName();
-                name = packageName + name;
+                name = packageName + "." + name;
             }
 
             Class<? extends TWAbsLayoutManager> clazz =
