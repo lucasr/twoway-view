@@ -242,6 +242,13 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
     }
 
     @Override
+    protected void onLayoutScrapList(Recycler recycler, State state) {
+        mLanes.save();
+        super.onLayoutScrapList(recycler, state);
+        mLanes.restore();
+    }
+
+    @Override
     public void setOrientation(Orientation orientation) {
         final boolean changed = (getOrientation() != orientation);
         super.setOrientation(orientation);
