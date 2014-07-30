@@ -444,13 +444,13 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     private View makeAndAddView(int position, Direction direction, Recycler recycler) {
         final View child = recycler.getViewForPosition(position);
 
+        measureChild(child);
+        layoutChild(child, direction);
+
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
             addView(child, (direction == Direction.END ? -1 : 0));
         }
-
-        measureChild(child);
-        layoutChild(child, direction);
 
         return child;
     }
