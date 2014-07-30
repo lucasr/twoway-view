@@ -95,11 +95,11 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         }
     }
 
-    private int getStartWithPadding() {
+    protected int getStartWithPadding() {
         return (mIsVertical ? getPaddingTop() : getPaddingLeft());
     }
 
-    private int getEndWithPadding() {
+    protected int getEndWithPadding() {
         if (mIsVertical) {
             return (getHeight() - getPaddingBottom());
         } else {
