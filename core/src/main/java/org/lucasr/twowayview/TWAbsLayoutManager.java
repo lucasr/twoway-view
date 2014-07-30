@@ -466,6 +466,16 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         return child;
     }
 
+    private void handleAdapterChange() {
+        // Refresh state by requesting layout without changing the
+        // first visible position. This will ensure we'll ensure
+        // the layout will sync with the adapter changes.
+        final View firstChild = findViewByPosition(mFirstPosition);
+        mPendingScrollPosition = mFirstPosition;
+        mPendingScrollOffset = getChildStart(firstChild);
+        requestLayout();
+    }
+
     protected int getExtraLayoutSpace(State state) {
         if (state.hasTargetScrollPosition()) {
             return getTotalSpace();
@@ -576,6 +586,7 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     public void onItemsAdded(RecyclerView recyclerView, int positionStart, int itemCount) {
         if (positionStart < mFirstPosition) {
             mFirstPosition -= itemCount;
+            handleAdapterChange();
         }
     }
 
@@ -583,6 +594,7 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     public void onItemsRemoved(RecyclerView recyclerView, int positionStart, int itemCount) {
         if (positionStart < mFirstPosition) {
             mFirstPosition -= itemCount;
+            handleAdapterChange();
         }
     }
 

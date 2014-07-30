@@ -27,6 +27,7 @@ import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -170,6 +171,15 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         return true;
     }
 
+    void handleAdapterChange() {
+        // Adapter changes is very likely to affect chain of layout
+        // decisions the layout manager has made regarding where to
+        // place items e.g. the lane is dynamically decided in
+        // some of the built-in layouts. Clear state so that the
+        // next layout pass doesn't run with bogus layout assumptions.
+        mItemEntries.clear();
+    }
+
     private void ensureLayoutState() {
         final int laneCount = getLaneCount();
         if (laneCount == 0 || getWidth() == 0 || getHeight() == 0) {
@@ -247,6 +257,19 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         super.onLayoutScrapList(recycler, state);
         mLanes.restore();
     }
+
+    @Override
+    public void onItemsAdded(RecyclerView recyclerView, int positionStart, int itemCount) {
+        super.onItemsAdded(recyclerView, positionStart, itemCount);
+        handleAdapterChange();
+    }
+
+    @Override
+    public void onItemsRemoved(RecyclerView recyclerView, int positionStart, int itemCount) {
+        super.onItemsRemoved(recyclerView, positionStart, itemCount);
+        handleAdapterChange();
+    }
+
 
     @Override
     public void setOrientation(Orientation orientation) {
