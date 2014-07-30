@@ -17,7 +17,6 @@
 package org.lucasr.twowayview.widget;
 
 import android.graphics.Rect;
-import android.util.Log;
 import android.view.View;
 
 import org.lucasr.twowayview.TWAbsLayoutManager.Direction;
@@ -31,6 +30,7 @@ class TWLanes {
     private final TWBaseLayoutManager mLayout;
     private final boolean mIsVertical;
     private final Rect[] mLanes;
+    private final Rect[] mSavedLanes;
     private final int mLaneSize;
 
     private static enum Edge {
@@ -47,6 +47,11 @@ class TWLanes {
         mIsVertical = (orientation == Orientation.VERTICAL);
         mLanes = lanes;
         mLaneSize = laneSize;
+
+        mSavedLanes = new Rect[mLanes.length];
+        for (int i = 0; i < mLanes.length; i++) {
+            mSavedLanes[i] = new Rect();
+        }
     }
 
     public TWLanes(TWBaseLayoutManager layout, int laneCount) {
@@ -54,8 +59,10 @@ class TWLanes {
         mIsVertical = (layout.getOrientation() == Orientation.VERTICAL);
 
         mLanes = new Rect[laneCount];
+        mSavedLanes = new Rect[laneCount];
         for (int i = 0; i < laneCount; i++) {
             mLanes[i] = new Rect();
+            mSavedLanes[i] = new Rect();
         }
 
         final int paddingLeft = layout.getPaddingLeft();
@@ -89,6 +96,18 @@ class TWLanes {
 
     public Orientation getOrientation() {
         return (mIsVertical ? Orientation.VERTICAL : Orientation.HORIZONTAL);
+    }
+
+    public void save() {
+        for (int i = 0; i < mLanes.length; i++) {
+            mSavedLanes[i].set(mLanes[i]);
+        }
+    }
+
+    public void restore() {
+        for (int i = 0; i < mLanes.length; i++) {
+            mLanes[i].set(mSavedLanes[i]);
+        }
     }
 
     public int getLaneSize() {
