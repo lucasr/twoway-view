@@ -19,7 +19,6 @@ package org.lucasr.twowayview;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
