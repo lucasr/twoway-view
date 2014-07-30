@@ -129,13 +129,6 @@ public class TWFragment extends Fragment {
 
         mRecyclerView.addItemDecoration(new SimpleDecoration(getActivity()));
         mRecyclerView.setAdapter(new SimpleAdapter(activity, mRecyclerView, mLayoutId));
-
-//        mRecyclerView.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                mRecyclerView.smoothScrollToPosition(20);
-//            }
-//        }, 5000);
     }
 
     private void updateState(int scrollState) {
