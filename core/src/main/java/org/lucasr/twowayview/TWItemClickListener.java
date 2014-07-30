@@ -110,8 +110,13 @@ public class TWItemClickListener implements OnItemTouchListener {
     }
 
     private int getFirstVisiblePosition() {
-        RecyclerView.LayoutParams lp =
-                (RecyclerView.LayoutParams) mHostView.getChildAt(0).getLayoutParams();
+        final View child = mHostView.getChildAt(0);
+        if (child == null) {
+            return 0;
+        }
+
+        final RecyclerView.LayoutParams lp =
+                (RecyclerView.LayoutParams) child.getLayoutParams();
         return lp.getViewPosition();
     }
 
