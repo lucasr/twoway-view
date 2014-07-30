@@ -221,6 +221,12 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
     public void onLayoutChildren(Recycler recycler, State state) {
         ensureLayoutState();
 
+        // Still not able to create lanes, nothing we can do here,
+        // just bail for now.
+        if (mLanes == null) {
+            return;
+        }
+
         if (canUseLanes(mLanesToRestore)) {
             mLanes = mLanesToRestore;
             mItemEntries = mItemEntriesToRestore;
