@@ -552,6 +552,20 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     }
 
     @Override
+    public void onItemsAdded(RecyclerView recyclerView, int positionStart, int itemCount) {
+        if (positionStart < mFirstPosition) {
+            mFirstPosition -= itemCount;
+        }
+    }
+
+    @Override
+    public void onItemsRemoved(RecyclerView recyclerView, int positionStart, int itemCount) {
+        if (positionStart < mFirstPosition) {
+            mFirstPosition -= itemCount;
+        }
+    }
+
+    @Override
     public RecyclerView.LayoutParams generateDefaultLayoutParams() {
         if (mIsVertical) {
             return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
