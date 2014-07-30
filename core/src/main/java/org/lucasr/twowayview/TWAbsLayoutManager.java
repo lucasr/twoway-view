@@ -32,6 +32,7 @@ import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.View.BaseSavedState;
+import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
 import java.util.List;
@@ -442,7 +443,11 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
 
     private View makeAndAddView(int position, Direction direction, Recycler recycler) {
         final View child = recycler.getViewForPosition(position);
-        addView(child, (direction == Direction.END ? -1 : 0));
+
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        if (!lp.isItemRemoved()) {
+            addView(child, (direction == Direction.END ? -1 : 0));
+        }
 
         measureChild(child);
         layoutChild(child, direction);

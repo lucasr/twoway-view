@@ -338,7 +338,11 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         final int position = getPosition(child);
 
         final int lane = getChildLaneAndFrame(child, position, direction, mChildFrame);
-        mLanes.pushChildFrame(lane, direction, mChildFrame);
+
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        if (!lp.isItemRemoved()) {
+            mLanes.pushChildFrame(lane, direction, mChildFrame);
+        }
 
         layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
                 mChildFrame.bottom);

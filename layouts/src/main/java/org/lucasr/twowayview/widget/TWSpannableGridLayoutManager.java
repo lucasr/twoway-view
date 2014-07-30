@@ -224,8 +224,9 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     protected void layoutChild(View child, Direction direction) {
         super.layoutChild(child, direction);
 
-        final int laneSpan = getLaneSpan(isVertical(), child);
-        if (laneSpan == 1) {
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        final int laneSpan = getLaneSpan(isVertical(), lp);
+        if (lp.isItemRemoved() || laneSpan == 1) {
             return;
         }
 
