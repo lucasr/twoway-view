@@ -446,17 +446,19 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
 
         View scrapChild = null;
         while ((scrapChild = findNextScrapView(scrapList, direction, position)) != null) {
-            measureChild(scrapChild);
-            layoutChild(scrapChild, direction);
+            setupChild(scrapChild, direction);
             position += (direction == Direction.END ? 1 : -1);
         }
     }
 
-    private View makeAndAddView(int position, Direction direction, Recycler recycler) {
-        final View child = recycler.getViewForPosition(position);
-
+    private void setupChild(View child, Direction direction) {
         measureChild(child);
         layoutChild(child, direction);
+    }
+
+    private View makeAndAddView(int position, Direction direction, Recycler recycler) {
+        final View child = recycler.getViewForPosition(position);
+        setupChild(child, direction);
 
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
