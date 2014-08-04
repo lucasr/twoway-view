@@ -322,16 +322,6 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         }
     }
 
-    @Override
-    protected int getLayoutStart() {
-        return mLanes.getOuterStart();
-    }
-
-    @Override
-    protected int getLayoutEnd() {
-        return mLanes.getOuterEnd();
-    }
-
     private int getWidthUsed(View child) {
         final boolean isVertical = isVertical();
         if (!isVertical) {

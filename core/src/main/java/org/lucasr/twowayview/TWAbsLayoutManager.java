@@ -59,6 +59,9 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     private int mPendingScrollPosition = RecyclerView.NO_POSITION;
     private int mPendingScrollOffset = 0;
 
+    private int mLayoutStart;
+    private int mLayoutEnd;
+
     public TWAbsLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
@@ -120,6 +123,9 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         } else {
             offsetChildrenHorizontal(offset);
         }
+
+        mLayoutStart += offset;
+        mLayoutEnd += offset;
     }
 
     private void recycleChildrenOutOfBounds(Direction direction, Recycler recycler) {
@@ -151,7 +157,9 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         mFirstPosition += detachedCount;
 
         while (--detachedCount >= 0) {
-            removeAndRecycleViewAt(0, recycler);
+            final View child = getChildAt(0);
+            removeAndRecycleView(child, recycler);
+            updateLayoutEdgesFromRemovedChild(child, direction);
         }
     }
 
@@ -176,7 +184,9 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         }
 
         while (--detachedCount >= 0) {
+            final View child = getChildAt(firstDetachedPos);
             removeAndRecycleViewAt(firstDetachedPos, recycler);
+            updateLayoutEdgesFromRemovedChild(child, direction);
         }
     }
 
@@ -185,9 +195,6 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         if (childCount == 0 || delta == 0) {
             return 0;
         }
-
-        final int outerStart = getLayoutStart();
-        final int outerEnd = getLayoutEnd();
 
         final int start = getStartWithPadding();
         final int end = getEndWithPadding();
@@ -200,9 +207,9 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         }
 
         final boolean cannotScrollBackward = (mFirstPosition == 0 &&
-                outerStart >= start && delta <= 0);
+                mLayoutStart >= start && delta <= 0);
         final boolean cannotScrollForward = (mFirstPosition + childCount == state.getItemCount() &&
-                outerEnd <= end && delta >= 0);
+                mLayoutEnd <= end && delta >= 0);
 
         if (cannotScrollForward || cannotScrollBackward) {
             return 0;
@@ -305,25 +312,20 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
             return;
         }
 
-        // Get the last end edge.
-        final int lastEnd = getLayoutEnd();
-
         // This is bottom of our drawable area.
         final int start = getStartWithPadding();
         final int end = getEndWithPadding();
 
         // This is how far the end edge of the last view is from the end of the
         // drawable area.
-        int endOffset = end - lastEnd;
-
-        int firstStart = getLayoutStart();
+        int endOffset = end - mLayoutEnd;
 
         // Make sure we are 1) Too high, and 2) Either there are more rows above the
         // first row or the first row is scrolled off the top of the drawable area
-        if (endOffset > 0 && (mFirstPosition > 0 || firstStart < start))  {
+        if (endOffset > 0 && (mFirstPosition > 0 || mLayoutStart < start))  {
             if (mFirstPosition == 0) {
                 // Don't pull the top too far down.
-                endOffset = Math.min(endOffset, start - firstStart);
+                endOffset = Math.min(endOffset, start - mLayoutStart);
             }
 
             // Move everything down
@@ -347,26 +349,24 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
             return;
         }
 
-        final int firstStart = getLayoutStart();
         final int start = getStartWithPadding();
         final int end = getEndWithPadding();
         final int itemCount = state.getItemCount();
 
         // This is how far the start edge of the first view is from the start of the
         // drawable area.
-        int startOffset = firstStart - start;
+        int startOffset = mLayoutStart - start;
 
-        int lastEnd = getLayoutEnd();
         final int lastPosition = mFirstPosition + childCount - 1;
 
         // Make sure we are 1) Too low, and 2) Either there are more columns/rows below the
         // last column/row or the last column/row is scrolled off the end of the
         // drawable area.
         if (startOffset > 0) {
-            if (lastPosition < itemCount - 1 || lastEnd > end)  {
+            if (lastPosition < itemCount - 1 || mLayoutEnd > end)  {
                 if (lastPosition == itemCount - 1) {
                     // Don't pull the bottom too far up.
-                    startOffset = Math.min(startOffset, lastEnd - end);
+                    startOffset = Math.min(startOffset, mLayoutEnd - end);
                 }
 
                 // Move everything up.
@@ -391,7 +391,7 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
             return;
         }
 
-        int delta = getLayoutStart() - getStartWithPadding();
+        int delta = mLayoutStart - getStartWithPadding();
         if (delta < 0) {
             // We only are looking to see if we are too low, not too high
             delta = 0;
@@ -463,6 +463,7 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
             addView(child, (direction == Direction.END ? -1 : 0));
+            updateLayoutEdgesFromNewChild(child);
         }
 
         return child;
@@ -476,6 +477,86 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         mPendingScrollPosition = mFirstPosition;
         mPendingScrollOffset = getChildStart(firstChild);
         requestLayout();
+    }
+
+    private void updateLayoutEdgesFromNewChild(View newChild) {
+        final int childStart = getChildStart(newChild);
+        if (childStart < mLayoutStart) {
+            mLayoutStart = childStart;
+        }
+
+        final int childEnd = getChildEnd(newChild);
+        if (childEnd > mLayoutEnd) {
+            mLayoutEnd = childEnd;
+        }
+    }
+
+    private void updateLayoutEdgesFromRemovedChild(View removedChild, Direction direction) {
+        final int childCount = getChildCount();
+        if (childCount == 0) {
+            resetLayoutEdges();
+            return;
+        }
+
+        final int removedChildStart = getChildStart(removedChild);
+        final int removedChildEnd = getChildEnd(removedChild);
+
+        if (removedChildStart > mLayoutStart && removedChildEnd < mLayoutEnd) {
+            return;
+        }
+
+        int index;
+        final int limit;
+        if (direction == Direction.END) {
+            // Scrolling torwards the end of the layout, child view being
+            // removed from the start.
+            mLayoutStart = Integer.MAX_VALUE;
+            index = 0;
+            limit = removedChildEnd;
+        } else {
+            // Scrolling torwards the start of the layout, child view being
+            // removed from the end.
+            mLayoutEnd = Integer.MIN_VALUE;
+            index = childCount - 1;
+            limit = removedChildStart;
+        }
+
+        while (index >= 0 && index <= childCount - 1) {
+            final View child = getChildAt(index);
+
+            if (direction == Direction.END) {
+                final int childStart = getChildStart(child);
+                if (childStart < mLayoutStart) {
+                    mLayoutStart = childStart;
+                }
+
+                // Checked enough child views to update the minimum
+                // layout start edge, stop.
+                if (childStart >= limit) {
+                    break;
+                }
+
+                index++;
+            } else {
+                final int childEnd = getChildEnd(child);
+                if (childEnd > mLayoutEnd) {
+                    mLayoutEnd = childEnd;
+                }
+
+                // Checked enough child views to update the minimum
+                // layout end edge, stop.
+                if (childEnd <= limit) {
+                    break;
+                }
+
+                index--;
+            }
+        }
+    }
+
+    private void resetLayoutEdges() {
+        mLayoutStart = getStartWithPadding();
+        mLayoutEnd = mLayoutStart;
     }
 
     protected int getExtraLayoutSpace(State state) {
@@ -770,9 +851,6 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     public int getFirstVisiblePosition() {
         return mFirstPosition;
     }
-
-    protected abstract int getLayoutStart();
-    protected abstract int getLayoutEnd();
 
     protected abstract void measureChild(View child);
     protected abstract void layoutChild(View child, Direction direction);

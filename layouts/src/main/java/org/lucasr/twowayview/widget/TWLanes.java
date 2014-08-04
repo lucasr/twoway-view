@@ -22,8 +22,6 @@ import android.view.View;
 import org.lucasr.twowayview.TWAbsLayoutManager.Direction;
 import org.lucasr.twowayview.TWAbsLayoutManager.Orientation;
 
-import java.util.EnumMap;
-
 class TWLanes {
     public static final int NO_LANE = -1;
 
@@ -33,14 +31,8 @@ class TWLanes {
     private final Rect[] mSavedLanes;
     private final int mLaneSize;
 
-    private static enum Edge {
-        OUTER_START,
-        OUTER_END,
-        INNER_START,
-        INNER_END
-    }
-
-    private final EnumMap<Edge, Integer> mCachedEdges = new EnumMap(Edge.class);
+    private Integer mInnerStart;
+    private Integer mInnerEnd;
 
     public TWLanes(TWBaseLayoutManager layout, Orientation orientation, Rect[] lanes, int laneSize) {
         mLayout = layout;
@@ -91,7 +83,8 @@ class TWLanes {
     }
 
     private void invalidateEdges() {
-        mCachedEdges.clear();
+        mInnerStart = null;
+        mInnerEnd = null;
     }
 
     public Orientation getOrientation() {
@@ -120,7 +113,7 @@ class TWLanes {
 
     private void offsetLane(int lane, int offset) {
         mLanes[lane].offset(mIsVertical ? 0 : offset,
-                            mIsVertical ? offset : 0);
+                mIsVertical ? offset : 0);
     }
 
     public void offset(int offset) {
@@ -251,68 +244,32 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public int getOuterStart() {
-        Integer outerStart = mCachedEdges.get(Edge.OUTER_START);
-        if (outerStart != null) {
-            return outerStart;
-        }
-
-        outerStart = Integer.MAX_VALUE;
-        for (int i = 0; i < mLanes.length; i++) {
-            final Rect laneRect = mLanes[i];
-            outerStart = Math.min(outerStart, mIsVertical ? laneRect.top : laneRect.left);
-        }
-
-        mCachedEdges.put(Edge.OUTER_START, outerStart);
-        return outerStart;
-    }
-
     public int getInnerStart() {
-        Integer innerStart = mCachedEdges.get(Edge.INNER_START);
-        if (innerStart != null) {
-            return innerStart;
+        if (mInnerStart != null) {
+            return mInnerStart;
         }
 
-        innerStart = Integer.MIN_VALUE;
+        mInnerStart = Integer.MIN_VALUE;
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
-            innerStart = Math.max(innerStart, mIsVertical ? laneRect.top : laneRect.left);
+            mInnerStart = Math.max(mInnerStart, mIsVertical ? laneRect.top : laneRect.left);
         }
 
-        mCachedEdges.put(Edge.INNER_START, innerStart);
-        return innerStart;
+        return mInnerStart;
     }
 
     public int getInnerEnd() {
-        Integer innerEnd = mCachedEdges.get(Edge.INNER_END);
-        if (innerEnd != null) {
-            return innerEnd;
+        if (mInnerEnd != null) {
+            return mInnerEnd;
         }
 
-        innerEnd = Integer.MAX_VALUE;
+        mInnerEnd = Integer.MAX_VALUE;
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
-            innerEnd = Math.min(innerEnd, mIsVertical ? laneRect.bottom : laneRect.right);
+            mInnerEnd = Math.min(mInnerEnd, mIsVertical ? laneRect.bottom : laneRect.right);
         }
 
-        mCachedEdges.put(Edge.INNER_END, innerEnd);
-        return innerEnd;
-    }
-
-    public int getOuterEnd() {
-        Integer outerEnd = mCachedEdges.get(Edge.OUTER_END);
-        if (outerEnd != null) {
-            return outerEnd;
-        }
-
-        outerEnd = Integer.MIN_VALUE;
-        for (int i = 0; i < mLanes.length; i++) {
-            final Rect laneRect = mLanes[i];
-            outerEnd = Math.max(outerEnd, mIsVertical ? laneRect.bottom : laneRect.right);
-        }
-
-        mCachedEdges.put(Edge.OUTER_END, outerEnd);
-        return outerEnd;
+        return mInnerEnd;
     }
 
     public boolean intersects(int start, int count, Rect r) {
