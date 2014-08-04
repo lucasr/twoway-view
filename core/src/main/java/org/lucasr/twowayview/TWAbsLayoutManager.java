@@ -584,6 +584,10 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         fillFromScrapList(scrapList, Direction.END);
     }
 
+    protected void detachChild(View child, Direction direction) {
+        // Do nothing by default.
+    }
+
     @Override
     public void onItemsAdded(RecyclerView recyclerView, int positionStart, int itemCount) {
         if (positionStart < mFirstPosition) {
@@ -772,7 +776,6 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
 
     protected abstract void measureChild(View child);
     protected abstract void layoutChild(View child, Direction direction);
-    protected abstract void detachChild(View child, Direction direction);
 
     protected abstract boolean canAddMoreViews(Direction direction, int limit);
 
