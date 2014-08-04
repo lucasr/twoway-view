@@ -672,7 +672,7 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     @Override
     public void onItemsAdded(RecyclerView recyclerView, int positionStart, int itemCount) {
         if (positionStart < mFirstPosition) {
-            mFirstPosition -= itemCount;
+            mFirstPosition += itemCount;
             handleAdapterChange();
         }
     }
