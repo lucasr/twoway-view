@@ -138,6 +138,12 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
                         Direction.END, childFrame);
             } else {
                 final View child = recycler.getViewForPosition(i);
+
+                // XXX: This might potentially cause stalls in the main
+                // thread if the layout ends up having to measure tons of
+                // child views. We might need to add different policies based
+                // on known assumptions regarding certain layouts e.g. child
+                // views have stable aspect ratio, lane size is fixed, etc.
                 measureChild(child);
 
                 final int lane = getLaneForPosition(position, Direction.END);
