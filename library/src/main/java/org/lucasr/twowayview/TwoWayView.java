@@ -4716,12 +4716,14 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int top;
         final int left;
 
+        // Compensate item margin on the first item of the list if the item margin
+        // is negative to avoid incorrect offset for the very first child.
         if (mIsVertical) {
-            top = offset;
+            top = offset - (mItemMargin < 0 && position == 0 && !flow ? mItemMargin : 0);
             left = getPaddingLeft();
         } else {
             top = getPaddingTop();
-            left = offset;
+            left = offset - (mItemMargin < 0 && position == 0 && !flow ? mItemMargin: 0);
         }
 
         if (!mDataChanged) {
@@ -5095,7 +5097,14 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             return;
         }
 
-        int delta = getChildStartEdge(getChildAt(0)) - getStartEdge() - mItemMargin;
+        int delta = getChildStartEdge(getChildAt(0)) - getStartEdge();
+
+        // If item margin is negative we shouldn't apply it in the
+        // first item of the list to avoid offsetting it incorrectly.
+        if (mItemMargin >= 0 || mFirstPosition != 0) {
+            delta -= mItemMargin;
+        }
+
         if (delta < 0) {
             // We only are looking to see if we are too low, not too high
             delta = 0;
