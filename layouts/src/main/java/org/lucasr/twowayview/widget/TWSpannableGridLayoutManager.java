@@ -104,8 +104,17 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return getLanes().getLaneSize() * rowSpan;
     }
 
-    private static int getLaneSpan(boolean isVertical, View child) {
-        return getLaneSpan(isVertical, (LayoutParams) child.getLayoutParams());
+    static int getLaneSpan(TWSpannableGridLayoutManager lm, View child) {
+        return getLaneSpan(lm.isVertical(), (LayoutParams) child.getLayoutParams());
+    }
+
+    static int getLaneSpan(TWSpannableGridLayoutManager lm, int position) {
+        final SpannableItemEntry entry = (SpannableItemEntry) lm.getItemEntryForPosition(position);
+        if (entry == null) {
+            throw new IllegalStateException("Could not find span for position " + position);
+        }
+
+        return getLaneSpan(lm.isVertical(), entry);
     }
 
     private static int getLaneSpan(boolean isVertical, LayoutParams lp) {
@@ -146,7 +155,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
                                        Rect childFrame) {
         return getChildLaneAndFrame(getDecoratedMeasuredWidth(child),
                 getDecoratedMeasuredHeight(child), position, direction,
-                getLaneSpan(isVertical(), child), childFrame);
+                getLaneSpan(this, child), childFrame);
     }
 
     private int getChildLaneAndFrame(int childWith, int childHeight, int position,
@@ -243,7 +252,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     protected void detachChild(View child, Direction direction) {
         super.detachChild(child, direction);
 
-        final int laneSpan = getLaneSpan(isVertical(), child);
+        final int laneSpan = getLaneSpan(this, child);
         if (laneSpan == 1) {
             return;
         }
