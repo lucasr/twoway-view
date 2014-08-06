@@ -508,13 +508,13 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         int index;
         final int limit;
         if (direction == Direction.END) {
-            // Scrolling torwards the end of the layout, child view being
+            // Scrolling towards the end of the layout, child view being
             // removed from the start.
             mLayoutStart = Integer.MAX_VALUE;
             index = 0;
             limit = removedChildEnd;
         } else {
-            // Scrolling torwards the start of the layout, child view being
+            // Scrolling towards the start of the layout, child view being
             // removed from the end.
             mLayoutEnd = Integer.MIN_VALUE;
             index = childCount - 1;
