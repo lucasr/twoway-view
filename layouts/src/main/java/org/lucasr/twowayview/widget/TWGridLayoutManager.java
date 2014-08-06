@@ -47,16 +47,10 @@ public class TWGridLayoutManager extends TWBaseLayoutManager {
         final TypedArray a =
                 context.obtainStyledAttributes(attrs, R.styleable.TWGridLayoutManager, defStyle, 0);
 
-        final int indexCount = a.getIndexCount();
-        for (int i = 0; i < indexCount; i++) {
-            final int attr = a.getIndex(i);
-
-            if (attr == R.styleable.TWGridLayoutManager_numColumns) {
-                mNumColumns = Math.max(1, a.getInt(attr, defaultNumColumns));
-            } else if (attr == R.styleable.TWGridLayoutManager_numRows) {
-                mNumRows = Math.max(1, a.getInt(attr, defaultNumRows));
-            }
-        }
+        mNumColumns =
+                Math.max(1, a.getInt(R.styleable.TWGridLayoutManager_numColumns, defaultNumColumns));
+        mNumRows =
+                Math.max(1, a.getInt(R.styleable.TWGridLayoutManager_numRows, defaultNumRows));
 
         a.recycle();
     }
