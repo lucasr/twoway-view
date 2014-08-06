@@ -22,6 +22,15 @@
         <attr name="numRows" format="integer"/>
     </declare-styleable>
 
+    <declare-styleable name="TWSpacingItemDecoration">
+        <attr name="android:verticalSpacing"/>
+        <attr name="android:horizontalSpacing"/>
+    </declare-styleable>
+
+    <declare-styleable name="TWDividerItemDecoration">
+        <attr name="android:divider"/>
+    </declare-styleable>
+
     <declare-styleable name="TWSpannableGridViewChild">
         <attr name="colSpan" format="integer"/>
         <attr name="rowSpan" format="integer"/>

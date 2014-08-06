@@ -1,0 +1,190 @@
+package org.lucasr.twowayview.widget;
+
+import android.graphics.Rect;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
+
+import org.lucasr.twowayview.TWAbsLayoutManager.Direction;
+
+/**
+ * Core logic for applying item vertical and horizontal spacings via item
+ * offsets. Account for the item lane positions to only apply spacings within
+ * the layout.
+ */
+class TWItemSpacing {
+    private final int mVerticalSpacing;
+    private final int mHorizontalSpacing;
+
+    private boolean mAddSpacingAtEnd;
+
+    public TWItemSpacing(int verticalSpacing, int horizontalSpacing) {
+        if (verticalSpacing < 0 || horizontalSpacing < 0) {
+            throw new IllegalArgumentException("Spacings should be equal or greater than 0");
+        }
+
+        mVerticalSpacing = verticalSpacing;
+        mHorizontalSpacing = horizontalSpacing;
+    }
+
+    /**
+     * Checks whether the given position is placed just after the item in the
+     * first lane of the layout taking items spans into account.
+     */
+    private boolean isSecondLane(TWBaseLayoutManager lm, int itemPosition, int lane) {
+        if (lane == 0 || itemPosition == 0) {
+            return false;
+        }
+
+        int previousLane = TWLanes.NO_LANE;
+        int previousPosition = itemPosition - 1;
+        while (previousPosition >= 0) {
+            previousLane = lm.getLaneForPosition(previousPosition, Direction.END);
+            if (previousLane != lane) {
+                break;
+            }
+
+            previousPosition--;
+        }
+
+        final int previousLaneSpan = getLaneSpan(lm, previousPosition);
+        if (previousLane == 0) {
+            return (lane == previousLane + previousLaneSpan);
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks whether the given position is placed at the start of a layout lane.
+     */
+    private static boolean isFirstChildInLane(TWBaseLayoutManager lm, int itemPosition) {
+        final int laneCount = lm.getLanes().getCount();
+        if (itemPosition >= laneCount) {
+            return false;
+        }
+
+        int count = 0;
+        for (int i = 0; i < itemPosition; i++) {
+            count += getLaneSpan(lm, i);
+            if (count >= laneCount) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks whether the given position is placed at the end of a layout lane.
+     */
+    private static boolean isLastChildInLane(TWBaseLayoutManager lm, int itemPosition, int itemCount) {
+        final int laneCount = lm.getLanes().getCount();
+        if (itemPosition < itemCount - laneCount) {
+            return false;
+        }
+
+        // TODO: Figure out a robust way to compute this for layouts
+        // that are dynamically placed and might span multiple lanes.
+        if (lm instanceof TWSpannableGridLayoutManager ||
+            lm instanceof TWStaggeredGridLayoutManager) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns the lane span for a given child. Only actually computed for
+     * layouts that support spans. Simply Returns 1 otherwise.
+     */
+    private static int getLaneSpan(TWBaseLayoutManager lm, View child) {
+        if (lm instanceof TWSpannableGridLayoutManager) {
+            return TWSpannableGridLayoutManager.getLaneSpan((TWSpannableGridLayoutManager) lm,
+                    child);
+        } else {
+            return 1;
+        }
+    }
+
+    /**
+     * Returns the lane span for a given position. This should only be used for
+     * positions that precedes the position being computed in getItemOffsets().
+     */
+    private static int getLaneSpan(TWBaseLayoutManager lm, int itemPosition) {
+        if (lm instanceof TWSpannableGridLayoutManager) {
+            return TWSpannableGridLayoutManager.getLaneSpan((TWSpannableGridLayoutManager) lm,
+                    itemPosition);
+        } else {
+            return 1;
+        }
+    }
+
+    public void setAddSpacingAtEnd(boolean spacingAtEnd) {
+        mAddSpacingAtEnd = spacingAtEnd;
+    }
+
+    /**
+     * Computes the offsets based on the vertical and horizontal spacing values.
+     * The spacing computation has to ensure that the lane sizes are the same after
+     * applying the offsets. This means we have to shift the spacing unevenly across
+     * items depending on their position in the layout.
+     */
+    public void getItemOffsets(Rect outRect, int itemPosition, RecyclerView parent) {
+        final TWBaseLayoutManager lm = (TWBaseLayoutManager) parent.getLayoutManager();
+        final View child = lm.findViewByPosition(itemPosition);
+
+        final int lane = lm.getLaneForChild(child, Direction.END);
+        final int laneSpan = getLaneSpan(lm, child);
+        final int laneCount = lm.getLanes().getCount();
+        final int itemCount = parent.getAdapter().getItemCount();
+
+        final boolean isVertical = lm.isVertical();
+
+        final boolean firstLane = (lane == 0);
+        final boolean secondLane = isSecondLane(lm, itemPosition, lane);
+
+        final boolean lastLane = (lane + laneSpan == laneCount);
+        final boolean beforeLastLane = (lane + laneSpan == laneCount - 1);
+
+        final int laneSpacing = (isVertical ? mHorizontalSpacing : mVerticalSpacing);
+
+        final int laneOffsetStart;
+        final int laneOffsetEnd;
+
+        if (firstLane) {
+            laneOffsetStart = 0;
+        } else if (lastLane && !secondLane) {
+            laneOffsetStart = (int) (laneSpacing * 0.75);
+        } else if (secondLane && !lastLane) {
+            laneOffsetStart = (int) (laneSpacing * 0.25);
+        } else {
+            laneOffsetStart = (int) (laneSpacing * 0.5);
+        }
+
+        if (lastLane) {
+            laneOffsetEnd = 0;
+        } else if (firstLane && !beforeLastLane) {
+            laneOffsetEnd = (int) (laneSpacing * 0.75);
+        } else if (beforeLastLane && !firstLane) {
+            laneOffsetEnd = (int) (laneSpacing * 0.25);
+        } else {
+            laneOffsetEnd = (int) (laneSpacing * 0.5);
+        }
+
+        final boolean isFirstInLane = isFirstChildInLane(lm, itemPosition);
+        final boolean isLastInLane = !mAddSpacingAtEnd &&
+                isLastChildInLane(lm, itemPosition, itemCount);
+
+        if (isVertical) {
+            outRect.left = laneOffsetStart;
+            outRect.top = (isFirstInLane ? 0 : mVerticalSpacing / 2);
+            outRect.right = laneOffsetEnd;
+            outRect.bottom = (isLastInLane ? 0 : mVerticalSpacing / 2);
+        } else {
+            outRect.left = (isFirstInLane ? 0 : mHorizontalSpacing / 2);
+            outRect.top = laneOffsetStart;
+            outRect.right = (isLastInLane ? 0 : mHorizontalSpacing / 2);
+            outRect.bottom = laneOffsetEnd;
+        }
+    }
+}
