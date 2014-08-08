@@ -22,6 +22,7 @@ import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
@@ -40,6 +41,8 @@ import org.lucasr.twowayview.TWItemClickListener;
 import org.lucasr.twowayview.TWItemClickListener.OnItemClickListener;
 import org.lucasr.twowayview.TWItemClickListener.OnItemLongClickListener;
 import org.lucasr.twowayview.TWAbsLayoutManager.Orientation;
+import org.lucasr.twowayview.widget.TWDividerItemDecoration;
+import org.lucasr.twowayview.widget.TWSpacingItemDecoration;
 import org.lucasr.twowayview.widget.TWSpannableGridLayoutManager;
 import org.lucasr.twowayview.TWView;
 
@@ -127,7 +130,9 @@ public class TWFragment extends Fragment {
             }
         });
 
-        mRecyclerView.addItemDecoration(new SimpleDecoration(getActivity()));
+        final Drawable divider = getResources().getDrawable(R.drawable.divider);
+        mRecyclerView.addItemDecoration(new TWDividerItemDecoration(divider));
+
         mRecyclerView.setAdapter(new SimpleAdapter(activity, mRecyclerView, mLayoutId));
     }
 
@@ -240,39 +245,6 @@ public class TWFragment extends Fragment {
         @Override
         public int getItemCount() {
             return 100;
-        }
-    }
-
-    private static class SimpleDecoration extends RecyclerView.ItemDecoration {
-        private final int mBorderWidth;
-        private final Paint mPaint;
-
-        public SimpleDecoration(Context context) {
-            final Resources res = context.getResources();
-            mBorderWidth = res.getDimensionPixelSize(R.dimen.item_border_width);
-
-            mPaint = new Paint();
-            mPaint.setStyle(Paint.Style.STROKE);
-            mPaint.setStrokeWidth(mBorderWidth);
-            mPaint.setColor(res.getColor(R.color.item_border_color));
-        }
-
-        @Override
-        public void onDrawOver(Canvas c, RecyclerView parent) {
-            final int childCount = parent.getChildCount();
-            for (int i = 0; i < childCount; i++) {
-                final View child = parent.getChildAt(i);
-                c.drawRect(child.getLeft(), child.getTop(), child.getRight(),
-                        child.getBottom(), mPaint);
-            }
-        }
-
-        @Override
-        public void getItemOffsets(Rect outRect, int itemPosition, RecyclerView parent) {
-            outRect.left = mBorderWidth;
-            outRect.top = mBorderWidth;
-            outRect.right = mBorderWidth;
-            outRect.bottom = mBorderWidth;
         }
     }
 }
