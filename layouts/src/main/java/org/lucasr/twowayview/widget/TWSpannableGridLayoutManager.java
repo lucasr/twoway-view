@@ -125,31 +125,6 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return (isVertical ? entry.colSpan : entry.rowSpan);
     }
 
-    private int getChildStartInLane(int childWidth, int childHeight, int lane, Direction direction) {
-        getLanes().getChildFrame(childWidth, childHeight, lane, direction, mTempRect);
-        return (isVertical() ? mTempRect.top : mTempRect.left);
-    }
-
-    private int getLaneThatFitsFrame(int childWidth, int childHeight, int anchor, Direction direction,
-                                     int laneSpan, Rect frame) {
-        final TWLanes lanes = getLanes();
-        final boolean isVertical = isVertical();
-
-        final int count = getLaneCount() - laneSpan + 1;
-        for (int l = 0; l < count; l++) {
-            lanes.getChildFrame(childWidth, childHeight, l, direction, frame);
-
-            frame.offsetTo(isVertical ? frame.left : anchor,
-                           isVertical ? anchor : frame.top);
-
-            if (!lanes.intersects(l, laneSpan, frame)) {
-                return l;
-            }
-        }
-
-        return TWLanes.NO_LANE;
-    }
-
     @Override
     protected int getChildLaneAndFrame(View child, int position, Direction direction,
                                        Rect childFrame) {
@@ -158,35 +133,19 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
                 getLaneSpan(this, child), childFrame);
     }
 
-    private int getChildLaneAndFrame(int childWith, int childHeight, int position,
+    private int getChildLaneAndFrame(int childWidth, int childHeight, int position,
                                      Direction direction, int laneSpan, Rect childFrame) {
         final TWLanes lanes = getLanes();
         int lane = TWLanes.NO_LANE;
 
         final ItemEntry entry = getItemEntryForPosition(position);
-        if (entry != null && entry.lane != TWLanes.NO_LANE) {
-            lanes.getChildFrame(childWith, childHeight, entry.lane, direction, childFrame);
-            return entry.lane;
+        if (entry != null) {
+            lane = entry.lane;
+        } else {
+            lane = lanes.findLane(laneSpan, direction);
         }
 
-        int targetEdge = (direction == Direction.END ? Integer.MAX_VALUE : Integer.MIN_VALUE);
-
-        final int count = getLaneCount() - laneSpan + 1;
-        for (int l = 0; l < count; l++) {
-            final int childStart = getChildStartInLane(childWith, childHeight, l, direction);
-
-            if ((direction == Direction.END && childStart < targetEdge) ||
-                (direction == Direction.START && childStart > targetEdge)) {
-                final int targetLane = getLaneThatFitsFrame(childWith, childHeight, childStart,
-                        direction, laneSpan, childFrame);
-
-                if (targetLane != TWLanes.NO_LANE) {
-                    targetEdge = childStart;
-                    lane = targetLane;
-                }
-            }
-        }
-
+        lanes.getChildFrame(childWidth, childHeight, lane, direction, childFrame);
         return lane;
     }
 

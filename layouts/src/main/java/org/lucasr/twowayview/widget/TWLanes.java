@@ -31,6 +31,8 @@ class TWLanes {
     private final Rect[] mSavedLanes;
     private final int mLaneSize;
 
+    private final Rect mTempRect = new Rect();
+
     private Integer mInnerStart;
     private Integer mInnerEnd;
 
@@ -206,6 +208,60 @@ class TWLanes {
         childFrame.bottom = childFrame.top + childHeight;
     }
 
+    private boolean intersects(int start, int count, Rect r) {
+        for (int i = start; i < start + count; i++) {
+            if (Rect.intersects(mLanes[i], r)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private int findLaneThatFitsSpan(int laneSpan, Direction direction, int anchor) {
+        final int count = mLanes.length - laneSpan + 1;
+        for (int l = 0; l < count; l++) {
+            getChildFrame(mIsVertical ? laneSpan * mLaneSize : 1,
+                          mIsVertical ? 1 : laneSpan * mLaneSize,
+                          l, direction, mTempRect);
+
+            mTempRect.offsetTo(mIsVertical ? mTempRect.left : anchor,
+                               mIsVertical ? anchor : mTempRect.top);
+
+            if (!intersects(l, laneSpan, mTempRect)) {
+                return l;
+            }
+        }
+
+        return TWLanes.NO_LANE;
+    }
+
+    public int findLane(int laneSpan, Direction direction) {
+        int lane = NO_LANE;
+
+        int targetEdge = (direction == Direction.END ? Integer.MAX_VALUE : Integer.MIN_VALUE);
+        final int count = mLanes.length - laneSpan + 1;
+        for (int l = 0; l < count; l++) {
+            final int laneEdge;
+            if (mIsVertical) {
+                laneEdge = (direction == Direction.END ? mLanes[l].bottom : mLanes[l].top);
+            } else {
+                laneEdge = (direction == Direction.END ? mLanes[l].right : mLanes[l].left);
+            }
+
+            if ((direction == Direction.END && laneEdge < targetEdge) ||
+                (direction == Direction.START && laneEdge > targetEdge)) {
+                final int targetLane = findLaneThatFitsSpan(laneSpan, direction, laneEdge);
+                if (targetLane != NO_LANE) {
+                    targetEdge = laneEdge;
+                    lane = targetLane;
+                }
+            }
+        }
+
+        return lane;
+    }
+
     public void reset(Direction direction) {
         for (int i = 0; i < mLanes.length; i++) {
             final Rect laneRect = mLanes[i];
@@ -270,15 +326,5 @@ class TWLanes {
         }
 
         return mInnerEnd;
-    }
-
-    public boolean intersects(int start, int count, Rect r) {
-        for (int i = start; i < start + count; i++) {
-            if (Rect.intersects(mLanes[i], r)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
