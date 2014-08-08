@@ -126,10 +126,9 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     @Override
-    protected int getChildLaneAndFrame(View child, int position, Direction direction,
-                                       Rect childFrame) {
+    protected int getChildLaneAndFrame(View child, Direction direction, Rect childFrame) {
         return getChildLaneAndFrame(getDecoratedMeasuredWidth(child),
-                getDecoratedMeasuredHeight(child), position, direction,
+                getDecoratedMeasuredHeight(child), getPosition(child), direction,
                 getLaneSpan(this, child), childFrame);
     }
 

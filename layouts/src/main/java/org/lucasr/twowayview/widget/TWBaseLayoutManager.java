@@ -119,9 +119,8 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         childFrame.bottom = getDecoratedBottom(child);
     }
 
-    protected int getChildLaneAndFrame(View child, int position, Direction direction,
-                                       Rect childFrame) {
-        final int lane = getLaneForPosition(position, direction);
+    protected int getChildLaneAndFrame(View child, Direction direction, Rect childFrame) {
+        final int lane = getLaneForPosition(getPosition(child), direction);
 
         mLanes.getChildFrame(getDecoratedMeasuredWidth(child), getDecoratedMeasuredHeight(child),
                 lane, direction, childFrame);
@@ -350,9 +349,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
 
     @Override
     protected void layoutChild(View child, Direction direction) {
-        final int position = getPosition(child);
-
-        final int lane = getChildLaneAndFrame(child, position, direction, mChildFrame);
+        final int lane = getChildLaneAndFrame(child, direction, mChildFrame);
 
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
@@ -362,7 +359,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
                 mChildFrame.bottom);
 
-        cacheItemEntry(child, position, lane, mChildFrame);
+        cacheItemEntry(child, getPosition(child), lane, mChildFrame);
     }
 
     @Override
