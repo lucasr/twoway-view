@@ -169,6 +169,16 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return TWLanes.NO_LANE;
     }
 
+    @Override
+    int getLaneForChild(View child, Direction direction) {
+        int lane = getLaneForPosition(getPosition(child), direction);
+        if (lane == TWLanes.NO_LANE) {
+            lane = getLanes().findLane(getLaneSpan(this, child), direction);
+        }
+
+        return lane;
+    }
+
     private int getWidthUsed(View child) {
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         return getWidth() - getChildWidth(lp.colSpan);

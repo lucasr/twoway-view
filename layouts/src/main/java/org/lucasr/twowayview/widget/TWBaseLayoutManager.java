@@ -378,6 +378,10 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         mLanes.reset(offset);
     }
 
+    int getLaneForChild(View child, Direction direction) {
+        return getLaneForPosition(getPosition(child), direction);
+    }
+
     ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
         // Do nothing by default
         return null;
