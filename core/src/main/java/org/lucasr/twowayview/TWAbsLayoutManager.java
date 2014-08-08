@@ -632,16 +632,16 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
 
     @Override
     public void onLayoutChildren(Recycler recycler, State state) {
-        int pendingScrollPosition = getPendingScrollPosition();
-        if (pendingScrollPosition != RecyclerView.NO_POSITION) {
-            if (pendingScrollPosition < 0 || pendingScrollPosition >= state.getItemCount()) {
-                pendingScrollPosition = RecyclerView.NO_POSITION;
+        int pendingPosition = getPendingScrollPosition();
+        if (pendingPosition != RecyclerView.NO_POSITION) {
+            if (pendingPosition < 0 || pendingPosition >= state.getItemCount()) {
+                pendingPosition = RecyclerView.NO_POSITION;
             }
         }
 
         final int anchorItemPosition;
-        if (pendingScrollPosition != RecyclerView.NO_POSITION) {
-            anchorItemPosition = pendingScrollPosition;
+        if (pendingPosition != RecyclerView.NO_POSITION) {
+            anchorItemPosition = pendingPosition;
         } else if (getChildCount() > 0) {
             anchorItemPosition = mFirstPosition;
         } else {
