@@ -105,7 +105,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     }
 
     static int getLaneSpan(TWSpannableGridLayoutManager lm, View child) {
-        return getLaneSpan(lm.isVertical(), (LayoutParams) child.getLayoutParams());
+        return getLaneSpan((LayoutParams) child.getLayoutParams(), lm.isVertical());
     }
 
     static int getLaneSpan(TWSpannableGridLayoutManager lm, int position) {
@@ -114,14 +114,14 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
             throw new IllegalStateException("Could not find span for position " + position);
         }
 
-        return getLaneSpan(lm.isVertical(), entry);
+        return getLaneSpan(entry, lm.isVertical());
     }
 
-    private static int getLaneSpan(boolean isVertical, LayoutParams lp) {
+    private static int getLaneSpan(LayoutParams lp, boolean isVertical) {
         return (isVertical ? lp.colSpan : lp.rowSpan);
     }
 
-    private static int getLaneSpan(boolean isVertical, SpannableItemEntry entry) {
+    private static int getLaneSpan(SpannableItemEntry entry, boolean isVertical) {
         return (isVertical ? entry.colSpan : entry.rowSpan);
     }
 
@@ -202,7 +202,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         super.layoutChild(child, direction);
 
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        final int laneSpan = getLaneSpan(isVertical(), lp);
+        final int laneSpan = getLaneSpan(lp, isVertical());
         if (lp.isItemRemoved() || laneSpan == 1) {
             return;
         }
@@ -252,7 +252,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
                 LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
                 final int lane = getChildLaneAndFrame(getChildWidth(lp.colSpan),
-                        getChildHeight(lp.rowSpan), i, Direction.END, getLaneSpan(isVertical, lp),
+                        getChildHeight(lp.rowSpan), i, Direction.END, getLaneSpan(lp, isVertical),
                         childFrame);
 
                 entry = (SpannableItemEntry) cacheItemEntry(child, i, lane, childFrame);
@@ -260,7 +260,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
             if (i != position) {
                 lanes.pushChildFrame(childFrame, entry.lane,
-                        entry.lane + getLaneSpan(isVertical, entry), Direction.END);
+                        entry.lane + getLaneSpan(entry, isVertical), Direction.END);
             }
         }
 
