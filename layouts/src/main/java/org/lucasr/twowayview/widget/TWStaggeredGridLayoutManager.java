@@ -139,6 +139,10 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
             } else {
                 final View child = recycler.getViewForPosition(i);
 
+                // Temporarily add view as some item decoration might assume
+                // the while being measured is attached.
+                addView(child);
+
                 // XXX: This might potentially cause stalls in the main
                 // thread if the layout ends up having to measure tons of
                 // child views. We might need to add different policies based
@@ -150,6 +154,9 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
                 lanes.getChildFrame(child, lane, Direction.END, childFrame);
 
                 entry = (StaggeredItemEntry) cacheItemEntry(child, i, lane, childFrame);
+
+                // Done, now recycle view.
+                removeAndRecycleView(child, recycler);
             }
 
             lanes.pushChildFrame(entry.lane, Direction.END, childFrame);
