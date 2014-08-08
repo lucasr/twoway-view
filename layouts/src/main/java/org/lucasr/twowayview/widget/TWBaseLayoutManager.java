@@ -236,7 +236,8 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
             mItemEntries = mItemEntriesToRestore;
         } else {
             final int pendingPosition = getPendingScrollPosition();
-            if (pendingPosition != RecyclerView.NO_POSITION) {
+            if (pendingPosition != RecyclerView.NO_POSITION &&
+                    pendingPosition >= 0 && pendingPosition < state.getItemCount()) {
                 moveLayoutToPosition(pendingPosition, getPendingScrollOffset(), recycler, state);
             }
         }
