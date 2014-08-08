@@ -5,14 +5,13 @@ import android.os.Build;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.OnItemTouchListener;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class TWItemClickListener implements OnItemTouchListener {
-    private static final String LOGTAG = "TWItemClickListener";
+public class ClickItemTouchListener implements OnItemTouchListener {
+    private static final String LOGTAG = "ClickItemTouchListener";
 
     /**
      * Interface definition for a callback to be invoked when an item in the
@@ -57,7 +56,7 @@ public class TWItemClickListener implements OnItemTouchListener {
     private OnItemClickListener mItemClickListener;
     private OnItemLongClickListener mItemLongClickListener;
 
-    private TWItemClickListener(RecyclerView hostView) {
+    private ClickItemTouchListener(RecyclerView hostView) {
         mHostView = hostView;
 
         final Context context = mHostView.getContext();
@@ -116,8 +115,8 @@ public class TWItemClickListener implements OnItemTouchListener {
         mItemLongClickListener = listener;
     }
 
-    public static TWItemClickListener addTo(RecyclerView recyclerView) {
-        TWItemClickListener listener = new TWItemClickListener(recyclerView);
+    public static ClickItemTouchListener addTo(RecyclerView recyclerView) {
+        ClickItemTouchListener listener = new ClickItemTouchListener(recyclerView);
         recyclerView.addOnItemTouchListener(listener);
         return listener;
     }

@@ -68,7 +68,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public class TabListener implements ActionBar.TabListener {
-        private TWFragment mFragment;
+        private LayoutFragment mFragment;
         private final int mLayoutId;
         private final String mTag;
 
@@ -79,9 +79,9 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-            mFragment = (TWFragment) getSupportFragmentManager().findFragmentByTag(mTag);
+            mFragment = (LayoutFragment) getSupportFragmentManager().findFragmentByTag(mTag);
             if (mFragment == null) {
-                mFragment = (TWFragment) TWFragment.newInstance(mLayoutId);
+                mFragment = (LayoutFragment) LayoutFragment.newInstance(mLayoutId);
                 ft.add(R.id.content, mFragment, mTag);
             } else {
                 ft.attach(mFragment);

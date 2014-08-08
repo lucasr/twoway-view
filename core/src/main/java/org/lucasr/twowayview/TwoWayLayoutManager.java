@@ -30,15 +30,14 @@ import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.View.BaseSavedState;
 import android.view.ViewGroup.MarginLayoutParams;
 
 import java.util.List;
 
-public abstract class TWAbsLayoutManager extends LayoutManager {
-    private static final String LOGTAG = "TWLayoutManager";
+public abstract class TwoWayLayoutManager extends LayoutManager {
+    private static final String LOGTAG = "AbsLayoutManager";
 
     public static enum Orientation {
         HORIZONTAL,
@@ -62,19 +61,19 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
     private int mLayoutStart;
     private int mLayoutEnd;
 
-    public TWAbsLayoutManager(Context context, AttributeSet attrs) {
+    public TwoWayLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWAbsLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+    public TwoWayLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TWAbsLayoutManager, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.TwoWayLayoutManager, defStyle, 0);
 
         final int indexCount = a.getIndexCount();
         for (int i = 0; i < indexCount; i++) {
             final int attr = a.getIndex(i);
 
-            if (attr == R.styleable.TWAbsLayoutManager_android_orientation) {
+            if (attr == R.styleable.TwoWayLayoutManager_android_orientation) {
                 final int orientation = a.getInt(attr, -1);
                 if (orientation >= 0) {
                     setOrientation(Orientation.values()[orientation]);
@@ -85,7 +84,7 @@ public abstract class TWAbsLayoutManager extends LayoutManager {
         a.recycle();
     }
 
-    public TWAbsLayoutManager(Context context, Orientation orientation) {
+    public TwoWayLayoutManager(Context context, Orientation orientation) {
         mIsVertical = (orientation == Orientation.VERTICAL);
     }
 

@@ -19,13 +19,13 @@ package org.lucasr.twowayview.widget;
 import android.graphics.Rect;
 import android.view.View;
 
-import org.lucasr.twowayview.TWAbsLayoutManager.Direction;
-import org.lucasr.twowayview.TWAbsLayoutManager.Orientation;
+import org.lucasr.twowayview.TwoWayLayoutManager.Direction;
+import org.lucasr.twowayview.TwoWayLayoutManager.Orientation;
 
-class TWLanes {
+class Lanes {
     public static final int NO_LANE = -1;
 
-    private final TWBaseLayoutManager mLayout;
+    private final BaseLayoutManager mLayout;
     private final boolean mIsVertical;
     private final Rect[] mLanes;
     private final Rect[] mSavedLanes;
@@ -36,7 +36,7 @@ class TWLanes {
     private Integer mInnerStart;
     private Integer mInnerEnd;
 
-    public TWLanes(TWBaseLayoutManager layout, Orientation orientation, Rect[] lanes, int laneSize) {
+    public Lanes(BaseLayoutManager layout, Orientation orientation, Rect[] lanes, int laneSize) {
         mLayout = layout;
         mIsVertical = (orientation == Orientation.VERTICAL);
         mLanes = lanes;
@@ -48,7 +48,7 @@ class TWLanes {
         }
     }
 
-    public TWLanes(TWBaseLayoutManager layout, int laneCount) {
+    public Lanes(BaseLayoutManager layout, int laneCount) {
         mLayout = layout;
         mIsVertical = (layout.getOrientation() == Orientation.VERTICAL);
 
@@ -233,7 +233,7 @@ class TWLanes {
             }
         }
 
-        return TWLanes.NO_LANE;
+        return Lanes.NO_LANE;
     }
 
     public int findLane(int laneSpan, Direction direction) {

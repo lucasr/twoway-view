@@ -16,31 +16,31 @@ import android.view.View;
  * divider vertically and horizontally between the items of the target
  * {@link android.support.v7.widget.RecyclerView}.
  */
-public class TWDividerItemDecoration extends ItemDecoration {
-    private final TWItemSpacing mItemSpacing;
+public class DividerItemDecoration extends ItemDecoration {
+    private final ItemSpacingOffsets mItemSpacing;
     private final Drawable mDivider;
 
     private final SparseArray<Rect> mItemOffsets = new SparseArray<Rect>();
 
-    public TWDividerItemDecoration(Context context, AttributeSet attrs) {
+    public DividerItemDecoration(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWDividerItemDecoration(Context context, AttributeSet attrs, int defStyle) {
+    public DividerItemDecoration(Context context, AttributeSet attrs, int defStyle) {
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TWGridLayoutManager, defStyle, 0);
-        mDivider = a.getDrawable(R.styleable.TWDividerItemDecoration_android_divider);
+                context.obtainStyledAttributes(attrs, R.styleable.DividerItemDecoration, defStyle, 0);
+        mDivider = a.getDrawable(R.styleable.DividerItemDecoration_android_divider);
         a.recycle();
 
         mItemSpacing = createSpacing(mDivider);
     }
 
-    public TWDividerItemDecoration(Drawable verticalDivider) {
+    public DividerItemDecoration(Drawable verticalDivider) {
         mDivider = verticalDivider;
         mItemSpacing = createSpacing(mDivider);
     }
 
-    private static TWItemSpacing createSpacing(Drawable divider) {
+    private static ItemSpacingOffsets createSpacing(Drawable divider) {
         final int verticalSpacing;
         final int horizontalSpacing;
         if (divider != null) {
@@ -51,7 +51,7 @@ public class TWDividerItemDecoration extends ItemDecoration {
             horizontalSpacing = 0;
         }
 
-        final TWItemSpacing spacing = new TWItemSpacing(verticalSpacing, horizontalSpacing);
+        final ItemSpacingOffsets spacing = new ItemSpacingOffsets(verticalSpacing, horizontalSpacing);
         spacing.setAddSpacingAtEnd(true);
 
         return spacing;
@@ -59,7 +59,7 @@ public class TWDividerItemDecoration extends ItemDecoration {
 
     @Override
     public void onDrawOver(Canvas c, RecyclerView parent) {
-        final TWBaseLayoutManager lm = (TWBaseLayoutManager) parent.getLayoutManager();
+        final BaseLayoutManager lm = (BaseLayoutManager) parent.getLayoutManager();
 
         final int rightWithPadding = parent.getWidth() - parent.getPaddingRight();
         final int bottomWithPadding = parent.getHeight() - parent.getPaddingBottom();

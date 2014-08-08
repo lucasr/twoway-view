@@ -19,18 +19,18 @@ package org.lucasr.twowayview.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 
-public class TWListLayoutManager extends TWBaseLayoutManager {
-    private static final String LOGTAG = "TWListLayoutManager";
+public class ListLayoutManager extends BaseLayoutManager {
+    private static final String LOGTAG = "ListLayoutManager";
 
-    public TWListLayoutManager(Context context, AttributeSet attrs) {
+    public ListLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWListLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+    public ListLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
-    public TWListLayoutManager(Context context, Orientation orientation) {
+    public ListLayoutManager(Context context, Orientation orientation) {
         super(context, orientation);
     }
 

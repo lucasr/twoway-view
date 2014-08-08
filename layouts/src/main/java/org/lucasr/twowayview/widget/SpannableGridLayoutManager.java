@@ -29,15 +29,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
-import org.lucasr.twowayview.TWView;
+import org.lucasr.twowayview.TwoWayView;
 
-public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
-    private static final String LOGTAG = "TWSpannableGridLayoutManager";
+public class SpannableGridLayoutManager extends GridLayoutManager {
+    private static final String LOGTAG = "SpannableGridLayoutManager";
 
     private static final int DEFAULT_NUM_COLS = 3;
     private static final int DEFAULT_NUM_ROWS = 3;
 
-    protected static class SpannableItemEntry extends TWBaseLayoutManager.ItemEntry {
+    protected static class SpannableItemEntry extends BaseLayoutManager.ItemEntry {
         private final int colSpan;
         private final int rowSpan;
 
@@ -77,21 +77,21 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     private final Context mContext;
     private boolean mMeasuring;
 
-    public TWSpannableGridLayoutManager(Context context) {
+    public SpannableGridLayoutManager(Context context) {
         this(context, null);
     }
 
-    public TWSpannableGridLayoutManager(Context context, AttributeSet attrs) {
+    public SpannableGridLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWSpannableGridLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+    public SpannableGridLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle, DEFAULT_NUM_COLS, DEFAULT_NUM_ROWS);
         mContext = context;
     }
 
-    public TWSpannableGridLayoutManager(Context context, Orientation orientation,
-                                        int numColumns, int numRows) {
+    public SpannableGridLayoutManager(Context context, Orientation orientation,
+                                      int numColumns, int numRows) {
         super(context, orientation, numColumns, numRows);
         mContext = context;
     }
@@ -104,11 +104,11 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return getLanes().getLaneSize() * rowSpan;
     }
 
-    static int getLaneSpan(TWSpannableGridLayoutManager lm, View child) {
+    static int getLaneSpan(SpannableGridLayoutManager lm, View child) {
         return getLaneSpan((LayoutParams) child.getLayoutParams(), lm.isVertical());
     }
 
-    static int getLaneSpan(TWSpannableGridLayoutManager lm, int position) {
+    static int getLaneSpan(SpannableGridLayoutManager lm, int position) {
         final SpannableItemEntry entry = (SpannableItemEntry) lm.getItemEntryForPosition(position);
         if (entry == null) {
             throw new IllegalStateException("Could not find span for position " + position);
@@ -134,8 +134,8 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
 
     private int getChildLaneAndFrame(int childWidth, int childHeight, int position,
                                      Direction direction, int laneSpan, Rect childFrame) {
-        final TWLanes lanes = getLanes();
-        int lane = TWLanes.NO_LANE;
+        final Lanes lanes = getLanes();
+        int lane = Lanes.NO_LANE;
 
         final ItemEntry entry = getItemEntryForPosition(position);
         if (entry != null) {
@@ -165,13 +165,13 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
             return entry.lane;
         }
 
-        return TWLanes.NO_LANE;
+        return Lanes.NO_LANE;
     }
 
     @Override
     int getLaneForChild(View child, Direction direction) {
         int lane = getLaneForPosition(getPosition(child), direction);
-        if (lane == TWLanes.NO_LANE) {
+        if (lane == Lanes.NO_LANE) {
             lane = getLanes().findLane(getLaneSpan(this, child), direction);
         }
 
@@ -237,7 +237,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
     @Override
     protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final boolean isVertical = isVertical();
-        final TWLanes lanes = getLanes();
+        final Lanes lanes = getLanes();
         final Rect childFrame = new Rect();
 
         lanes.reset(0);
@@ -336,7 +336,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         return new LayoutParams(c, attrs);
     }
 
-    public static class LayoutParams extends TWView.LayoutParams {
+    public static class LayoutParams extends TwoWayView.LayoutParams {
         private static final int DEFAULT_SPAN = 1;
 
         public int rowSpan;
@@ -351,11 +351,11 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
 
-            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.TWSpannableGridViewChild);
+            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.SpannableGridViewChild);
             colSpan = Math.max(
-                    DEFAULT_SPAN, a.getInt(R.styleable.TWSpannableGridViewChild_colSpan, -1));
+                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_colSpan, -1));
             rowSpan = Math.max(
-                    DEFAULT_SPAN, a.getInt(R.styleable.TWSpannableGridViewChild_rowSpan, -1));
+                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_rowSpan, -1));
             a.recycle();
         }
 

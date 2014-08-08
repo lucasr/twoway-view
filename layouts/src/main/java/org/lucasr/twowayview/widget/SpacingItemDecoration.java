@@ -12,29 +12,29 @@ import android.util.AttributeSet;
  * vertical and horizontal spacing between items of the target
  * {@link android.support.v7.widget.RecyclerView}.
  */
-public class TWSpacingItemDecoration extends ItemDecoration {
-    private final TWItemSpacing mItemSpacing;
+public class SpacingItemDecoration extends ItemDecoration {
+    private final ItemSpacingOffsets mItemSpacing;
 
-    public TWSpacingItemDecoration(Context context, AttributeSet attrs) {
+    public SpacingItemDecoration(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWSpacingItemDecoration(Context context, AttributeSet attrs, int defStyle) {
+    public SpacingItemDecoration(Context context, AttributeSet attrs, int defStyle) {
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TWGridLayoutManager, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.SpacingItemDecoration, defStyle, 0);
 
         final int verticalSpacing =
-                Math.max(0, a.getInt(R.styleable.TWSpacingItemDecoration_android_verticalSpacing, 0));
+                Math.max(0, a.getInt(R.styleable.SpacingItemDecoration_android_verticalSpacing, 0));
         final int horizontalSpacing =
-                Math.max(0, a.getInt(R.styleable.TWSpacingItemDecoration_android_horizontalSpacing, 0));
+                Math.max(0, a.getInt(R.styleable.SpacingItemDecoration_android_horizontalSpacing, 0));
 
         a.recycle();
 
-        mItemSpacing = new TWItemSpacing(verticalSpacing, horizontalSpacing);
+        mItemSpacing = new ItemSpacingOffsets(verticalSpacing, horizontalSpacing);
     }
 
-    public TWSpacingItemDecoration(int verticalSpacing, int horizontalSpacing) {
-        mItemSpacing = new TWItemSpacing(verticalSpacing, horizontalSpacing);
+    public SpacingItemDecoration(int verticalSpacing, int horizontalSpacing) {
+        mItemSpacing = new ItemSpacingOffsets(verticalSpacing, horizontalSpacing);
     }
 
     @Override

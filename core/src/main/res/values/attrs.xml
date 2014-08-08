@@ -17,11 +17,11 @@
 
 <resources>
 
-    <declare-styleable name="TWView">
+    <declare-styleable name="TwoWayView">
         <attr name="layoutManager" format="string"/>
     </declare-styleable>
 
-    <declare-styleable name="TWAbsLayoutManager">
+    <declare-styleable name="TwoWayLayoutManager">
         <attr name="android:orientation"/>
     </declare-styleable>
 

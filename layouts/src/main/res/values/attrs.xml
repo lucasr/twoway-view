@@ -17,21 +17,21 @@
 
 <resources>
 
-    <declare-styleable name="TWGridLayoutManager">
+    <declare-styleable name="GridLayoutManager">
         <attr name="numColumns" format="integer"/>
         <attr name="numRows" format="integer"/>
     </declare-styleable>
 
-    <declare-styleable name="TWSpacingItemDecoration">
+    <declare-styleable name="SpacingItemDecoration">
         <attr name="android:verticalSpacing"/>
         <attr name="android:horizontalSpacing"/>
     </declare-styleable>
 
-    <declare-styleable name="TWDividerItemDecoration">
+    <declare-styleable name="DividerItemDecoration">
         <attr name="android:divider"/>
     </declare-styleable>
 
-    <declare-styleable name="TWSpannableGridViewChild">
+    <declare-styleable name="SpannableGridViewChild">
         <attr name="colSpan" format="integer"/>
         <attr name="rowSpan" format="integer"/>
     </declare-styleable>

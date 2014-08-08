@@ -23,8 +23,8 @@ import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class TWGridLayoutManager extends TWBaseLayoutManager {
-    private static final String LOGTAG = "TWGridLayoutManager";
+public class GridLayoutManager extends BaseLayoutManager {
+    private static final String LOGTAG = "GridLayoutManager";
 
     private static final int DEFAULT_NUM_COLS = 2;
     private static final int DEFAULT_NUM_ROWS = 2;
@@ -32,41 +32,41 @@ public class TWGridLayoutManager extends TWBaseLayoutManager {
     private int mNumColumns;
     private int mNumRows;
 
-    public TWGridLayoutManager(Context context, AttributeSet attrs) {
+    public GridLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWGridLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+    public GridLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         this(context, attrs, defStyle, DEFAULT_NUM_COLS, DEFAULT_NUM_ROWS);
     }
 
-    protected TWGridLayoutManager(Context context, AttributeSet attrs, int defStyle,
-                                  int defaultNumColumns, int defaultNumRows) {
+    protected GridLayoutManager(Context context, AttributeSet attrs, int defStyle,
+                                int defaultNumColumns, int defaultNumRows) {
         super(context, attrs, defStyle);
 
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TWGridLayoutManager, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.GridLayoutManager, defStyle, 0);
 
         mNumColumns =
-                Math.max(1, a.getInt(R.styleable.TWGridLayoutManager_numColumns, defaultNumColumns));
+                Math.max(1, a.getInt(R.styleable.GridLayoutManager_numColumns, defaultNumColumns));
         mNumRows =
-                Math.max(1, a.getInt(R.styleable.TWGridLayoutManager_numRows, defaultNumRows));
+                Math.max(1, a.getInt(R.styleable.GridLayoutManager_numRows, defaultNumRows));
 
         a.recycle();
     }
 
-    public TWGridLayoutManager(Context context, Orientation orientation,
-                               int numColumns, int numRows) {
+    public GridLayoutManager(Context context, Orientation orientation,
+                             int numColumns, int numRows) {
         super(context, orientation);
         mNumColumns = numColumns;
         mNumRows = numRows;
 
         if (mNumColumns < 1) {
-            throw new IllegalArgumentException("TWGridLayoutManager must have at least 1 column");
+            throw new IllegalArgumentException("GridLayoutManager must have at least 1 column");
         }
 
         if (mNumRows < 1) {
-            throw new IllegalArgumentException("TWGridLayoutManager must have at least 1 row");
+            throw new IllegalArgumentException("GridLayoutManager must have at least 1 row");
         }
     }
 
@@ -82,7 +82,7 @@ public class TWGridLayoutManager extends TWBaseLayoutManager {
 
     @Override
     void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
-        final TWLanes lanes = getLanes();
+        final Lanes lanes = getLanes();
         lanes.reset(offset);
 
         final int lane = getLaneForPosition(position, Direction.END);

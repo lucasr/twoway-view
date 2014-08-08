@@ -22,33 +22,33 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 
-import org.lucasr.twowayview.TWAbsLayoutManager.Orientation;
+import org.lucasr.twowayview.TwoWayLayoutManager.Orientation;
 
 import java.lang.reflect.Constructor;
 
-public class TWView extends RecyclerView {
-    private static final String LOGTAG = "TWView";
+public class TwoWayView extends RecyclerView {
+    private static final String LOGTAG = "TwoWayView";
 
     private static final Class<?>[] sConstructorSignature = new Class[] {
             Context.class, AttributeSet.class};
 
     final Object[] sConstructorArgs = new Object[2];
 
-    public TWView(Context context) {
+    public TwoWayView(Context context) {
         this(context, null);
     }
 
-    public TWView(Context context, AttributeSet attrs) {
+    public TwoWayView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWView(Context context, AttributeSet attrs, int defStyle) {
+    public TwoWayView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TWView, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.TwoWayView, defStyle, 0);
 
-        final String name = a.getString(R.styleable.TWView_layoutManager);
+        final String name = a.getString(R.styleable.TwoWayView_layoutManager);
         if (!TextUtils.isEmpty(name)) {
             loadLayoutManagerFromName(context, attrs, name);
         }
@@ -66,10 +66,10 @@ public class TWView extends RecyclerView {
                 name = packageName + "." + name;
             }
 
-            Class<? extends TWAbsLayoutManager> clazz =
-                    context.getClassLoader().loadClass(name).asSubclass(TWAbsLayoutManager.class);
+            Class<? extends TwoWayLayoutManager> clazz =
+                    context.getClassLoader().loadClass(name).asSubclass(TwoWayLayoutManager.class);
 
-            Constructor<? extends TWAbsLayoutManager> constructor =
+            Constructor<? extends TwoWayLayoutManager> constructor =
                     clazz.getConstructor(sConstructorSignature);
 
             sConstructorArgs[0] = context;
@@ -77,14 +77,14 @@ public class TWView extends RecyclerView {
 
             setLayoutManager(constructor.newInstance(sConstructorArgs));
         } catch (Exception e) {
-            throw new IllegalStateException("Could not load TWLayoutManager from class: " + name, e);
+            throw new IllegalStateException("Could not load AbsLayoutManager from class: " + name, e);
         }
     }
 
     @Override
     public void setLayoutManager(LayoutManager layout) {
-        if (!(layout instanceof TWAbsLayoutManager)) {
-            throw new IllegalArgumentException("TWView can only use TWLayoutManager subclasses " +
+        if (!(layout instanceof TwoWayLayoutManager)) {
+            throw new IllegalArgumentException("TwoWayView can only use AbsLayoutManager subclasses " +
                                                "as its layout manager");
         }
 
@@ -92,17 +92,17 @@ public class TWView extends RecyclerView {
     }
 
     public Orientation getOrientation() {
-        TWAbsLayoutManager layout = (TWAbsLayoutManager) getLayoutManager();
+        TwoWayLayoutManager layout = (TwoWayLayoutManager) getLayoutManager();
         return layout.getOrientation();
     }
 
     public void setOrientation(Orientation orientation) {
-        TWAbsLayoutManager layout = (TWAbsLayoutManager) getLayoutManager();
+        TwoWayLayoutManager layout = (TwoWayLayoutManager) getLayoutManager();
         layout.setOrientation(orientation);
     }
 
     public int getFirstVisiblePosition() {
-        TWAbsLayoutManager layout = (TWAbsLayoutManager) getLayoutManager();
+        TwoWayLayoutManager layout = (TwoWayLayoutManager) getLayoutManager();
         return layout.getFirstVisiblePosition();
     }
 }

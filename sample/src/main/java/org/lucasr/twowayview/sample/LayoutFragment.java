@@ -18,10 +18,6 @@ package org.lucasr.twowayview.sample;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.Resources;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -37,19 +33,18 @@ import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
 import static android.support.v7.widget.RecyclerView.SCROLL_STATE_DRAGGING;
 import static android.support.v7.widget.RecyclerView.SCROLL_STATE_SETTLING;
 
-import org.lucasr.twowayview.TWItemClickListener;
-import org.lucasr.twowayview.TWItemClickListener.OnItemClickListener;
-import org.lucasr.twowayview.TWItemClickListener.OnItemLongClickListener;
-import org.lucasr.twowayview.TWAbsLayoutManager.Orientation;
-import org.lucasr.twowayview.widget.TWDividerItemDecoration;
-import org.lucasr.twowayview.widget.TWSpacingItemDecoration;
-import org.lucasr.twowayview.widget.TWSpannableGridLayoutManager;
-import org.lucasr.twowayview.TWView;
+import org.lucasr.twowayview.ClickItemTouchListener;
+import org.lucasr.twowayview.ClickItemTouchListener.OnItemClickListener;
+import org.lucasr.twowayview.ClickItemTouchListener.OnItemLongClickListener;
+import org.lucasr.twowayview.TwoWayLayoutManager.Orientation;
+import org.lucasr.twowayview.widget.DividerItemDecoration;
+import org.lucasr.twowayview.widget.SpannableGridLayoutManager;
+import org.lucasr.twowayview.TwoWayView;
 
-public class TWFragment extends Fragment {
+public class LayoutFragment extends Fragment {
     private static final String ARG_LAYOUT_ID = "layout_id";
 
-    private TWView mRecyclerView;
+    private TwoWayView mRecyclerView;
     private TextView mPositionText;
     private TextView mCountText;
     private TextView mStateText;
@@ -57,8 +52,8 @@ public class TWFragment extends Fragment {
 
     private int mLayoutId;
 
-    public static TWFragment newInstance(int layoutId) {
-        TWFragment fragment = new TWFragment();
+    public static LayoutFragment newInstance(int layoutId) {
+        LayoutFragment fragment = new LayoutFragment();
 
         Bundle args = new Bundle();
         args.putInt(ARG_LAYOUT_ID, layoutId);
@@ -88,7 +83,7 @@ public class TWFragment extends Fragment {
         mToast = Toast.makeText(activity, "", Toast.LENGTH_SHORT);
         mToast.setGravity(Gravity.CENTER, 0, 0);
 
-        mRecyclerView = (TWView) view.findViewById(R.id.list);
+        mRecyclerView = (TwoWayView) view.findViewById(R.id.list);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLongClickable(true);
 
@@ -98,7 +93,7 @@ public class TWFragment extends Fragment {
         mStateText = (TextView) view.getRootView().findViewById(R.id.state);
         updateState(SCROLL_STATE_IDLE);
 
-        TWItemClickListener clickListener = TWItemClickListener.addTo(mRecyclerView);
+        ClickItemTouchListener clickListener = ClickItemTouchListener.addTo(mRecyclerView);
 
         clickListener.setOnItemClickListener(new OnItemClickListener() {
             @Override
@@ -131,7 +126,7 @@ public class TWFragment extends Fragment {
         });
 
         final Drawable divider = getResources().getDrawable(R.drawable.divider);
-        mRecyclerView.addItemDecoration(new TWDividerItemDecoration(divider));
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(divider));
 
         mRecyclerView.setAdapter(new SimpleAdapter(activity, mRecyclerView, mLayoutId));
     }
@@ -161,7 +156,7 @@ public class TWFragment extends Fragment {
 
     public static class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder> {
         private final Context mContext;
-        private final TWView mRecyclerView;
+        private final TwoWayView mRecyclerView;
         private final int mLayoutId;
 
         public static class SimpleViewHolder extends RecyclerView.ViewHolder {
@@ -173,7 +168,7 @@ public class TWFragment extends Fragment {
             }
         }
 
-        public SimpleAdapter(Context context, TWView recyclerView, int layoutId) {
+        public SimpleAdapter(Context context, TwoWayView recyclerView, int layoutId) {
             mContext = context;
             mRecyclerView = recyclerView;
             mLayoutId = layoutId;
@@ -215,8 +210,8 @@ public class TWFragment extends Fragment {
                     itemView.setLayoutParams(lp);
                 }
             } else if (mLayoutId == R.layout.layout_spannable_grid) {
-                final TWSpannableGridLayoutManager.LayoutParams lp =
-                        (TWSpannableGridLayoutManager.LayoutParams) itemView.getLayoutParams();
+                final SpannableGridLayoutManager.LayoutParams lp =
+                        (SpannableGridLayoutManager.LayoutParams) itemView.getLayoutParams();
 
                 final int span1 = (position == 0 || position == 3 ? 2 : 1);
                 final int span2 = (position == 0 ? 2 : (position == 3 ? 3 : 1));

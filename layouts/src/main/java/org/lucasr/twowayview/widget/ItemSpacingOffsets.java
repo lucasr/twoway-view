@@ -4,20 +4,20 @@ import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
-import org.lucasr.twowayview.TWAbsLayoutManager.Direction;
+import org.lucasr.twowayview.TwoWayLayoutManager.Direction;
 
 /**
  * Core logic for applying item vertical and horizontal spacings via item
  * offsets. Account for the item lane positions to only apply spacings within
  * the layout.
  */
-class TWItemSpacing {
+class ItemSpacingOffsets {
     private final int mVerticalSpacing;
     private final int mHorizontalSpacing;
 
     private boolean mAddSpacingAtEnd;
 
-    public TWItemSpacing(int verticalSpacing, int horizontalSpacing) {
+    public ItemSpacingOffsets(int verticalSpacing, int horizontalSpacing) {
         if (verticalSpacing < 0 || horizontalSpacing < 0) {
             throw new IllegalArgumentException("Spacings should be equal or greater than 0");
         }
@@ -30,12 +30,12 @@ class TWItemSpacing {
      * Checks whether the given position is placed just after the item in the
      * first lane of the layout taking items spans into account.
      */
-    private boolean isSecondLane(TWBaseLayoutManager lm, int itemPosition, int lane) {
+    private boolean isSecondLane(BaseLayoutManager lm, int itemPosition, int lane) {
         if (lane == 0 || itemPosition == 0) {
             return false;
         }
 
-        int previousLane = TWLanes.NO_LANE;
+        int previousLane = Lanes.NO_LANE;
         int previousPosition = itemPosition - 1;
         while (previousPosition >= 0) {
             previousLane = lm.getLaneForPosition(previousPosition, Direction.END);
@@ -57,7 +57,7 @@ class TWItemSpacing {
     /**
      * Checks whether the given position is placed at the start of a layout lane.
      */
-    private static boolean isFirstChildInLane(TWBaseLayoutManager lm, int itemPosition) {
+    private static boolean isFirstChildInLane(BaseLayoutManager lm, int itemPosition) {
         final int laneCount = lm.getLanes().getCount();
         if (itemPosition >= laneCount) {
             return false;
@@ -77,7 +77,7 @@ class TWItemSpacing {
     /**
      * Checks whether the given position is placed at the end of a layout lane.
      */
-    private static boolean isLastChildInLane(TWBaseLayoutManager lm, int itemPosition, int itemCount) {
+    private static boolean isLastChildInLane(BaseLayoutManager lm, int itemPosition, int itemCount) {
         final int laneCount = lm.getLanes().getCount();
         if (itemPosition < itemCount - laneCount) {
             return false;
@@ -85,8 +85,8 @@ class TWItemSpacing {
 
         // TODO: Figure out a robust way to compute this for layouts
         // that are dynamically placed and might span multiple lanes.
-        if (lm instanceof TWSpannableGridLayoutManager ||
-            lm instanceof TWStaggeredGridLayoutManager) {
+        if (lm instanceof SpannableGridLayoutManager ||
+            lm instanceof StaggeredGridLayoutManager) {
             return false;
         }
 
@@ -97,9 +97,9 @@ class TWItemSpacing {
      * Returns the lane span for a given child. Only actually computed for
      * layouts that support spans. Simply Returns 1 otherwise.
      */
-    private static int getLaneSpan(TWBaseLayoutManager lm, View child) {
-        if (lm instanceof TWSpannableGridLayoutManager) {
-            return TWSpannableGridLayoutManager.getLaneSpan((TWSpannableGridLayoutManager) lm,
+    private static int getLaneSpan(BaseLayoutManager lm, View child) {
+        if (lm instanceof SpannableGridLayoutManager) {
+            return SpannableGridLayoutManager.getLaneSpan((SpannableGridLayoutManager) lm,
                     child);
         } else {
             return 1;
@@ -110,9 +110,9 @@ class TWItemSpacing {
      * Returns the lane span for a given position. This should only be used for
      * positions that precedes the position being computed in getItemOffsets().
      */
-    private static int getLaneSpan(TWBaseLayoutManager lm, int itemPosition) {
-        if (lm instanceof TWSpannableGridLayoutManager) {
-            return TWSpannableGridLayoutManager.getLaneSpan((TWSpannableGridLayoutManager) lm,
+    private static int getLaneSpan(BaseLayoutManager lm, int itemPosition) {
+        if (lm instanceof SpannableGridLayoutManager) {
+            return SpannableGridLayoutManager.getLaneSpan((SpannableGridLayoutManager) lm,
                     itemPosition);
         } else {
             return 1;
@@ -130,7 +130,7 @@ class TWItemSpacing {
      * items depending on their position in the layout.
      */
     public void getItemOffsets(Rect outRect, int itemPosition, RecyclerView parent) {
-        final TWBaseLayoutManager lm = (TWBaseLayoutManager) parent.getLayoutManager();
+        final BaseLayoutManager lm = (BaseLayoutManager) parent.getLayoutManager();
         final View child = lm.findViewByPosition(itemPosition);
 
         final int lane = lm.getLaneForChild(child, Direction.END);

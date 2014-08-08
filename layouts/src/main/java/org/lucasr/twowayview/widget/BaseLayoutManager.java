@@ -32,10 +32,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
-import org.lucasr.twowayview.TWAbsLayoutManager;
+import org.lucasr.twowayview.TwoWayLayoutManager;
 
-public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
-    private static final String LOGTAG = "TWLanedLayoutManager";
+public abstract class BaseLayoutManager extends TwoWayLayoutManager {
+    private static final String LOGTAG = "BaseLayoutManager";
 
     protected static class ItemEntry implements Parcelable {
         public final int lane;
@@ -72,8 +72,8 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         };
     }
 
-    private TWLanes mLanes;
-    private TWLanes mLanesToRestore;
+    private Lanes mLanes;
+    private Lanes mLanesToRestore;
 
     private SparseArray<ItemEntry> mItemEntries;
     private SparseArray<ItemEntry> mItemEntriesToRestore;
@@ -81,15 +81,15 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
     protected final Rect mChildFrame = new Rect();
     protected final Rect mTempRect = new Rect();
 
-    public TWBaseLayoutManager(Context context, AttributeSet attrs) {
+    public BaseLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWBaseLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+    public BaseLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
-    public TWBaseLayoutManager(Context context, Orientation orientation) {
+    public BaseLayoutManager(Context context, Orientation orientation) {
         super(context, orientation);
     }
 
@@ -137,7 +137,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         ensureLayoutState();
     }
 
-    TWLanes getLanes() {
+    Lanes getLanes() {
         return mLanes;
     }
 
@@ -149,7 +149,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         return mItemEntries.get(position, null);
     }
 
-    private boolean canUseLanes(TWLanes lanes) {
+    private boolean canUseLanes(Lanes lanes) {
         if (lanes == null) {
             return false;
         }
@@ -188,7 +188,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
             return;
         }
 
-        mLanes = new TWLanes(this, getLaneCount());
+        mLanes = new Lanes(this, getLaneCount());
 
         if (mItemEntries == null) {
             mItemEntries = new SparseArray<ItemEntry>(10);
@@ -305,7 +305,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         final LanedSavedState ss = (LanedSavedState) state;
 
         if (ss.lanes != null && ss.laneSize > 0) {
-            mLanesToRestore = new TWLanes(this, ss.orientation, ss.lanes, ss.laneSize);
+            mLanesToRestore = new Lanes(this, ss.orientation, ss.lanes, ss.laneSize);
             mItemEntriesToRestore = ss.itemEntries;
         }
 

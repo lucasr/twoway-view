@@ -16,7 +16,7 @@
 
 <resources>
 
-    <style name="TWView" parent="TWViewBase">
+    <style name="TwoWayView" parent="TwoWayViewBase">
         <item name="android:orientation">vertical</item>
         <item name="android:scrollbars">vertical</item>
     </style>

@@ -25,13 +25,13 @@ import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
-    private static final String LOGTAG = "TWStaggeredGridLayoutManager";
+public class StaggeredGridLayoutManager extends GridLayoutManager {
+    private static final String LOGTAG = "StaggeredGridLayoutManager";
 
     private static final int DEFAULT_NUM_COLS = 2;
     private static final int DEFAULT_NUM_ROWS = 2;
 
-    protected static class StaggeredItemEntry extends TWBaseLayoutManager.ItemEntry {
+    protected static class StaggeredItemEntry extends BaseLayoutManager.ItemEntry {
         private final int width;
         private final int height;
 
@@ -68,37 +68,37 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
         };
     }
 
-    public TWStaggeredGridLayoutManager(Context context) {
+    public StaggeredGridLayoutManager(Context context) {
         this(context, null);
     }
 
-    public TWStaggeredGridLayoutManager(Context context, AttributeSet attrs) {
+    public StaggeredGridLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TWStaggeredGridLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+    public StaggeredGridLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle, DEFAULT_NUM_COLS, DEFAULT_NUM_ROWS);
     }
 
-    public TWStaggeredGridLayoutManager(Context context, Orientation orientation,
-                                        int numColumns, int numRows) {
+    public StaggeredGridLayoutManager(Context context, Orientation orientation,
+                                      int numColumns, int numRows) {
         super(context, orientation, numColumns, numRows);
     }
 
     @Override
     int getLaneForPosition(int position, Direction direction) {
-        int lane = TWLanes.NO_LANE;
+        int lane = Lanes.NO_LANE;
 
         final StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry != null) {
             lane = entry.lane;
         }
 
-        if (lane != TWLanes.NO_LANE) {
+        if (lane != Lanes.NO_LANE) {
             return lane;
         }
 
-        final TWLanes lanes = getLanes();
+        final Lanes lanes = getLanes();
         int targetEdge = (direction == Direction.END ? Integer.MAX_VALUE : Integer.MIN_VALUE);
 
         final int laneCount = lanes.getCount();
@@ -125,7 +125,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
     @Override
     void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final boolean isVertical = isVertical();
-        final TWLanes lanes = getLanes();
+        final Lanes lanes = getLanes();
         final Rect childFrame = new Rect();
 
         lanes.reset(0);
