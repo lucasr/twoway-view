@@ -135,7 +135,7 @@ class TWLanes {
         laneRect.set(mLanes[lane]);
     }
 
-    public void pushChildFrame(int lane, Direction direction, Rect childFrame) {
+    public void pushChildFrame(Rect childFrame, int lane, Direction direction) {
         final Rect laneRect = mLanes[lane];
         if (mIsVertical) {
             if (direction == Direction.END) {
@@ -154,13 +154,13 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public void pushChildFrame(int start, int end, Direction direction, Rect childFrame) {
+    public void pushChildFrame(Rect childFrame, int start, int end, Direction direction) {
         for (int i = start; i < end; i++) {
-            pushChildFrame(i, direction, childFrame);
+            pushChildFrame(childFrame, i, direction);
         }
     }
 
-    public void popChildFrame(int lane, Direction direction, Rect childFrame) {
+    public void popChildFrame(Rect childFrame, int lane, Direction direction) {
         final Rect laneRect = mLanes[lane];
         if (mIsVertical) {
             if (direction == Direction.END) {
@@ -179,9 +179,9 @@ class TWLanes {
         invalidateEdges();
     }
 
-    public void popChildFrame(int start, int end, Direction direction, Rect childFrame) {
+    public void popChildFrame(Rect childFrame, int start, int end, Direction direction) {
         for (int i = start; i < end; i++) {
-            popChildFrame(i, direction, childFrame);
+            popChildFrame(childFrame, i, direction);
         }
     }
 

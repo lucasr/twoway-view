@@ -214,7 +214,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         // the main lane. Now we push it to the remaining lanes
         // within the item's span.
         getDecoratedChildFrame(child, mChildFrame);
-        getLanes().pushChildFrame(lane + 1, lane + laneSpan, direction, mChildFrame);
+        getLanes().pushChildFrame(mChildFrame, lane + 1, lane + laneSpan, direction);
     }
 
     @Override
@@ -232,7 +232,7 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
         // the main lane. Now we pop it from the remaining lanes
         // within the item's span.
         getDecoratedChildFrame(child, mChildFrame);
-        getLanes().popChildFrame(lane + 1, lane + laneSpan, direction, mChildFrame);
+        getLanes().popChildFrame(mChildFrame, lane + 1, lane + laneSpan, direction);
     }
 
     @Override
@@ -260,8 +260,8 @@ public class TWSpannableGridLayoutManager extends TWGridLayoutManager {
             }
 
             if (i != position) {
-                lanes.pushChildFrame(entry.lane, entry.lane + getLaneSpan(isVertical, entry),
-                        Direction.END, childFrame);
+                lanes.pushChildFrame(childFrame, entry.lane,
+                        entry.lane + getLaneSpan(isVertical, entry), Direction.END);
             }
         }
 

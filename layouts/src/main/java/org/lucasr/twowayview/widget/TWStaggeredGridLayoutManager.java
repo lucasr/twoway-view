@@ -159,7 +159,7 @@ public class TWStaggeredGridLayoutManager extends TWGridLayoutManager {
                 removeAndRecycleView(child, recycler);
             }
 
-            lanes.pushChildFrame(entry.lane, Direction.END, childFrame);
+            lanes.pushChildFrame(childFrame, entry.lane, Direction.END);
         }
 
         lanes.reset(Direction.END);

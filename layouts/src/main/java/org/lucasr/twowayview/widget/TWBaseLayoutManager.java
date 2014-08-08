@@ -27,7 +27,6 @@ import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -357,7 +356,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
 
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
-            mLanes.pushChildFrame(lane, direction, mChildFrame);
+            mLanes.pushChildFrame(mChildFrame, lane, direction);
         }
 
         layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
@@ -371,7 +370,7 @@ public abstract class TWBaseLayoutManager extends TWAbsLayoutManager {
         final int lane = getLaneForPosition(getPosition(child), direction);
 
         getDecoratedChildFrame(child, mChildFrame);
-        mLanes.popChildFrame(lane, direction, mChildFrame);
+        mLanes.popChildFrame(mChildFrame, lane, direction);
     }
 
     void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
