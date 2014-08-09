@@ -20,8 +20,6 @@ public class DividerItemDecoration extends ItemDecoration {
     private final ItemSpacingOffsets mItemSpacing;
     private final Drawable mDivider;
 
-    private final SparseArray<Rect> mItemOffsets = new SparseArray<Rect>();
-
     public DividerItemDecoration(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
@@ -67,15 +65,15 @@ public class DividerItemDecoration extends ItemDecoration {
         final int childCount = parent.getChildCount();
         for (int i = 0; i < childCount; i++) {
             final View child = parent.getChildAt(i);
-            final Rect itemOffset = mItemOffsets.get(lm.getPosition(child));
 
             final int childLeft = lm.getDecoratedLeft(child);
             final int childTop = lm.getDecoratedTop(child);
             final int childRight = lm.getDecoratedRight(child);
             final int childBottom = lm.getDecoratedBottom(child);
 
-            if (itemOffset.right > 0 && childRight < rightWithPadding) {
-                final int left = childRight - itemOffset.right;
+            final int rightOffset = childRight - child.getRight();
+            if (rightOffset > 0 && childRight < rightWithPadding) {
+                final int left = childRight - rightOffset;
                 final int top = childTop;
                 final int right = left + mDivider.getIntrinsicWidth();
                 final int bottom = childBottom;
@@ -84,9 +82,10 @@ public class DividerItemDecoration extends ItemDecoration {
                 mDivider.draw(c);
             }
 
-            if (itemOffset.bottom > 0 && childBottom < bottomWithPadding) {
+            final int bottomOffset = childBottom - child.getBottom();
+            if (bottomOffset > 0 && childBottom < bottomWithPadding) {
                 final int left = childLeft;
-                final int top = childBottom - itemOffset.bottom;
+                final int top = childBottom - bottomOffset;
                 final int right = childRight;
                 final int bottom = top + mDivider.getIntrinsicHeight();
 
@@ -98,13 +97,6 @@ public class DividerItemDecoration extends ItemDecoration {
 
     @Override
     public void getItemOffsets(Rect outRect, int itemPosition, RecyclerView parent) {
-        final Rect itemOffset = mItemOffsets.get(itemPosition, null);
-        if (itemOffset != null) {
-            outRect.set(itemOffset);
-            return;
-        }
-
         mItemSpacing.getItemOffsets(outRect, itemPosition, parent);
-        mItemOffsets.put(itemPosition, new Rect(outRect));
     }
 }
