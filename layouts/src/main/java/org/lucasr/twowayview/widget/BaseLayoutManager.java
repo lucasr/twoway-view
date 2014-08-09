@@ -120,7 +120,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     }
 
     protected int getChildLaneAndFrame(View child, Direction direction, Rect childFrame) {
-        final int lane = getLaneForPosition(getPosition(child), direction);
+        final int lane = getLaneForChild(child, direction);
 
         mLanes.getChildFrame(getDecoratedMeasuredWidth(child), getDecoratedMeasuredHeight(child),
                 lane, direction, childFrame);

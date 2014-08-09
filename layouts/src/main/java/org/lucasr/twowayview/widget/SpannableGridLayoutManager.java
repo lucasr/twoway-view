@@ -125,26 +125,20 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
         return (isVertical ? entry.colSpan : entry.rowSpan);
     }
 
-    @Override
-    protected int getChildLaneAndFrame(View child, Direction direction, Rect childFrame) {
-        return getChildLaneAndFrame(getDecoratedMeasuredWidth(child),
-                getDecoratedMeasuredHeight(child), getPosition(child), direction,
-                getLaneSpan(this, child), childFrame);
-    }
-
     private int getChildLaneAndFrame(int childWidth, int childHeight, int position,
                                      Direction direction, int laneSpan, Rect childFrame) {
-        final Lanes lanes = getLanes();
         int lane = Lanes.NO_LANE;
 
         final ItemEntry entry = getItemEntryForPosition(position);
         if (entry != null) {
             lane = entry.lane;
-        } else {
-            lane = lanes.findLane(laneSpan, direction);
         }
 
-        lanes.getChildFrame(childWidth, childHeight, lane, direction, childFrame);
+        if (lane == Lanes.NO_LANE) {
+            lane = getLanes().findLane(laneSpan, direction);
+        }
+
+        getLanes().getChildFrame(childWidth, childHeight, lane, direction, childFrame);
         return lane;
     }
 
@@ -170,7 +164,7 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
 
     @Override
     int getLaneForChild(View child, Direction direction) {
-        int lane = getLaneForPosition(getPosition(child), direction);
+        int lane = super.getLaneForChild(child, direction);
         if (lane == Lanes.NO_LANE) {
             lane = getLanes().findLane(getLaneSpan(this, child), direction);
         }
