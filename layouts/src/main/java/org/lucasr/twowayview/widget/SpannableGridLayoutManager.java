@@ -125,23 +125,6 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
         return (isVertical ? entry.colSpan : entry.rowSpan);
     }
 
-    private int getChildLaneAndFrame(int childWidth, int childHeight, int position,
-                                     Direction direction, int laneSpan, Rect childFrame) {
-        int lane = Lanes.NO_LANE;
-
-        final ItemEntry entry = getItemEntryForPosition(position);
-        if (entry != null) {
-            lane = entry.lane;
-        }
-
-        if (lane == Lanes.NO_LANE) {
-            lane = getLanes().findLane(laneSpan, direction);
-        }
-
-        getLanes().getChildFrame(childWidth, childHeight, lane, direction, childFrame);
-        return lane;
-    }
-
     @Override
     public boolean canScrollHorizontally() {
         return super.canScrollHorizontally() && !mMeasuring;
@@ -245,9 +228,9 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
                 final View child = recycler.getViewForPosition(i);
                 LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
-                final int lane = getChildLaneAndFrame(getChildWidth(lp.colSpan),
-                        getChildHeight(lp.rowSpan), i, Direction.END, getLaneSpan(lp, isVertical),
-                        childFrame);
+                final int lane = lanes.findLane(getLaneSpan(lp, isVertical), Direction.END);
+                lanes.getChildFrame(getChildWidth(lp.colSpan), getChildHeight(lp.rowSpan),
+                        lane, Direction.END, childFrame);
 
                 entry = (SpannableItemEntry) cacheItemEntry(child, i, lane, childFrame);
             }
