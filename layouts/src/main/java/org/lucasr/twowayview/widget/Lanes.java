@@ -17,6 +17,7 @@
 package org.lucasr.twowayview.widget;
 
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.View;
 
 import org.lucasr.twowayview.TwoWayLayoutManager.Direction;
@@ -185,11 +186,6 @@ class Lanes {
         }
     }
 
-    public void getChildFrame(View child, int lane, Direction direction, Rect childFrame) {
-        getChildFrame(mLayout.getDecoratedMeasuredWidth(child),
-                mLayout.getDecoratedMeasuredHeight(child), lane, direction, childFrame);
-    }
-
     public void getChildFrame(int childWidth, int childHeight, int lane, Direction direction,
                               Rect childFrame) {
         final Rect laneRect = mLanes[lane];
@@ -218,15 +214,16 @@ class Lanes {
         return false;
     }
 
-    private int findLaneThatFitsSpan(int laneSpan, Direction direction, int anchor) {
-        final int count = mLanes.length - laneSpan + 1;
-        for (int l = 0; l < count; l++) {
+    private int findLaneThatFitsSpan(int lane, int laneEdge, int laneSpan, Direction direction) {
+        final int findStart = Math.max(0, lane - laneSpan + 1);
+        final int findEnd = Math.min(findStart + laneSpan, mLanes.length - laneSpan + 1);
+        for (int l = findStart; l < findEnd; l++) {
             getChildFrame(mIsVertical ? laneSpan * mLaneSize : 1,
                           mIsVertical ? 1 : laneSpan * mLaneSize,
                           l, direction, mTempRect);
 
-            mTempRect.offsetTo(mIsVertical ? mTempRect.left : anchor,
-                               mIsVertical ? anchor : mTempRect.top);
+            mTempRect.offsetTo(mIsVertical ? mTempRect.left : laneEdge,
+                               mIsVertical ? laneEdge : mTempRect.top);
 
             if (!intersects(l, laneSpan, mTempRect)) {
                 return l;
@@ -234,6 +231,10 @@ class Lanes {
         }
 
         return Lanes.NO_LANE;
+    }
+
+    public int findLane(Direction direction) {
+        return findLane(1, direction);
     }
 
     public int findLane(int laneSpan, Direction direction) {
@@ -251,7 +252,8 @@ class Lanes {
 
             if ((direction == Direction.END && laneEdge < targetEdge) ||
                 (direction == Direction.START && laneEdge > targetEdge)) {
-                final int targetLane = findLaneThatFitsSpan(laneSpan, direction, laneEdge);
+
+                final int targetLane = findLaneThatFitsSpan(l, laneEdge, laneSpan, direction);
                 if (targetLane != NO_LANE) {
                     targetEdge = laneEdge;
                     lane = targetLane;
