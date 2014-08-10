@@ -94,29 +94,8 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
             lane = entry.lane;
         }
 
-        if (lane != Lanes.NO_LANE) {
-            return lane;
-        }
-
-        final Lanes lanes = getLanes();
-        int targetEdge = (direction == Direction.END ? Integer.MAX_VALUE : Integer.MIN_VALUE);
-
-        final int laneCount = lanes.getCount();
-        for (int i = 0; i < laneCount; i++) {
-            lanes.getLane(i, mTempRect);
-
-            final int laneEdge;
-            if (isVertical()) {
-                laneEdge = (direction == Direction.END ? mTempRect.bottom : mTempRect.top);
-            } else {
-                laneEdge = (direction == Direction.END ? mTempRect.right : mTempRect.left);
-            }
-
-            if ((direction == Direction.END && laneEdge < targetEdge) ||
-                (direction == Direction.START && laneEdge > targetEdge)) {
-                targetEdge = laneEdge;
-                lane = i;
-            }
+        if (lane == Lanes.NO_LANE) {
+            lane = getLanes().findLane(direction);
         }
 
         return lane;
@@ -150,8 +129,9 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                 // views have stable aspect ratio, lane size is fixed, etc.
                 measureChild(child);
 
-                final int lane = getLaneForPosition(position, Direction.END);
-                lanes.getChildFrame(child, lane, Direction.END, childFrame);
+                final int lane = lanes.findLane(Direction.END);
+                lanes.getChildFrame(getDecoratedMeasuredWidth(child),
+                        getDecoratedMeasuredHeight(child), lane, Direction.END, childFrame);
 
                 entry = (StaggeredItemEntry) cacheItemEntry(child, i, lane, childFrame);
 
