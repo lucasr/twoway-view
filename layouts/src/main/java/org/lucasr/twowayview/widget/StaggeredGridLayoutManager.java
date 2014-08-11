@@ -95,13 +95,15 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
         super(context, orientation, numColumns, numRows);
     }
 
-    static int getLaneSpan(StaggeredGridLayoutManager lm, View child) {
+    @Override
+    int getLaneSpanForChild(View child) {
         LayoutParams lp = (LayoutParams) child.getLayoutParams();
         return lp.span;
     }
 
-    static int getLaneSpan(StaggeredGridLayoutManager lm, int position) {
-        final StaggeredItemEntry entry = (StaggeredItemEntry) lm.getItemEntryForPosition(position);
+    @Override
+    int getLaneSpanForPosition(int position) {
+        final StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
             throw new IllegalStateException("Could not find span for position " + position);
         }
@@ -124,7 +126,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
     void getLaneForChild(LaneInfo outInfo, View child, Direction direction) {
         super.getLaneForChild(outInfo, child, direction);
         if (outInfo.isUndefined()) {
-            getLanes().findLane(outInfo, getLaneSpan(this, child), direction);
+            getLanes().findLane(outInfo, getLaneSpanForChild(child), direction);
         }
     }
 
@@ -176,7 +178,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
     protected void detachChild(View child, Direction direction) {
         super.detachChild(child, direction);
 
-        final int laneSpan = getLaneSpan(this, child);
+        final int laneSpan = getLaneSpanForChild(child);
         if (laneSpan == 1) {
             return;
         }

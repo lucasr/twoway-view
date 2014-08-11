@@ -50,7 +50,7 @@ class ItemSpacingOffsets {
             previousPosition--;
         }
 
-        final int previousLaneSpan = getLaneSpan(lm, previousPosition);
+        final int previousLaneSpan = lm.getLaneSpanForPosition(previousPosition);
         if (previousLane == 0) {
             return (lane == previousLane + previousLaneSpan);
         }
@@ -69,7 +69,7 @@ class ItemSpacingOffsets {
 
         int count = 0;
         for (int i = 0; i < itemPosition; i++) {
-            count += getLaneSpan(lm, i);
+            count += lm.getLaneSpanForPosition(i);
             if (count >= laneCount) {
                 return false;
             }
@@ -97,36 +97,6 @@ class ItemSpacingOffsets {
         return true;
     }
 
-    /**
-     * Returns the lane span for a given child. Only actually computed for
-     * layouts that support spans. Simply Returns 1 otherwise.
-     */
-    private static int getLaneSpan(BaseLayoutManager lm, View child) {
-        if (lm instanceof StaggeredGridLayoutManager) {
-            return StaggeredGridLayoutManager.getLaneSpan((StaggeredGridLayoutManager) lm, child);
-        } else if (lm instanceof SpannableGridLayoutManager) {
-            return SpannableGridLayoutManager.getLaneSpan((SpannableGridLayoutManager) lm, child);
-        } else {
-            return 1;
-        }
-    }
-
-    /**
-     * Returns the lane span for a given position. This should only be used for
-     * positions that precedes the position being computed in getItemOffsets().
-     */
-    private static int getLaneSpan(BaseLayoutManager lm, int itemPosition) {
-        if (lm instanceof StaggeredGridLayoutManager) {
-            return StaggeredGridLayoutManager.getLaneSpan((StaggeredGridLayoutManager) lm,
-                    itemPosition);
-        } else if (lm instanceof SpannableGridLayoutManager) {
-            return SpannableGridLayoutManager.getLaneSpan((SpannableGridLayoutManager) lm,
-                    itemPosition);
-        } else {
-            return 1;
-        }
-    }
-
     public void setAddSpacingAtEnd(boolean spacingAtEnd) {
         mAddSpacingAtEnd = spacingAtEnd;
     }
@@ -143,7 +113,7 @@ class ItemSpacingOffsets {
 
         lm.getLaneForChild(mTempLaneInfo, child, Direction.END);
         final int lane = mTempLaneInfo.startLane;
-        final int laneSpan = getLaneSpan(lm, child);
+        final int laneSpan = lm.getLaneSpanForChild(child);
         final int laneCount = lm.getLanes().getCount();
         final int itemCount = parent.getAdapter().getItemCount();
 

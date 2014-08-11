@@ -102,19 +102,6 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
         return getLanes().getLaneSize() * rowSpan;
     }
 
-    static int getLaneSpan(SpannableGridLayoutManager lm, View child) {
-        return getLaneSpan((LayoutParams) child.getLayoutParams(), lm.isVertical());
-    }
-
-    static int getLaneSpan(SpannableGridLayoutManager lm, int position) {
-        final SpannableItemEntry entry = (SpannableItemEntry) lm.getItemEntryForPosition(position);
-        if (entry == null) {
-            throw new IllegalStateException("Could not find span for position " + position);
-        }
-
-        return getLaneSpan(entry, lm.isVertical());
-    }
-
     private static int getLaneSpan(LayoutParams lp, boolean isVertical) {
         return (isVertical ? lp.colSpan : lp.rowSpan);
     }
@@ -134,6 +121,21 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
+    int getLaneSpanForChild(View child) {
+        return getLaneSpan((LayoutParams) child.getLayoutParams(), isVertical());
+    }
+
+    @Override
+    int getLaneSpanForPosition(int position) {
+        final SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
+        if (entry == null) {
+            throw new IllegalStateException("Could not find span for position " + position);
+        }
+
+        return getLaneSpan(entry, isVertical());
+    }
+
+    @Override
     void getLaneForPosition(LaneInfo outInfo, int position, Direction direction) {
         final SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
         if (entry != null) {
@@ -148,7 +150,7 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
     void getLaneForChild(LaneInfo outInfo, View child, Direction direction) {
         super.getLaneForChild(outInfo, child, direction);
         if (outInfo.isUndefined()) {
-            getLanes().findLane(outInfo, getLaneSpan(this, child), direction);
+            getLanes().findLane(outInfo, getLaneSpanForChild(child), direction);
         }
     }
 
@@ -195,7 +197,7 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
     protected void detachChild(View child, Direction direction) {
         super.detachChild(child, direction);
 
-        final int laneSpan = getLaneSpan(this, child);
+        final int laneSpan = getLaneSpanForChild(child);
         if (laneSpan == 1) {
             return;
         }

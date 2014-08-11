@@ -373,6 +373,14 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         getLaneForPosition(outInfo, getPosition(child), direction);
     }
 
+    int getLaneSpanForChild(View child) {
+        return 1;
+    }
+
+    int getLaneSpanForPosition(int position) {
+        return 1;
+    }
+
     ItemEntry cacheItemEntry(View child, int position, LaneInfo laneInfo, Rect childFrame) {
         // Do nothing by default
         return null;
