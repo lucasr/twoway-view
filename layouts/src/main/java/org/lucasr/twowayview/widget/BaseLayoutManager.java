@@ -319,21 +319,21 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     }
 
     private int getWidthUsed(View child) {
-        final boolean isVertical = isVertical();
-        if (!isVertical) {
+        if (!isVertical()) {
             return 0;
         }
 
-        return getWidth() - getPaddingLeft() - getPaddingRight() - mLanes.getLaneSize();
+        final int size = getLanes().getLaneSize() * getLaneSpanForChild(child);
+        return getWidth() - getPaddingLeft() - getPaddingRight() - size;
     }
 
     private int getHeightUsed(View child) {
-        final boolean isVertical = isVertical();
-        if (isVertical) {
+        if (isVertical()) {
             return 0;
         }
 
-        return getHeight() - getPaddingTop() - getPaddingBottom() - mLanes.getLaneSize();
+        final int size = getLanes().getLaneSize() * getLaneSpanForChild(child);
+        return getHeight() - getPaddingTop() - getPaddingBottom() - size;
     }
 
     @Override
@@ -349,7 +349,9 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
-            mLanes.pushChildFrame(mChildFrame, mTempLaneInfo.startLane, direction);
+            final int lane = mTempLaneInfo.startLane;
+            final int laneSpan = getLaneSpanForChild(child);
+            mLanes.pushChildFrame(mChildFrame, lane, lane + laneSpan, direction);
         }
 
         layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
@@ -362,7 +364,10 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     protected void detachChild(View child, Direction direction) {
         getLaneForPosition(mTempLaneInfo, getPosition(child), direction);
         getDecoratedChildFrame(child, mChildFrame);
-        mLanes.popChildFrame(mChildFrame, mTempLaneInfo.startLane, direction);
+
+        final int lane = mTempLaneInfo.startLane;
+        final int laneSpan = getLaneSpanForChild(child);
+        mLanes.popChildFrame(mChildFrame, lane, lane + laneSpan, direction);
     }
 
     void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {

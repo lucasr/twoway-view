@@ -174,45 +174,6 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
-    protected void layoutChild(View child, Direction direction) {
-        super.layoutChild(child, direction);
-
-        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        final int laneSpan = getLaneSpan(lp, isVertical());
-        if (lp.isItemRemoved() || laneSpan == 1) {
-            return;
-        }
-
-        getLaneForPosition(mTempLaneInfo, getPosition(child), direction);
-        final int lane = mTempLaneInfo.startLane;
-
-        // The parent class has already pushed the frame to
-        // the main lane. Now we push it to the remaining lanes
-        // within the item's span.
-        getDecoratedChildFrame(child, mChildFrame);
-        getLanes().pushChildFrame(mChildFrame, lane + 1, lane + laneSpan, direction);
-    }
-
-    @Override
-    protected void detachChild(View child, Direction direction) {
-        super.detachChild(child, direction);
-
-        final int laneSpan = getLaneSpanForChild(child);
-        if (laneSpan == 1) {
-            return;
-        }
-
-        getLaneForPosition(mTempLaneInfo, getPosition(child), direction);
-        final int lane = mTempLaneInfo.startLane;
-
-        // The parent class has already popped the frame from
-        // the main lane. Now we pop it from the remaining lanes
-        // within the item's span.
-        getDecoratedChildFrame(child, mChildFrame);
-        getLanes().popChildFrame(mChildFrame, lane + 1, lane + laneSpan, direction);
-    }
-
-    @Override
     protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final boolean isVertical = isVertical();
         final Lanes lanes = getLanes();
