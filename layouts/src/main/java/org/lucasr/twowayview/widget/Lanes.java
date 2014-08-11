@@ -156,23 +156,31 @@ class Lanes {
         laneRect.set(mLanes[lane]);
     }
 
-    public void pushChildFrame(Rect childFrame, int lane, Direction direction) {
+    public int pushChildFrame(Rect childFrame, int lane, Direction direction) {
+        final int margin;
+
         final Rect laneRect = mLanes[lane];
         if (mIsVertical) {
             if (direction == Direction.END) {
+                margin = laneRect.bottom - childFrame.top;
                 laneRect.bottom = childFrame.bottom;
             } else {
+                margin = laneRect.top - childFrame.bottom;
                 laneRect.top = childFrame.top;
             }
         } else {
             if (direction == Direction.END) {
+                margin = laneRect.right - childFrame.left;
                 laneRect.right = childFrame.right;
             } else {
+                margin = laneRect.left - childFrame.right;
                 laneRect.left = childFrame.left;
             }
         }
 
         invalidateEdges();
+
+        return margin;
     }
 
     public void pushChildFrame(Rect childFrame, int start, int end, Direction direction) {
