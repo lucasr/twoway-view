@@ -226,7 +226,7 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
                         entry.lane, Direction.END, childFrame);
             } else {
                 final View child = recycler.getViewForPosition(i);
-                LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
                 final int lane = lanes.findLane(getLaneSpan(lp, isVertical), Direction.END);
                 lanes.getChildFrame(getChildWidth(lp.colSpan), getChildHeight(lp.rowSpan),
