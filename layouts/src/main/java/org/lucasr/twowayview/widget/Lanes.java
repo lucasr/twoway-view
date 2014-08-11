@@ -232,8 +232,8 @@ class Lanes {
     }
 
     private boolean intersects(int start, int count, Rect r) {
-        for (int i = start; i < start + count; i++) {
-            if (Rect.intersects(mLanes[i], r)) {
+        for (int l = start; l < start + count; l++) {
+            if (Rect.intersects(mLanes[l], r)) {
                 return true;
             }
         }
