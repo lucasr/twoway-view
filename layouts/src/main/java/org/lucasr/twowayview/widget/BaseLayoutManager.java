@@ -327,9 +327,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             return 0;
         }
 
-        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        final int size = (isVertical ? mLanes.getLaneSize() : lp.width);
-        return getWidth() - getPaddingLeft() - getPaddingRight() - size;
+        return getWidth() - getPaddingLeft() - getPaddingRight() - mLanes.getLaneSize();
     }
 
     private int getHeightUsed(View child) {
@@ -338,9 +336,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             return 0;
         }
 
-        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        final int size = (isVertical ? lp.height : mLanes.getLaneSize());
-        return getHeight() - getPaddingTop() - getPaddingBottom() - size;
+        return getHeight() - getPaddingTop() - getPaddingBottom() - mLanes.getLaneSize();
     }
 
     @Override
