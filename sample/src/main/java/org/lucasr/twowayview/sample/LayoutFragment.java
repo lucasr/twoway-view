@@ -201,7 +201,7 @@ public class LayoutFragment extends Fragment {
                 }
 
                 final int span;
-                if (position == 2 || position == 8) {
+                if (position == 2) {
                     span = 2;
                 } else {
                     span = 1;

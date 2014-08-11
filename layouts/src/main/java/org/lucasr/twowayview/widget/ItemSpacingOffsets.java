@@ -5,6 +5,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import org.lucasr.twowayview.TwoWayLayoutManager.Direction;
+import org.lucasr.twowayview.widget.Lanes.LaneInfo;
 
 /**
  * Core logic for applying item vertical and horizontal spacings via item
@@ -16,6 +17,8 @@ class ItemSpacingOffsets {
     private final int mHorizontalSpacing;
 
     private boolean mAddSpacingAtEnd;
+
+    private final LaneInfo mTempLaneInfo = new LaneInfo();
 
     public ItemSpacingOffsets(int verticalSpacing, int horizontalSpacing) {
         if (verticalSpacing < 0 || horizontalSpacing < 0) {
@@ -38,7 +41,8 @@ class ItemSpacingOffsets {
         int previousLane = Lanes.NO_LANE;
         int previousPosition = itemPosition - 1;
         while (previousPosition >= 0) {
-            previousLane = lm.getLaneForPosition(previousPosition, Direction.END);
+            lm.getLaneForPosition(mTempLaneInfo, previousPosition, Direction.END);
+            previousLane = mTempLaneInfo.startLane;
             if (previousLane != lane) {
                 break;
             }
@@ -137,7 +141,8 @@ class ItemSpacingOffsets {
         final BaseLayoutManager lm = (BaseLayoutManager) parent.getLayoutManager();
         final View child = lm.findViewByPosition(itemPosition);
 
-        final int lane = lm.getLaneForChild(child, Direction.END);
+        lm.getLaneForChild(mTempLaneInfo, child, Direction.END);
+        final int lane = mTempLaneInfo.startLane;
         final int laneSpan = getLaneSpan(lm, child);
         final int laneCount = lm.getLanes().getCount();
         final int itemCount = parent.getAdapter().getItemCount();

@@ -25,10 +25,12 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
 import org.lucasr.twowayview.TwoWayView;
+import org.lucasr.twowayview.widget.Lanes.LaneInfo;
 
 public class StaggeredGridLayoutManager extends GridLayoutManager {
     private static final String LOGTAG = "StaggeredGridLayoutManager";
@@ -41,8 +43,8 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
         private final int width;
         private final int height;
 
-        public StaggeredItemEntry(int lane, int span, int width, int height) {
-            super(lane);
+        public StaggeredItemEntry(int startLane, int anchorLane, int span, int width, int height) {
+            super(startLane, anchorLane);
             this.span = span;
             this.width = width;
             this.height = height;
@@ -109,23 +111,22 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
-    int getLaneForPosition(int position, Direction direction) {
+    void getLaneForPosition(LaneInfo outInfo, int position, Direction direction) {
         final StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry != null) {
-            return entry.lane;
+            outInfo.set(entry.startLane, entry.anchorLane);
+            return;
         }
 
-        return Lanes.NO_LANE;
+        outInfo.setUndefined();
     }
 
     @Override
-    int getLaneForChild(View child, Direction direction) {
-        int lane = super.getLaneForChild(child, direction);
-        if (lane == Lanes.NO_LANE) {
-            lane = getLanes().findLane(getLaneSpan(this, child), direction);
+    void getLaneForChild(LaneInfo outInfo, View child, Direction direction) {
+        super.getLaneForChild(outInfo, child, direction);
+        if (outInfo.isUndefined()) {
+            getLanes().findLane(outInfo, getLaneSpan(this, child), direction);
         }
-
-        return lane;
     }
 
     private int getWidthUsed(View child) {
@@ -162,7 +163,8 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
             return;
         }
 
-        final int lane = getLaneForPosition(getPosition(child), direction);
+        getLaneForPosition(mTempLaneInfo, getPosition(child), direction);
+        final int lane = mTempLaneInfo.startLane;
 
         // The parent class has already pushed the frame to
         // the main lane. Now we push it to the remaining lanes
@@ -180,7 +182,8 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
             return;
         }
 
-        final int lane = getLaneForPosition(getPosition(child), direction);
+        getLaneForPosition(mTempLaneInfo, getPosition(child), direction);
+        final int lane = mTempLaneInfo.startLane;
 
         // The parent class has already popped the frame from
         // the main lane. Now we pop it from the remaining lanes
@@ -201,7 +204,8 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
             StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(i);
 
             if (entry != null) {
-                lanes.getChildFrame(entry.width, entry.height, entry.lane,
+                mTempLaneInfo.set(entry.startLane, entry.anchorLane);
+                lanes.getChildFrame(entry.width, entry.height, mTempLaneInfo,
                         Direction.END, childFrame);
             } else {
                 final View child = recycler.getViewForPosition(i);
@@ -218,36 +222,39 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                 // views have stable aspect ratio, lane size is fixed, etc.
                 measureChild(child);
 
-                final int lane = lanes.findLane(lp.span, Direction.END);
+                lanes.findLane(mTempLaneInfo, lp.span, Direction.END);
                 lanes.getChildFrame(getDecoratedMeasuredWidth(child),
-                        getDecoratedMeasuredHeight(child), lane, Direction.END, childFrame);
+                        getDecoratedMeasuredHeight(child), mTempLaneInfo, Direction.END, childFrame);
 
-                entry = (StaggeredItemEntry) cacheItemEntry(child, i, lane, childFrame);
+                entry = (StaggeredItemEntry) cacheItemEntry(child, i, mTempLaneInfo, childFrame);
 
                 // Done, now recycle view.
                 removeAndRecycleView(child, recycler);
             }
 
             if (i != position) {
-                lanes.pushChildFrame(childFrame, entry.lane,
-                        entry.lane + entry.span, Direction.END);
+                lanes.pushChildFrame(childFrame, entry.startLane,
+                        entry.startLane + entry.span, Direction.END);
             }
         }
 
+        getLaneForPosition(mTempLaneInfo, position, Direction.END);
+        lanes.getLane(mTempLaneInfo.startLane, mTempRect);
+
         lanes.reset(Direction.END);
-        lanes.getLane(getLaneForPosition(position, Direction.END), mTempRect);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
     }
 
     @Override
-    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
+    ItemEntry cacheItemEntry(View child, int position, LaneInfo laneInfo, Rect childFrame) {
         StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
             final LayoutParams lp = (LayoutParams) child.getLayoutParams();
             final int width = childFrame.right - childFrame.left;
             final int height = childFrame.bottom - childFrame.top;
 
-            entry = new StaggeredItemEntry(lane, lp.span, width, height);
+            entry = new StaggeredItemEntry(laneInfo.startLane, laneInfo.anchorLane,
+                    lp.span, width, height);
             setItemEntryForPosition(position, entry);
         }
 

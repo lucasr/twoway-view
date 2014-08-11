@@ -23,6 +23,8 @@ import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
 import android.view.View;
 
+import org.lucasr.twowayview.widget.Lanes.LaneInfo;
+
 public class GridLayoutManager extends BaseLayoutManager {
     private static final String LOGTAG = "GridLayoutManager";
 
@@ -76,8 +78,9 @@ public class GridLayoutManager extends BaseLayoutManager {
     }
 
     @Override
-    int getLaneForPosition(int position, Direction direction) {
-        return (position % getLaneCount());
+    void getLaneForPosition(LaneInfo outInfo, int position, Direction direction) {
+        final int lane = (position % getLaneCount());
+        outInfo.set(lane, lane);
     }
 
     @Override
@@ -85,7 +88,8 @@ public class GridLayoutManager extends BaseLayoutManager {
         final Lanes lanes = getLanes();
         lanes.reset(offset);
 
-        final int lane = getLaneForPosition(position, Direction.END);
+        getLaneForPosition(mTempLaneInfo, position, Direction.END);
+        final int lane = mTempLaneInfo.startLane;
         if (lane == 0) {
             return;
         }

@@ -27,25 +27,30 @@ import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
 import org.lucasr.twowayview.TwoWayLayoutManager;
+import org.lucasr.twowayview.widget.Lanes.LaneInfo;
 
 public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     private static final String LOGTAG = "BaseLayoutManager";
 
     protected static class ItemEntry implements Parcelable {
-        public final int lane;
+        public final int startLane;
+        public final int anchorLane;
 
-        public ItemEntry(int position) {
-            this.lane = position;
+        public ItemEntry(int startLane, int anchorLane) {
+            this.startLane = startLane;
+            this.anchorLane = anchorLane;
         }
 
         public ItemEntry(Parcel in) {
-            this.lane = in.readInt();
+            startLane = in.readInt();
+            anchorLane = in.readInt();
         }
 
         @Override
@@ -55,7 +60,8 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
         @Override
         public void writeToParcel(Parcel out, int flags) {
-            out.writeInt(lane);
+            out.writeInt(startLane);
+            out.writeInt(anchorLane);
         }
 
         public static final Creator<ItemEntry> CREATOR
@@ -80,6 +86,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     protected final Rect mChildFrame = new Rect();
     protected final Rect mTempRect = new Rect();
+    protected final LaneInfo mTempLaneInfo = new LaneInfo();
 
     public BaseLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
@@ -119,13 +126,11 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         childFrame.bottom = getDecoratedBottom(child);
     }
 
-    protected int getChildLaneAndFrame(View child, Direction direction, Rect childFrame) {
-        final int lane = getLaneForChild(child, direction);
-
+    protected void getChildLaneAndFrame(LaneInfo outInfo, View child, Direction direction,
+                                        Rect childFrame) {
+        getLaneForChild(outInfo, child, direction);
         mLanes.getChildFrame(getDecoratedMeasuredWidth(child), getDecoratedMeasuredHeight(child),
-                lane, direction, childFrame);
-
-        return lane;
+                outInfo, direction, childFrame);
     }
 
     boolean isVertical() {
@@ -346,36 +351,35 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     @Override
     protected void layoutChild(View child, Direction direction) {
-        final int lane = getChildLaneAndFrame(child, direction, mChildFrame);
+        getChildLaneAndFrame(mTempLaneInfo, child, direction, mChildFrame);
 
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
-            mLanes.pushChildFrame(mChildFrame, lane, direction);
+            mLanes.pushChildFrame(mChildFrame, mTempLaneInfo.startLane, direction);
         }
 
         layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
                 mChildFrame.bottom);
 
-        cacheItemEntry(child, getPosition(child), lane, mChildFrame);
+        cacheItemEntry(child, getPosition(child), mTempLaneInfo, mChildFrame);
     }
 
     @Override
     protected void detachChild(View child, Direction direction) {
-        final int lane = getLaneForPosition(getPosition(child), direction);
-
+        getLaneForPosition(mTempLaneInfo, getPosition(child), direction);
         getDecoratedChildFrame(child, mChildFrame);
-        mLanes.popChildFrame(mChildFrame, lane, direction);
+        mLanes.popChildFrame(mChildFrame, mTempLaneInfo.startLane, direction);
     }
 
     void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         mLanes.reset(offset);
     }
 
-    int getLaneForChild(View child, Direction direction) {
-        return getLaneForPosition(getPosition(child), direction);
+    void getLaneForChild(LaneInfo outInfo, View child, Direction direction) {
+        getLaneForPosition(outInfo, getPosition(child), direction);
     }
 
-    ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
+    ItemEntry cacheItemEntry(View child, int position, LaneInfo laneInfo, Rect childFrame) {
         // Do nothing by default
         return null;
     }
@@ -418,7 +422,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     }
 
     abstract int getLaneCount();
-    abstract int getLaneForPosition(int position, Direction direction);
+    abstract void getLaneForPosition(LaneInfo outInfo, int position, Direction direction);
 
     protected static class LanedSavedState extends SavedState {
         private Orientation orientation;

@@ -19,6 +19,8 @@ package org.lucasr.twowayview.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 
+import org.lucasr.twowayview.widget.Lanes.LaneInfo;
+
 public class ListLayoutManager extends BaseLayoutManager {
     private static final String LOGTAG = "ListLayoutManager";
 
@@ -40,7 +42,7 @@ public class ListLayoutManager extends BaseLayoutManager {
     }
 
     @Override
-    int getLaneForPosition(int position, Direction direction) {
-        return 0;
+    void getLaneForPosition(LaneInfo outInfo, int position, Direction direction) {
+        outInfo.set(0, 0);
     }
 }
