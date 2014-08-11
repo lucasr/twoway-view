@@ -27,7 +27,6 @@ import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -129,8 +128,8 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     protected void getChildLaneAndFrame(LaneInfo outInfo, View child, Direction direction,
                                         Rect childFrame) {
         getLaneForChild(outInfo, child, direction);
-        mLanes.getChildFrame(getDecoratedMeasuredWidth(child), getDecoratedMeasuredHeight(child),
-                outInfo, direction, childFrame);
+        mLanes.getChildFrame(childFrame, getDecoratedMeasuredWidth(child), getDecoratedMeasuredHeight(child),
+                outInfo, direction);
     }
 
     boolean isVertical() {

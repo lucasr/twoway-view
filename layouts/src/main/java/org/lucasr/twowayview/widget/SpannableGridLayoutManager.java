@@ -25,7 +25,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
@@ -76,7 +75,6 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
         };
     }
 
-    private final Context mContext;
     private boolean mMeasuring;
 
     public SpannableGridLayoutManager(Context context) {
@@ -89,13 +87,11 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
 
     public SpannableGridLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle, DEFAULT_NUM_COLS, DEFAULT_NUM_ROWS);
-        mContext = context;
     }
 
     public SpannableGridLayoutManager(Context context, Orientation orientation,
                                       int numColumns, int numRows) {
         super(context, orientation, numColumns, numRows);
-        mContext = context;
     }
 
     private int getChildWidth(int colSpan) {
@@ -226,15 +222,15 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
             SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(i);
             if (entry != null) {
                 mTempLaneInfo.set(entry.startLane, entry.anchorLane);
-                lanes.getChildFrame(getChildWidth(entry.colSpan), getChildHeight(entry.rowSpan),
-                        mTempLaneInfo, Direction.END, childFrame);
+                lanes.getChildFrame(childFrame, getChildWidth(entry.colSpan), getChildHeight(entry.rowSpan),
+                        mTempLaneInfo, Direction.END);
             } else {
                 final View child = recycler.getViewForPosition(i);
                 final LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
                 lanes.findLane(mTempLaneInfo, getLaneSpan(lp, isVertical), Direction.END);
-                lanes.getChildFrame(getChildWidth(lp.colSpan), getChildHeight(lp.rowSpan),
-                        mTempLaneInfo, Direction.END, childFrame);
+                lanes.getChildFrame(childFrame, getChildWidth(lp.colSpan), getChildHeight(lp.rowSpan),
+                        mTempLaneInfo, Direction.END);
 
                 entry = (SpannableItemEntry) cacheItemEntry(child, i, mTempLaneInfo, childFrame);
             }

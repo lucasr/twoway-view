@@ -25,7 +25,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -205,8 +204,8 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
 
             if (entry != null) {
                 mTempLaneInfo.set(entry.startLane, entry.anchorLane);
-                lanes.getChildFrame(entry.width, entry.height, mTempLaneInfo,
-                        Direction.END, childFrame);
+                lanes.getChildFrame(childFrame, entry.width, entry.height, mTempLaneInfo,
+                        Direction.END);
             } else {
                 final View child = recycler.getViewForPosition(i);
                 final LayoutParams lp = (LayoutParams) child.getLayoutParams();
@@ -223,8 +222,8 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                 measureChild(child);
 
                 lanes.findLane(mTempLaneInfo, lp.span, Direction.END);
-                lanes.getChildFrame(getDecoratedMeasuredWidth(child),
-                        getDecoratedMeasuredHeight(child), mTempLaneInfo, Direction.END, childFrame);
+                lanes.getChildFrame(childFrame, getDecoratedMeasuredWidth(child),
+                        getDecoratedMeasuredHeight(child), mTempLaneInfo, Direction.END);
 
                 entry = (StaggeredItemEntry) cacheItemEntry(child, i, mTempLaneInfo, childFrame);
 
