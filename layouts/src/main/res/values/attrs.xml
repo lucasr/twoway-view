@@ -31,6 +31,10 @@
         <attr name="android:divider"/>
     </declare-styleable>
 
+    <declare-styleable name="StaggeredGridViewChild">
+        <attr name="span" format="integer"/>
+    </declare-styleable>
+
     <declare-styleable name="SpannableGridViewChild">
         <attr name="colSpan" format="integer"/>
         <attr name="rowSpan" format="integer"/>

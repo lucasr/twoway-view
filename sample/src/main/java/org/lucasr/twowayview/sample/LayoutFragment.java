@@ -40,6 +40,7 @@ import org.lucasr.twowayview.TwoWayLayoutManager.Orientation;
 import org.lucasr.twowayview.widget.DividerItemDecoration;
 import org.lucasr.twowayview.widget.SpannableGridLayoutManager;
 import org.lucasr.twowayview.TwoWayView;
+import org.lucasr.twowayview.widget.StaggeredGridLayoutManager;
 
 public class LayoutFragment extends Fragment {
     private static final String ARG_LAYOUT_ID = "layout_id";
@@ -199,13 +200,23 @@ public class LayoutFragment extends Fragment {
                     id = R.dimen.staggered_child_small;
                 }
 
+                final int span;
+                if (position == 2 || position == 8) {
+                    span = 2;
+                } else {
+                    span = 1;
+                }
+
                 final int size = mContext.getResources().getDimensionPixelSize(id);
 
-                final ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
+                final StaggeredGridLayoutManager.LayoutParams lp =
+                        (StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams();
                 if (!isVertical && lp.width != id) {
+                    lp.span = span;
                     lp.width = size;
                     itemView.setLayoutParams(lp);
                 } else if (isVertical && lp.height != id) {
+                    lp.span = span;
                     lp.height = size;
                     itemView.setLayoutParams(lp);
                 }

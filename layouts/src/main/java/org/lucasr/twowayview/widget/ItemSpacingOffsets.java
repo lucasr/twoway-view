@@ -98,9 +98,10 @@ class ItemSpacingOffsets {
      * layouts that support spans. Simply Returns 1 otherwise.
      */
     private static int getLaneSpan(BaseLayoutManager lm, View child) {
-        if (lm instanceof SpannableGridLayoutManager) {
-            return SpannableGridLayoutManager.getLaneSpan((SpannableGridLayoutManager) lm,
-                    child);
+        if (lm instanceof StaggeredGridLayoutManager) {
+            return StaggeredGridLayoutManager.getLaneSpan((StaggeredGridLayoutManager) lm, child);
+        } else if (lm instanceof SpannableGridLayoutManager) {
+            return SpannableGridLayoutManager.getLaneSpan((SpannableGridLayoutManager) lm, child);
         } else {
             return 1;
         }
@@ -111,7 +112,10 @@ class ItemSpacingOffsets {
      * positions that precedes the position being computed in getItemOffsets().
      */
     private static int getLaneSpan(BaseLayoutManager lm, int itemPosition) {
-        if (lm instanceof SpannableGridLayoutManager) {
+        if (lm instanceof StaggeredGridLayoutManager) {
+            return StaggeredGridLayoutManager.getLaneSpan((StaggeredGridLayoutManager) lm,
+                    itemPosition);
+        } else if (lm instanceof SpannableGridLayoutManager) {
             return SpannableGridLayoutManager.getLaneSpan((SpannableGridLayoutManager) lm,
                     itemPosition);
         } else {

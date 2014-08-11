@@ -17,13 +17,18 @@
 package org.lucasr.twowayview.widget;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
+
+import org.lucasr.twowayview.TwoWayView;
 
 public class StaggeredGridLayoutManager extends GridLayoutManager {
     private static final String LOGTAG = "StaggeredGridLayoutManager";
@@ -32,17 +37,20 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
     private static final int DEFAULT_NUM_ROWS = 2;
 
     protected static class StaggeredItemEntry extends BaseLayoutManager.ItemEntry {
+        private final int span;
         private final int width;
         private final int height;
 
-        public StaggeredItemEntry(int lane, int width, int height) {
+        public StaggeredItemEntry(int lane, int span, int width, int height) {
             super(lane);
+            this.span = span;
             this.width = width;
             this.height = height;
         }
 
         public StaggeredItemEntry(Parcel in) {
             super(in);
+            this.span = in.readInt();
             this.width = in.readInt();
             this.height = in.readInt();
         }
@@ -50,6 +58,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
         @Override
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
+            out.writeInt(span);
             out.writeInt(width);
             out.writeInt(height);
         }
@@ -85,20 +94,99 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
         super(context, orientation, numColumns, numRows);
     }
 
-    @Override
-    int getLaneForPosition(int position, Direction direction) {
-        int lane = Lanes.NO_LANE;
+    static int getLaneSpan(StaggeredGridLayoutManager lm, View child) {
+        LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        return lp.span;
+    }
 
-        final StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
-        if (entry != null) {
-            lane = entry.lane;
+    static int getLaneSpan(StaggeredGridLayoutManager lm, int position) {
+        final StaggeredItemEntry entry = (StaggeredItemEntry) lm.getItemEntryForPosition(position);
+        if (entry == null) {
+            throw new IllegalStateException("Could not find span for position " + position);
         }
 
+        return entry.span;
+    }
+
+    @Override
+    int getLaneForPosition(int position, Direction direction) {
+        final StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
+        if (entry != null) {
+            return entry.lane;
+        }
+
+        return Lanes.NO_LANE;
+    }
+
+    @Override
+    int getLaneForChild(View child, Direction direction) {
+        int lane = super.getLaneForChild(child, direction);
         if (lane == Lanes.NO_LANE) {
-            lane = getLanes().findLane(direction);
+            lane = getLanes().findLane(getLaneSpan(this, child), direction);
         }
 
         return lane;
+    }
+
+    private int getWidthUsed(View child) {
+        if (!isVertical()) {
+            return 0;
+        }
+
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        final int size = getLanes().getLaneSize() * lp.span;
+        return getWidth() - getPaddingLeft() - getPaddingRight() - size;
+    }
+
+    private int getHeightUsed(View child) {
+        if (isVertical()) {
+            return 0;
+        }
+
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        final int size = getLanes().getLaneSize() * lp.span;
+        return getHeight() - getPaddingTop() - getPaddingBottom() - size;
+    }
+
+    @Override
+    protected void measureChild(View child) {
+        measureChildWithMargins(child, getWidthUsed(child), getHeightUsed(child));
+    }
+
+    @Override
+    protected void layoutChild(View child, Direction direction) {
+        super.layoutChild(child, direction);
+
+        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+        if (lp.isItemRemoved() || lp.span == 1) {
+            return;
+        }
+
+        final int lane = getLaneForPosition(getPosition(child), direction);
+
+        // The parent class has already pushed the frame to
+        // the main lane. Now we push it to the remaining lanes
+        // within the item's span.
+        getDecoratedChildFrame(child, mChildFrame);
+        getLanes().pushChildFrame(mChildFrame, lane + 1, lane + lp.span, direction);
+    }
+
+    @Override
+    protected void detachChild(View child, Direction direction) {
+        super.detachChild(child, direction);
+
+        final int laneSpan = getLaneSpan(this, child);
+        if (laneSpan == 1) {
+            return;
+        }
+
+        final int lane = getLaneForPosition(getPosition(child), direction);
+
+        // The parent class has already popped the frame from
+        // the main lane. Now we pop it from the remaining lanes
+        // within the item's span.
+        getDecoratedChildFrame(child, mChildFrame);
+        getLanes().popChildFrame(mChildFrame, lane + 1, lane + laneSpan, direction);
     }
 
     @Override
@@ -109,7 +197,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
 
         lanes.reset(0);
 
-        for (int i = 0; i < position; i++) {
+        for (int i = 0; i <= position; i++) {
             StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(i);
 
             if (entry != null) {
@@ -117,6 +205,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                         Direction.END, childFrame);
             } else {
                 final View child = recycler.getViewForPosition(i);
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
                 // Temporarily add view as some item decoration might assume
                 // the while being measured is attached.
@@ -129,7 +218,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                 // views have stable aspect ratio, lane size is fixed, etc.
                 measureChild(child);
 
-                final int lane = lanes.findLane(Direction.END);
+                final int lane = lanes.findLane(lp.span, Direction.END);
                 lanes.getChildFrame(getDecoratedMeasuredWidth(child),
                         getDecoratedMeasuredHeight(child), lane, Direction.END, childFrame);
 
@@ -139,7 +228,10 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                 removeAndRecycleView(child, recycler);
             }
 
-            lanes.pushChildFrame(childFrame, entry.lane, Direction.END);
+            if (i != position) {
+                lanes.pushChildFrame(childFrame, entry.lane,
+                        entry.lane + entry.span, Direction.END);
+            }
         }
 
         lanes.reset(Direction.END);
@@ -151,13 +243,96 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
     ItemEntry cacheItemEntry(View child, int position, int lane, Rect childFrame) {
         StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
             final int width = childFrame.right - childFrame.left;
             final int height = childFrame.bottom - childFrame.top;
 
-            entry = new StaggeredItemEntry(lane, width, height);
+            entry = new StaggeredItemEntry(lane, lp.span, width, height);
             setItemEntryForPosition(position, entry);
         }
 
         return entry;
+    }
+
+    @Override
+    public boolean checkLayoutParams(RecyclerView.LayoutParams lp) {
+        boolean result = super.checkLayoutParams(lp);
+        if (lp instanceof LayoutParams) {
+            final LayoutParams staggeredLp = (LayoutParams) lp;
+            result &= (staggeredLp.span >= 1 && staggeredLp.span <= getLaneCount());
+        }
+
+        return result;
+    }
+
+    @Override
+    public LayoutParams generateDefaultLayoutParams() {
+        if (isVertical()) {
+            return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        } else {
+            return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
+        }
+    }
+
+    @Override
+    public LayoutParams generateLayoutParams(ViewGroup.LayoutParams lp) {
+        final LayoutParams staggeredLp = new LayoutParams((ViewGroup.MarginLayoutParams) lp);
+        if (isVertical()) {
+            staggeredLp.width = LayoutParams.MATCH_PARENT;
+            staggeredLp.height = lp.height;
+        } else {
+            staggeredLp.width = lp.width;
+            staggeredLp.height = LayoutParams.MATCH_PARENT;
+        }
+
+        if (lp instanceof LayoutParams) {
+            final LayoutParams other = (LayoutParams) lp;
+            staggeredLp.span = Math.max(1, Math.min(other.span, getLaneCount()));
+        }
+
+        return staggeredLp;
+    }
+
+    @Override
+    public LayoutParams generateLayoutParams(Context c, AttributeSet attrs) {
+        return new LayoutParams(c, attrs);
+    }
+
+    public static class LayoutParams extends TwoWayView.LayoutParams {
+        private static final int DEFAULT_SPAN = 1;
+
+        public int span;
+
+        public LayoutParams(int width, int height) {
+            super(width, height);
+            span = DEFAULT_SPAN;
+        }
+
+        public LayoutParams(Context c, AttributeSet attrs) {
+            super(c, attrs);
+
+            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.StaggeredGridViewChild);
+            span = Math.max(DEFAULT_SPAN, a.getInt(R.styleable.StaggeredGridViewChild_span, -1));
+            a.recycle();
+        }
+
+        public LayoutParams(ViewGroup.LayoutParams other) {
+            super(other);
+            init(other);
+        }
+
+        public LayoutParams(ViewGroup.MarginLayoutParams other) {
+            super(other);
+            init(other);
+        }
+
+        private void init(ViewGroup.LayoutParams other) {
+            if (other instanceof LayoutParams) {
+                final LayoutParams lp = (LayoutParams) other;
+                span = lp.span;
+            } else {
+                span = DEFAULT_SPAN;
+            }
+        }
     }
 }
