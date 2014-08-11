@@ -125,13 +125,6 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         childFrame.bottom = getDecoratedBottom(child);
     }
 
-    protected void getChildLaneAndFrame(LaneInfo outInfo, View child, Direction direction,
-                                        Rect childFrame) {
-        getLaneForChild(outInfo, child, direction);
-        mLanes.getChildFrame(childFrame, getDecoratedMeasuredWidth(child), getDecoratedMeasuredHeight(child),
-                outInfo, direction);
-    }
-
     boolean isVertical() {
         return (getOrientation() == Orientation.VERTICAL);
     }
@@ -350,7 +343,9 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     @Override
     protected void layoutChild(View child, Direction direction) {
-        getChildLaneAndFrame(mTempLaneInfo, child, direction, mChildFrame);
+        getLaneForChild(mTempLaneInfo, child, direction);
+        mLanes.getChildFrame(mChildFrame, getDecoratedMeasuredWidth(child),
+                getDecoratedMeasuredHeight(child), mTempLaneInfo, direction);
 
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
