@@ -408,7 +408,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     }
 
     @Override
-    protected void measureChild(View child) {
+    protected void measureChild(View child, Direction direction) {
         measureChildWithMargins(child, getWidthUsed(child), getHeightUsed(child));
     }
 

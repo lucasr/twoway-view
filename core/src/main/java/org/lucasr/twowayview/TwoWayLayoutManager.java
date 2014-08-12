@@ -451,7 +451,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     }
 
     private void setupChild(View child, Direction direction) {
-        measureChild(child);
+        measureChild(child, direction);
         layoutChild(child, direction);
     }
 
@@ -855,7 +855,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         return mFirstPosition;
     }
 
-    protected abstract void measureChild(View child);
+    protected abstract void measureChild(View child, Direction direction);
     protected abstract void layoutChild(View child, Direction direction);
 
     protected abstract boolean canAddMoreViews(Direction direction, int limit);

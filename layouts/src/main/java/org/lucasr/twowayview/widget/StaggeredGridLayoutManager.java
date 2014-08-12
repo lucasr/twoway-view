@@ -158,7 +158,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                 // child views. We might need to add different policies based
                 // on known assumptions regarding certain layouts e.g. child
                 // views have stable aspect ratio, lane size is fixed, etc.
-                measureChild(child);
+                measureChild(child, Direction.END);
 
                 lanes.findLane(mTempLaneInfo, lp.span, Direction.END);
                 lanes.getChildFrame(childFrame, getDecoratedMeasuredWidth(child),

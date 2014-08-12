@@ -95,7 +95,7 @@ public class GridLayoutManager extends BaseLayoutManager {
         }
 
         final View child = recycler.getViewForPosition(position);
-        measureChild(child);
+        measureChild(child, Direction.END);
 
         final int dimension =
                 (isVertical() ? getDecoratedMeasuredHeight(child) : getDecoratedMeasuredWidth(child));
