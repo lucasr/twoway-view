@@ -407,9 +407,13 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         return getHeight() - getPaddingTop() - getPaddingBottom() - size;
     }
 
+    void measureChildWithMargins(View child) {
+        measureChildWithMargins(child, getWidthUsed(child), getHeightUsed(child));
+    }
+
     @Override
     protected void measureChild(View child, Direction direction) {
-        measureChildWithMargins(child, getWidthUsed(child), getHeightUsed(child));
+        measureChildWithMargins(child);
     }
 
     @Override
