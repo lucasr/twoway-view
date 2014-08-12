@@ -17,6 +17,8 @@
 package org.lucasr.twowayview.widget;
 
 import android.content.Context;
+import android.support.v7.widget.RecyclerView.Recycler;
+import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
 
 import org.lucasr.twowayview.widget.Lanes.LaneInfo;
@@ -44,5 +46,10 @@ public class ListLayoutManager extends BaseLayoutManager {
     @Override
     void getLaneForPosition(LaneInfo outInfo, int position, Direction direction) {
         outInfo.set(0, 0);
+    }
+
+    @Override
+    void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
+        getLanes().reset(offset);
     }
 }

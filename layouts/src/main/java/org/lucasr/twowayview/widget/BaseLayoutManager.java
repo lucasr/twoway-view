@@ -441,10 +441,6 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
                 getLaneSpanForChild(child), direction);
     }
 
-    void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
-        mLanes.reset(offset);
-    }
-
     void getLaneForChild(LaneInfo outInfo, View child, Direction direction) {
         getLaneForPosition(outInfo, getPosition(child), direction);
     }
@@ -501,6 +497,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     abstract int getLaneCount();
     abstract void getLaneForPosition(LaneInfo outInfo, int position, Direction direction);
+    abstract void moveLayoutToPosition(int position, int offset, Recycler recycler, State state);
 
     protected static class LanedSavedState extends SavedState {
         private Orientation orientation;
