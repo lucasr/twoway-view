@@ -177,52 +177,43 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
     protected void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final boolean isVertical = isVertical();
         final Lanes lanes = getLanes();
-        final Rect childFrame = new Rect();
 
         lanes.reset(0);
 
         for (int i = 0; i <= position; i++) {
             SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(i);
-            if (entry != null) {
-                mTempLaneInfo.set(entry.startLane, entry.anchorLane);
-                lanes.getChildFrame(childFrame, getChildWidth(entry.colSpan), getChildHeight(entry.rowSpan),
-                        mTempLaneInfo, Direction.END);
-            } else {
+            if (entry == null) {
                 final View child = recycler.getViewForPosition(i);
-                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-
-                lanes.findLane(mTempLaneInfo, getLaneSpan(lp, isVertical), Direction.END);
-                lanes.getChildFrame(childFrame, getChildWidth(lp.colSpan), getChildHeight(lp.rowSpan),
-                        mTempLaneInfo, Direction.END);
-
-                entry = (SpannableItemEntry) cacheItemEntry(child, mTempLaneInfo, childFrame);
+                entry = (SpannableItemEntry) cacheChildLaneAndSpan(child, Direction.END);
             }
 
+            mTempLaneInfo.set(entry.startLane, entry.anchorLane);
+            lanes.getChildFrame(mTempRect, getChildWidth(entry.colSpan),
+                    getChildHeight(entry.rowSpan), mTempLaneInfo, Direction.END);
+
             if (i != position) {
-                pushChildFrame(entry, childFrame, entry.startLane, getLaneSpan(entry, isVertical),
+                pushChildFrame(entry, mTempRect, entry.startLane, getLaneSpan(entry, isVertical),
                         Direction.END);
             }
         }
 
-        getLaneForPosition(mTempLaneInfo, position, Direction.END);
         lanes.getLane(mTempLaneInfo.startLane, mTempRect);
-
         lanes.reset(Direction.END);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
     }
 
     @Override
-    ItemEntry cacheItemEntry(View child, LaneInfo laneInfo, Rect childFrame) {
+    ItemEntry cacheChildLaneAndSpan(View child, Direction direction) {
         final int position = getPosition(child);
 
         SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
-            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-            final int colSpan = lp.colSpan;
-            final int rowSpan = lp.rowSpan;
+            getLaneForChild(mTempLaneInfo, child, direction);
 
-            entry = new SpannableItemEntry(laneInfo.startLane, laneInfo.anchorLane,
-                    colSpan, rowSpan);
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+
+            entry = new SpannableItemEntry(mTempLaneInfo.startLane, mTempLaneInfo.anchorLane,
+                    lp.colSpan, lp.rowSpan);
             setItemEntryForPosition(position, entry);
         }
 

@@ -413,20 +413,20 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     @Override
     protected void measureChild(View child, Direction direction) {
+        cacheChildLaneAndSpan(child, direction);
         measureChildWithMargins(child);
     }
 
     @Override
     protected void layoutChild(View child, Direction direction) {
         getLaneForChild(mTempLaneInfo, child, direction);
+
         mLanes.getChildFrame(mChildFrame, getDecoratedMeasuredWidth(child),
                 getDecoratedMeasuredHeight(child), mTempLaneInfo, direction);
+        final ItemEntry entry = cacheChildFrame(child, mChildFrame);
 
         layoutDecorated(child, mChildFrame.left, mChildFrame.top, mChildFrame.right,
                 mChildFrame.bottom);
-
-        final ItemEntry entry =
-                cacheItemEntry(child, mTempLaneInfo, mChildFrame);
 
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
@@ -457,8 +457,13 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         return 1;
     }
 
-    ItemEntry cacheItemEntry(View child, LaneInfo laneInfo, Rect childFrame) {
-        // Do nothing by default
+    ItemEntry cacheChildLaneAndSpan(View child, Direction direction) {
+        // Do nothing by default.
+        return null;
+    }
+
+    ItemEntry cacheChildFrame(View child, Rect childFrame) {
+        // Do nothing by default.
         return null;
     }
 

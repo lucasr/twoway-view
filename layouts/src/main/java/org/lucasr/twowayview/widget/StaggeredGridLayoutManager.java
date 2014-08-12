@@ -39,14 +39,12 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
 
     protected static class StaggeredItemEntry extends BaseLayoutManager.ItemEntry {
         private final int span;
-        private final int width;
-        private final int height;
+        private int width;
+        private int height;
 
-        public StaggeredItemEntry(int startLane, int anchorLane, int span, int width, int height) {
+        public StaggeredItemEntry(int startLane, int anchorLane, int span) {
             super(startLane, anchorLane);
             this.span = span;
-            this.width = width;
-            this.height = height;
         }
 
         public StaggeredItemEntry(Parcel in) {
@@ -134,7 +132,6 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
     void moveLayoutToPosition(int position, int offset, Recycler recycler, State state) {
         final boolean isVertical = isVertical();
         final Lanes lanes = getLanes();
-        final Rect childFrame = new Rect();
 
         lanes.reset(0);
 
@@ -143,15 +140,10 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
 
             if (entry != null) {
                 mTempLaneInfo.set(entry.startLane, entry.anchorLane);
-                lanes.getChildFrame(childFrame, entry.width, entry.height, mTempLaneInfo,
+                lanes.getChildFrame(mTempRect, entry.width, entry.height, mTempLaneInfo,
                         Direction.END);
             } else {
                 final View child = recycler.getViewForPosition(i);
-                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-
-                // Temporarily add view as some item decoration might assume
-                // the while being measured is attached.
-                addView(child);
 
                 // XXX: This might potentially cause stalls in the main
                 // thread if the layout ends up having to measure tons of
@@ -160,43 +152,54 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                 // views have stable aspect ratio, lane size is fixed, etc.
                 measureChild(child, Direction.END);
 
-                lanes.findLane(mTempLaneInfo, lp.span, Direction.END);
-                lanes.getChildFrame(childFrame, getDecoratedMeasuredWidth(child),
+                entry = (StaggeredItemEntry) cacheChildLaneAndSpan(child, Direction.END);
+
+                mTempLaneInfo.set(entry.startLane, entry.anchorLane);
+                lanes.getChildFrame(mTempRect, getDecoratedMeasuredWidth(child),
                         getDecoratedMeasuredHeight(child), mTempLaneInfo, Direction.END);
 
-                entry = (StaggeredItemEntry) cacheItemEntry(child, mTempLaneInfo, childFrame);
-
-                // Done, now recycle view.
-                removeAndRecycleView(child, recycler);
+                cacheItemFrame(entry, mTempRect);
             }
 
             if (i != position) {
-                pushChildFrame(entry, childFrame, entry.startLane, entry.span, Direction.END);
+                pushChildFrame(entry, mTempRect, entry.startLane, entry.span, Direction.END);
             }
         }
 
-        getLaneForPosition(mTempLaneInfo, position, Direction.END);
         lanes.getLane(mTempLaneInfo.startLane, mTempRect);
-
         lanes.reset(Direction.END);
         lanes.offset(offset - (isVertical ? mTempRect.bottom : mTempRect.right));
     }
 
     @Override
-    ItemEntry cacheItemEntry(View child, LaneInfo laneInfo, Rect childFrame) {
+    ItemEntry cacheChildLaneAndSpan(View child, Direction direction) {
         final int position = getPosition(child);
 
         StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
-            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-            final int width = childFrame.right - childFrame.left;
-            final int height = childFrame.bottom - childFrame.top;
+            getLaneForChild(mTempLaneInfo, child, direction);
 
-            entry = new StaggeredItemEntry(laneInfo.startLane, laneInfo.anchorLane,
-                    lp.span, width, height);
+            entry = new StaggeredItemEntry(mTempLaneInfo.startLane, mTempLaneInfo.anchorLane,
+                    getLaneSpanForChild(child));
             setItemEntryForPosition(position, entry);
         }
 
+        return entry;
+    }
+
+    void cacheItemFrame(StaggeredItemEntry entry, Rect childFrame) {
+        entry.width = childFrame.right - childFrame.left;
+        entry.height = childFrame.bottom - childFrame.top;
+    }
+
+    @Override
+    ItemEntry cacheChildFrame(View child, Rect childFrame) {
+        StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(getPosition(child));
+        if (entry == null) {
+            throw new IllegalStateException("Tried to cache frame on undefined item");
+        }
+
+        cacheItemFrame(entry, childFrame);
         return entry;
     }
 

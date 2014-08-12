@@ -109,11 +109,10 @@ class ItemSpacingOffsets {
      */
     public void getItemOffsets(Rect outRect, int itemPosition, RecyclerView parent) {
         final BaseLayoutManager lm = (BaseLayoutManager) parent.getLayoutManager();
-        final View child = lm.findViewByPosition(itemPosition);
 
-        lm.getLaneForChild(mTempLaneInfo, child, Direction.END);
+        lm.getLaneForPosition(mTempLaneInfo, itemPosition, Direction.END);
         final int lane = mTempLaneInfo.startLane;
-        final int laneSpan = lm.getLaneSpanForChild(child);
+        final int laneSpan = lm.getLaneSpanForPosition(itemPosition);
         final int laneCount = lm.getLanes().getCount();
         final int itemCount = parent.getAdapter().getItemCount();
 
