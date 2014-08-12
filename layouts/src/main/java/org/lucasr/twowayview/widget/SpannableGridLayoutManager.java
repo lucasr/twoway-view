@@ -199,8 +199,8 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
             }
 
             if (i != position) {
-                lanes.pushChildFrame(childFrame, entry.startLane,
-                        entry.startLane + getLaneSpan(entry, isVertical), Direction.END);
+                pushChildFrame(entry, childFrame, entry.startLane, getLaneSpan(entry, isVertical),
+                        Direction.END);
             }
         }
 

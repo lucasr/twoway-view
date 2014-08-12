@@ -171,8 +171,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
             }
 
             if (i != position) {
-                lanes.pushChildFrame(childFrame, entry.startLane,
-                        entry.startLane + entry.span, Direction.END);
+                pushChildFrame(entry, childFrame, entry.startLane, entry.span, Direction.END);
             }
         }
 

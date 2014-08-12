@@ -154,62 +154,50 @@ class Lanes {
         laneRect.set(mLanes[lane]);
     }
 
-    public int pushChildFrame(Rect outRect, int lane, Direction direction) {
-        final int margin;
+    public int pushChildFrame(Rect outRect, int lane, int margin, Direction direction) {
+        final int delta;
 
         final Rect laneRect = mLanes[lane];
         if (mIsVertical) {
             if (direction == Direction.END) {
-                margin = laneRect.bottom - outRect.top;
-                laneRect.bottom = outRect.bottom;
+                delta = outRect.top - laneRect.bottom;
+                laneRect.bottom = outRect.bottom + margin;
             } else {
-                margin = laneRect.top - outRect.bottom;
-                laneRect.top = outRect.top;
+                delta = outRect.bottom - laneRect.top;
+                laneRect.top = outRect.top - margin;
             }
         } else {
             if (direction == Direction.END) {
-                margin = laneRect.right - outRect.left;
-                laneRect.right = outRect.right;
+                delta = outRect.left - laneRect.right;
+                laneRect.right = outRect.right + margin;
             } else {
-                margin = laneRect.left - outRect.right;
-                laneRect.left = outRect.left;
+                delta = outRect.right - laneRect.left;
+                laneRect.left = outRect.left - margin;
             }
         }
 
         invalidateEdges();
 
-        return margin;
+        return delta;
     }
 
-    public void pushChildFrame(Rect outRect, int start, int end, Direction direction) {
-        for (int i = start; i < end; i++) {
-            pushChildFrame(outRect, i, direction);
-        }
-    }
-
-    public void popChildFrame(Rect outRect, int lane, Direction direction) {
+    public void popChildFrame(Rect outRect, int lane, int margin, Direction direction) {
         final Rect laneRect = mLanes[lane];
         if (mIsVertical) {
             if (direction == Direction.END) {
-                laneRect.top = outRect.bottom;
+                laneRect.top = outRect.bottom - margin;
             } else {
-                laneRect.bottom = outRect.top;
+                laneRect.bottom = outRect.top + margin;
             }
         } else {
             if (direction == Direction.END) {
-                laneRect.left = outRect.right;
+                laneRect.left = outRect.right - margin;
             } else {
-                laneRect.right = outRect.left;
+                laneRect.right = outRect.left + margin;
             }
         }
 
         invalidateEdges();
-    }
-
-    public void popChildFrame(Rect outRect, int start, int end, Direction direction) {
-        for (int i = start; i < end; i++) {
-            popChildFrame(outRect, i, direction);
-        }
     }
 
     public void getChildFrame(Rect outRect, int childWidth, int childHeight, LaneInfo laneInfo,
