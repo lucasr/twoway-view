@@ -164,7 +164,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                 lanes.getChildFrame(childFrame, getDecoratedMeasuredWidth(child),
                         getDecoratedMeasuredHeight(child), mTempLaneInfo, Direction.END);
 
-                entry = (StaggeredItemEntry) cacheItemEntry(child, i, mTempLaneInfo, childFrame);
+                entry = (StaggeredItemEntry) cacheItemEntry(child, mTempLaneInfo, childFrame);
 
                 // Done, now recycle view.
                 removeAndRecycleView(child, recycler);
@@ -183,7 +183,9 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
-    ItemEntry cacheItemEntry(View child, int position, LaneInfo laneInfo, Rect childFrame) {
+    ItemEntry cacheItemEntry(View child, LaneInfo laneInfo, Rect childFrame) {
+        final int position = getPosition(child);
+
         StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
             final LayoutParams lp = (LayoutParams) child.getLayoutParams();

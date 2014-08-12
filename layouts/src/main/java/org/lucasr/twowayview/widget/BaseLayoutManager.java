@@ -422,7 +422,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
                 mChildFrame.bottom);
 
         final ItemEntry entry =
-                cacheItemEntry(child, getPosition(child), mTempLaneInfo, mChildFrame);
+                cacheItemEntry(child, mTempLaneInfo, mChildFrame);
 
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
         if (!lp.isItemRemoved()) {
@@ -453,7 +453,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         return 1;
     }
 
-    ItemEntry cacheItemEntry(View child, int position, LaneInfo laneInfo, Rect childFrame) {
+    ItemEntry cacheItemEntry(View child, LaneInfo laneInfo, Rect childFrame) {
         // Do nothing by default
         return null;
     }

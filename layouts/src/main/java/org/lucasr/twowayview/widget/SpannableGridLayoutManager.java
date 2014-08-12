@@ -195,7 +195,7 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
                 lanes.getChildFrame(childFrame, getChildWidth(lp.colSpan), getChildHeight(lp.rowSpan),
                         mTempLaneInfo, Direction.END);
 
-                entry = (SpannableItemEntry) cacheItemEntry(child, i, mTempLaneInfo, childFrame);
+                entry = (SpannableItemEntry) cacheItemEntry(child, mTempLaneInfo, childFrame);
             }
 
             if (i != position) {
@@ -212,7 +212,9 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
     }
 
     @Override
-    ItemEntry cacheItemEntry(View child, int position, LaneInfo laneInfo, Rect childFrame) {
+    ItemEntry cacheItemEntry(View child, LaneInfo laneInfo, Rect childFrame) {
+        final int position = getPosition(child);
+
         SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
         if (entry == null) {
             final LayoutParams lp = (LayoutParams) child.getLayoutParams();
