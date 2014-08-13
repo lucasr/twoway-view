@@ -5,6 +5,7 @@ import android.os.Build;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.OnItemTouchListener;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
@@ -173,6 +174,8 @@ public class ClickItemTouchListener implements OnItemTouchListener {
 
         @Override
         public boolean onSingleTapUp(MotionEvent event) {
+            boolean handled = false;
+
             if (mTargetChild != null) {
                 mTargetChild.setPressed(false);
 
@@ -180,14 +183,13 @@ public class ClickItemTouchListener implements OnItemTouchListener {
                     final int position = mHostView.getChildPosition(mTargetChild);
                     final long id = mHostView.getAdapter().getItemId(position);
                     mItemClickListener.onItemClick(mHostView, mTargetChild, position, id);
-
-                    return true;
+                    handled = true;
                 }
 
                 mTargetChild = null;
             }
 
-            return false;
+            return handled;
         }
 
         @Override
