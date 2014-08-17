@@ -6,7 +6,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 /**
- * @author Gabriele Mariotti (gabri.mariotti@gmail.com)
+ *
  */
 public class DividerItemDecoratorHelper {
 
