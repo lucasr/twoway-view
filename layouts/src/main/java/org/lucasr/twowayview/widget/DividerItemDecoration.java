@@ -12,13 +12,15 @@ import android.util.SparseArray;
 import android.view.View;
 
 /**
- * {@link android.support.v7.widget.RecyclerView.ItemDecoration} that applies a
- * divider vertically and horizontally between the items of the target
+ * {@link android.support.v7.widget.RecyclerView.ItemDecoration} that draws
+ * vertical and horizontal dividers between the items of the target
  * {@link android.support.v7.widget.RecyclerView}.
  */
 public class DividerItemDecoration extends ItemDecoration {
     private final ItemSpacingOffsets mItemSpacing;
-    private final Drawable mDivider;
+
+    private final Drawable mVerticalDivider;
+    private final Drawable mHorizontalDivider;
 
     public DividerItemDecoration(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
@@ -27,25 +29,43 @@ public class DividerItemDecoration extends ItemDecoration {
     public DividerItemDecoration(Context context, AttributeSet attrs, int defStyle) {
         final TypedArray a =
                 context.obtainStyledAttributes(attrs, R.styleable.DividerItemDecoration, defStyle, 0);
-        mDivider = a.getDrawable(R.styleable.DividerItemDecoration_android_divider);
+
+        final Drawable divider = a.getDrawable(R.styleable.DividerItemDecoration_android_divider);
+        if (divider != null) {
+            mVerticalDivider = mHorizontalDivider = divider;
+        } else {
+            mVerticalDivider = a.getDrawable(R.styleable.DividerItemDecoration_verticalDivider);
+            mHorizontalDivider = a.getDrawable(R.styleable.DividerItemDecoration_horizontalDivider);
+        }
+
         a.recycle();
 
-        mItemSpacing = createSpacing(mDivider);
+        mItemSpacing = createSpacing(mVerticalDivider, mHorizontalDivider);
     }
 
     public DividerItemDecoration(Drawable divider) {
-        mDivider = divider;
-        mItemSpacing = createSpacing(mDivider);
+        this(divider, divider);
     }
 
-    private static ItemSpacingOffsets createSpacing(Drawable divider) {
+    public DividerItemDecoration(Drawable verticalDivider, Drawable horizontalDivider) {
+        mVerticalDivider = verticalDivider;
+        mHorizontalDivider = horizontalDivider;
+        mItemSpacing = createSpacing(mVerticalDivider, mHorizontalDivider);
+    }
+
+    private static ItemSpacingOffsets createSpacing(Drawable verticalDivider,
+                                                    Drawable horizontalDivider) {
         final int verticalSpacing;
-        final int horizontalSpacing;
-        if (divider != null) {
-            verticalSpacing = divider.getIntrinsicHeight();
-            horizontalSpacing = divider.getIntrinsicWidth();
+        if (horizontalDivider != null) {
+            verticalSpacing = horizontalDivider.getIntrinsicHeight();
         } else {
             verticalSpacing = 0;
+        }
+
+        final int horizontalSpacing;
+        if (verticalDivider != null) {
+            horizontalSpacing = verticalDivider.getIntrinsicWidth();
+        } else {
             horizontalSpacing = 0;
         }
 
@@ -76,21 +96,21 @@ public class DividerItemDecoration extends ItemDecoration {
                 final int left = childLeft;
                 final int top = childBottom - bottomOffset;
                 final int right = childRight;
-                final int bottom = top + mDivider.getIntrinsicHeight();
+                final int bottom = top + mHorizontalDivider.getIntrinsicHeight();
 
-                mDivider.setBounds(left, top, right, bottom);
-                mDivider.draw(c);
+                mHorizontalDivider.setBounds(left, top, right, bottom);
+                mHorizontalDivider.draw(c);
             }
 
             final int rightOffset = childRight - child.getRight();
             if (rightOffset > 0 && childRight < rightWithPadding) {
                 final int left = childRight - rightOffset;
                 final int top = childTop;
-                final int right = left + mDivider.getIntrinsicWidth();
+                final int right = left + mVerticalDivider.getIntrinsicWidth();
                 final int bottom = childBottom;
 
-                mDivider.setBounds(left, top, right, bottom);
-                mDivider.draw(c);
+                mVerticalDivider.setBounds(left, top, right, bottom);
+                mVerticalDivider.draw(c);
             }
         }
     }

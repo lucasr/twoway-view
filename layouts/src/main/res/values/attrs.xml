@@ -29,6 +29,8 @@
 
     <declare-styleable name="DividerItemDecoration">
         <attr name="android:divider"/>
+        <attr name="verticalDivider" format="reference"/>
+        <attr name="horizontalDivider" format="reference"/>
     </declare-styleable>
 
     <declare-styleable name="StaggeredGridViewChild">
