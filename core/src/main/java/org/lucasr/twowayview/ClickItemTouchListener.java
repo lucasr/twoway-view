@@ -10,6 +10,7 @@ import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
+import android.view.SoundEffectConstants;
 import android.view.View;
 
 public class ClickItemTouchListener implements OnItemTouchListener {
@@ -183,7 +184,10 @@ public class ClickItemTouchListener implements OnItemTouchListener {
                 if (mItemClickListener != null) {
                     final int position = mHostView.getChildPosition(mTargetChild);
                     final long id = mHostView.getAdapter().getItemId(position);
+
+                    mHostView.playSoundEffect(SoundEffectConstants.CLICK);
                     mItemClickListener.onItemClick(mHostView, mTargetChild, position, id);
+
                     handled = true;
                 }
 
