@@ -8,6 +8,7 @@ import android.support.v7.widget.RecyclerView.OnItemTouchListener;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -214,6 +215,7 @@ public class ClickItemTouchListener implements OnItemTouchListener {
                             mTargetChild, position, id);
 
                     if (handled) {
+                        mHostView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                         mTargetChild.setPressed(false);
                         mTargetChild = null;
                     }
