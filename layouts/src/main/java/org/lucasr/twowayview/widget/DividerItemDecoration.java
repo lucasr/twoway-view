@@ -71,23 +71,23 @@ public class DividerItemDecoration extends ItemDecoration {
             final int childRight = lm.getDecoratedRight(child);
             final int childBottom = lm.getDecoratedBottom(child);
 
-            final int rightOffset = childRight - child.getRight();
-            if (rightOffset > 0 && childRight < rightWithPadding) {
-                final int left = childRight - rightOffset;
-                final int top = childTop;
-                final int right = left + mDivider.getIntrinsicWidth();
-                final int bottom = childBottom;
-
-                mDivider.setBounds(left, top, right, bottom);
-                mDivider.draw(c);
-            }
-
             final int bottomOffset = childBottom - child.getBottom();
             if (bottomOffset > 0 && childBottom < bottomWithPadding) {
                 final int left = childLeft;
                 final int top = childBottom - bottomOffset;
                 final int right = childRight;
                 final int bottom = top + mDivider.getIntrinsicHeight();
+
+                mDivider.setBounds(left, top, right, bottom);
+                mDivider.draw(c);
+            }
+
+            final int rightOffset = childRight - child.getRight();
+            if (rightOffset > 0 && childRight < rightWithPadding) {
+                final int left = childRight - rightOffset;
+                final int top = childTop;
+                final int right = left + mDivider.getIntrinsicWidth();
+                final int bottom = childBottom;
 
                 mDivider.setBounds(left, top, right, bottom);
                 mDivider.draw(c);
