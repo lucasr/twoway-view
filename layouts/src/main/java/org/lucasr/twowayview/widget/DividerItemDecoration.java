@@ -33,8 +33,8 @@ public class DividerItemDecoration extends ItemDecoration {
         mItemSpacing = createSpacing(mDivider);
     }
 
-    public DividerItemDecoration(Drawable verticalDivider) {
-        mDivider = verticalDivider;
+    public DividerItemDecoration(Drawable divider) {
+        mDivider = divider;
         mItemSpacing = createSpacing(mDivider);
     }
 
