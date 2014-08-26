@@ -156,12 +156,12 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
 
     private int getWidthUsed(View child) {
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        return getWidth() - getChildWidth(lp.colSpan);
+        return getWidth() - getPaddingLeft() - getPaddingRight() - getChildWidth(lp.colSpan);
     }
 
     private int getHeightUsed(View child) {
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        return getHeight() - getChildHeight(lp.rowSpan);
+        return getHeight() - getPaddingTop() - getPaddingBottom() - getChildHeight(lp.rowSpan);
     }
 
     @Override
