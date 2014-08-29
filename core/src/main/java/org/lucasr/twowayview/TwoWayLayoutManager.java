@@ -30,6 +30,7 @@ import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.View.BaseSavedState;
 import android.view.ViewGroup.MarginLayoutParams;
@@ -48,6 +49,8 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         START,
         END
     }
+
+    private RecyclerView mRecyclerView;
 
     private int mFirstPosition;
 
@@ -451,6 +454,12 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     }
 
     private void setupChild(View child, Direction direction) {
+        final ItemSelectionSupport itemSelection = ItemSelectionSupport.from(mRecyclerView);
+        if (itemSelection != null) {
+            final int position = getPosition(child);
+            itemSelection.setViewChecked(child, itemSelection.isItemChecked(position));
+        }
+
         measureChild(child, direction);
         layoutChild(child, direction);
     }
@@ -570,6 +579,14 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         }
     }
 
+    private Bundle getPendingItemSelectionState() {
+        if (mPendingSavedState != null) {
+            return mPendingSavedState.itemSelectionState;
+        }
+
+        return null;
+    }
+
     protected int getPendingScrollPosition() {
         if (mPendingSavedState != null) {
             return mPendingSavedState.anchorItemPosition;
@@ -630,11 +647,45 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     }
 
     @Override
+    public void onAttachedToWindow(RecyclerView view) {
+        super.onAttachedToWindow(view);
+        mRecyclerView = view;
+    }
+
+    @Override
+    public void onDetachedFromWindow(RecyclerView view) {
+        super.onDetachedFromWindow(view);
+        mRecyclerView = null;
+    }
+
+    @Override
+    public void onAdapterChanged(RecyclerView.Adapter oldAdapter, RecyclerView.Adapter newAdapter) {
+        super.onAdapterChanged(oldAdapter, newAdapter);
+
+        final ItemSelectionSupport itemSelectionSupport = ItemSelectionSupport.from(mRecyclerView);
+        if (oldAdapter != null && itemSelectionSupport != null) {
+            itemSelectionSupport.clearChoices();
+        }
+    }
+
+    @Override
     public void onLayoutChildren(Recycler recycler, State state) {
         int pendingPosition = getPendingScrollPosition();
         if (pendingPosition != RecyclerView.NO_POSITION) {
             if (pendingPosition < 0 || pendingPosition >= state.getItemCount()) {
                 pendingPosition = RecyclerView.NO_POSITION;
+            }
+        }
+
+        final ItemSelectionSupport itemSelection = ItemSelectionSupport.from(mRecyclerView);
+        if (itemSelection != null) {
+            final Bundle itemSelectionState = getPendingItemSelectionState();
+            if (itemSelectionState != null) {
+                itemSelection.onRestoreInstanceState(itemSelectionState);
+            }
+
+            if (state.didStructureChange()) {
+                itemSelection.onAdapterDataChanged();
             }
         }
 
@@ -827,6 +878,13 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         }
         state.anchorItemPosition = anchorItemPosition;
 
+        final ItemSelectionSupport itemSelection = ItemSelectionSupport.from(mRecyclerView);
+        if (itemSelection != null) {
+            state.itemSelectionState = itemSelection.onSaveInstanceState();
+        } else {
+            state.itemSelectionState = Bundle.EMPTY;
+        }
+
         return state;
     }
 
@@ -862,6 +920,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     protected static class SavedState extends BaseSavedState {
         private int anchorItemPosition;
+        private Bundle itemSelectionState;
 
         protected SavedState(Parcelable superState) {
             super(superState != null ? superState : Bundle.EMPTY);
@@ -870,6 +929,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         protected SavedState(Parcel in) {
             super(in);
             anchorItemPosition = in.readInt();
+            itemSelectionState = in.readParcelable(getClass().getClassLoader());
         }
 
         @Override
@@ -880,6 +940,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         @Override
         public void writeToParcel(Parcel out, int flags) {
             out.writeInt(anchorItemPosition);
+            out.writeParcelable(itemSelectionState, flags);
         }
 
         public static final Parcelable.Creator<SavedState> CREATOR

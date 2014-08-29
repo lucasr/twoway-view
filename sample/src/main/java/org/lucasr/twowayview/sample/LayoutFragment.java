@@ -33,9 +33,9 @@ import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
 import static android.support.v7.widget.RecyclerView.SCROLL_STATE_DRAGGING;
 import static android.support.v7.widget.RecyclerView.SCROLL_STATE_SETTLING;
 
-import org.lucasr.twowayview.ClickItemTouchListener;
-import org.lucasr.twowayview.ClickItemTouchListener.OnItemClickListener;
-import org.lucasr.twowayview.ClickItemTouchListener.OnItemLongClickListener;
+import org.lucasr.twowayview.ItemClickSupport;
+import org.lucasr.twowayview.ItemClickSupport.OnItemClickListener;
+import org.lucasr.twowayview.ItemClickSupport.OnItemLongClickListener;
 import org.lucasr.twowayview.TwoWayLayoutManager.Orientation;
 import org.lucasr.twowayview.widget.DividerItemDecoration;
 import org.lucasr.twowayview.widget.SpannableGridLayoutManager;
@@ -94,9 +94,9 @@ public class LayoutFragment extends Fragment {
         mStateText = (TextView) view.getRootView().findViewById(R.id.state);
         updateState(SCROLL_STATE_IDLE);
 
-        ClickItemTouchListener clickListener = ClickItemTouchListener.addTo(mRecyclerView);
+        final ItemClickSupport itemClick = ItemClickSupport.addTo(mRecyclerView);
 
-        clickListener.setOnItemClickListener(new OnItemClickListener() {
+        itemClick.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(RecyclerView parent, View child, int position, long id) {
                 mToast.setText("Item clicked: " + position);
@@ -104,7 +104,7 @@ public class LayoutFragment extends Fragment {
             }
         });
 
-        clickListener.setOnItemLongClickListener(new OnItemLongClickListener() {
+        itemClick.setOnItemLongClickListener(new OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(RecyclerView parent, View child, int position, long id) {
                 mToast.setText("Item long pressed: " + position);
