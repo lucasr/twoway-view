@@ -237,6 +237,7 @@ public class ItemSelectionSupport {
         }
 
         mCheckedCount = 0;
+        updateOnScreenCheckedViews();
     }
 
     /**
@@ -359,7 +360,6 @@ public class ItemSelectionSupport {
         }
 
         itemSelection.clearChoices();
-        itemSelection.updateOnScreenCheckedViews();
 
         recyclerView.removeOnItemTouchListener(itemSelection.mTouchListener);
         recyclerView.setTag(R.id.item_selection_support, null);
