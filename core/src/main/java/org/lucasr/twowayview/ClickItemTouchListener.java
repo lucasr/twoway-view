@@ -7,9 +7,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.OnItemTouchListener;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
-import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
-import android.view.SoundEffectConstants;
 import android.view.View;
 
 abstract class ClickItemTouchListener implements OnItemTouchListener {
@@ -117,10 +115,7 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
 
                 final int position = mHostView.getChildPosition(mTargetChild);
                 final long id = mHostView.getAdapter().getItemId(position);
-                if (performItemClick(mHostView, mTargetChild, position, id)) {
-                    mHostView.playSoundEffect(SoundEffectConstants.CLICK);
-                    handled = true;
-                }
+                handled = performItemClick(mHostView, mTargetChild, position, id);
 
                 mTargetChild = null;
             }
@@ -151,7 +146,6 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
             final boolean handled = performItemLongClick(mHostView, mTargetChild, position, id);
 
             if (handled) {
-                mHostView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                 mTargetChild.setPressed(false);
                 mTargetChild = null;
             }

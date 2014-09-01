@@ -1,6 +1,8 @@
 package org.lucasr.twowayview;
 
 import android.support.v7.widget.RecyclerView;
+import android.view.HapticFeedbackConstants;
+import android.view.SoundEffectConstants;
 import android.view.View;
 
 public class ItemClickSupport {
@@ -116,6 +118,7 @@ public class ItemClickSupport {
         @Override
         boolean performItemClick(RecyclerView parent, View view, int position, long id) {
             if (mItemClickListener != null) {
+                view.playSoundEffect(SoundEffectConstants.CLICK);
                 mItemClickListener.onItemClick(parent, view, position, id);
                 return true;
             }
@@ -126,6 +129,7 @@ public class ItemClickSupport {
         @Override
         boolean performItemLongClick(RecyclerView parent, View view, int position, long id) {
             if (mItemLongClickListener != null) {
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                 return mItemLongClickListener.onItemLongClick(parent, view, position, id);
             }
 
