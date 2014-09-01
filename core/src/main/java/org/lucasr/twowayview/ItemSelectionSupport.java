@@ -525,7 +525,7 @@ public class ItemSelectionSupport {
 
         @Override
         boolean performItemLongClick(RecyclerView parent, View view, int position, long id) {
-            return false;
+            return true;
         }
     }
 }
