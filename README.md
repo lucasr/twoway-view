@@ -1,37 +1,49 @@
 NOTE: TwoWayView's API is not final yet and code is under heavy development
-at the moment. Do not rely on it for production code just yet. Feedback and
+at the moment. Feedback and
 patches are very welcome!
 
 What is it?
 ===========
 
-An AdapterView with support for vertical and horizontal scrolling.
+The ultimate utility belt for `RecyclerView`.
 
 Features
 ========
 
-* View recycling while scrolling, just like ListView/GridView.
-* Vertical and horizontal scrolling support.
-* Accessibility support
-* Keyboard events and navigation
-* Focus handling
+* A `LayoutManager` base class that greatly simplified the development of custom layouts for `RecyclerView`
+* A collection of feature-complete stock layouts for `RecyclerView` including:
+  * List
+  * Grid
+  * Staggered Grid
+  * Spannable Grid
+* A collection of stock item decorations including:
+  * Item spacing
+  * Horizontal/vertical dividers.
+* `ListView`-style pluggable APIs for:
+  * Item click and long click support e.g. `OnItemClickListener` and `OnItemLongClickListener`.
+  * Item selection (single and multiple) support e.g. `setChoiceMode()`, `setItemChecked(int, boolean)`, etc.
 
-A lot more to come, stay tuned.
-
-How do I use it?
-================
-
-1. Import TwoWayView as a library to your project.
-
-2. Add a `TwoWayView` to your layout.
-
-3. Set an Adapter to the TwoWayView.
-
-The sample app uses all features available in the widget.
-
-
-Download
+Snapshot
 ========
+
+The new API is still under heavy development but you can try it now via Maven Central snapshots.
+
+Gradle:
+```groovy
+repositories {
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+dependencies {
+    compile 'org.lucasr.twowayview:core:1.0.0-SNAPSHOT'
+    compile 'org.lucasr.twowayview:layouts:1.0.0-SNAPSHOT'
+}
+```
+
+Stable Release
+==============
+
+TwoWayView used to be a standalone `AdapterView` implementation. You can grab it here from Maven Central as follows.
 
 Grab via Maven:
 ```xml
@@ -41,10 +53,12 @@ Grab via Maven:
   <version>0.1.1</version>
 </dependency>
 ```
-or Gradle:
+
+Gradle:
 ```groovy
-compile 'org.lucasr.twowayview:twowayview:0.1.1'
+compile 'org.lucasr.twowayview:core:0.1.1'
 ```
+
 
 Want to help?
 =============
