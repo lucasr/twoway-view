@@ -1,7 +1,3 @@
-NOTE: TwoWayView's API is not final yet and code is under heavy development
-at the moment. Feedback and
-patches are very welcome!
-
 What is it?
 ===========
 
