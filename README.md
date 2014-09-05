@@ -1,14 +1,14 @@
 What is it?
 ===========
 
-The ultimate utility belt for Android's `RecyclerView`.
+The ultimate utility belt for Android's *RecyclerView*.
 
-![](images/sample.gif)
+![](images/sample.png)
 
 Features
 ========
 
-* A `LayoutManager` base class that greatly simplifies the development of custom layouts for `RecyclerView`
+* A *LayoutManager* base class that greatly simplifies the development of custom layouts for *RecyclerView*
 * A collection of feature-complete stock layouts including:
   * List
   * Grid
@@ -18,8 +18,8 @@ Features
   * Item spacing
   * Horizontal/vertical dividers.
 * ListView-style pluggable APIs for:
-  * Item click and long click support e.g. `OnItemClickListener` and `OnItemLongClickListener`.
-  * Item selection (single and multiple) support e.g. `setChoiceMode()`, `setItemChecked(int, boolean)`, etc.
+  * Item click and long click support e.g. *OnItemClickListener* and *OnItemLongClickListener*.
+  * Item selection (single and multiple) support e.g. *setChoiceMode()*, *setItemChecked(int, boolean)*, etc.
 
 Snapshot
 ========
@@ -41,7 +41,7 @@ dependencies {
 Stable Release
 ==============
 
-TwoWayView used to be a standalone `AdapterView` implementation. You can grab it here from Maven Central as follows.
+TwoWayView used to be a standalone *AdapterView* implementation. You can grab it here from Maven Central as follows.
 
 Grab via Maven:
 ```xml
