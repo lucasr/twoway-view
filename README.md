@@ -10,8 +10,8 @@ The ultimate utility belt for `RecyclerView`.
 Features
 ========
 
-* A `LayoutManager` base class that greatly simplified the development of custom layouts for `RecyclerView`
-* A collection of feature-complete stock layouts for `RecyclerView` including:
+* A `LayoutManager` base class that greatly simplifies the development of custom layouts for `RecyclerView`
+* A collection of feature-complete stock layouts including:
   * List
   * Grid
   * Staggered Grid
@@ -19,7 +19,7 @@ Features
 * A collection of stock item decorations including:
   * Item spacing
   * Horizontal/vertical dividers.
-* `ListView`-style pluggable APIs for:
+* ListView-style pluggable APIs for:
   * Item click and long click support e.g. `OnItemClickListener` and `OnItemLongClickListener`.
   * Item selection (single and multiple) support e.g. `setChoiceMode()`, `setItemChecked(int, boolean)`, etc.
 
