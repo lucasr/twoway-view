@@ -1,7 +1,9 @@
 What is it?
 ===========
 
-The ultimate utility belt for `RecyclerView`.
+The ultimate utility belt for Android's `RecyclerView`.
+
+![](images/sample.gif)
 
 Features
 ========
