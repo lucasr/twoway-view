@@ -30,9 +30,7 @@ import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
-import android.view.View.BaseSavedState;
 import android.view.ViewGroup.MarginLayoutParams;
 
 import java.util.List;
