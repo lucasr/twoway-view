@@ -869,8 +869,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     @Override
     public Parcelable onSaveInstanceState() {
-        final Parcelable superState = super.onSaveInstanceState();
-        final SavedState state = new SavedState(superState);
+        final SavedState state = new SavedState(SavedState.EMPTY_STATE);
 
         int anchorItemPosition = getPendingScrollPosition();
         if (anchorItemPosition == RecyclerView.NO_POSITION) {
@@ -891,7 +890,6 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     @Override
     public void onRestoreInstanceState(Parcelable state) {
         mPendingSavedState = (SavedState) state;
-        super.onRestoreInstanceState(mPendingSavedState.getSuperState());
         requestLayout();
     }
 
@@ -918,18 +916,33 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     protected abstract boolean canAddMoreViews(Direction direction, int limit);
 
-    protected static class SavedState extends BaseSavedState {
+    protected static class SavedState implements Parcelable {
+        protected static final SavedState EMPTY_STATE = new SavedState();
+
+        private final Parcelable superState;
         private int anchorItemPosition;
         private Bundle itemSelectionState;
 
+        private SavedState() {
+            superState = null;
+        }
+
         protected SavedState(Parcelable superState) {
-            super(superState != null ? superState : Bundle.EMPTY);
+            if (superState == null) {
+                throw new IllegalArgumentException("superState must not be null");
+            }
+
+            this.superState = (superState != EMPTY_STATE ? superState : null);
         }
 
         protected SavedState(Parcel in) {
-            super(in);
+            this.superState = EMPTY_STATE;
             anchorItemPosition = in.readInt();
             itemSelectionState = in.readParcelable(getClass().getClassLoader());
+        }
+
+        public Parcelable getSuperState() {
+            return superState;
         }
 
         @Override
