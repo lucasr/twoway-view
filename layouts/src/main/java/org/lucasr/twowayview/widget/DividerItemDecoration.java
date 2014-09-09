@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.ItemDecoration;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup.MarginLayoutParams;
 
 /**
  * {@link android.support.v7.widget.RecyclerView.ItemDecoration} that draws
@@ -90,7 +91,9 @@ public class DividerItemDecoration extends ItemDecoration {
             final int childRight = lm.getDecoratedRight(child);
             final int childBottom = lm.getDecoratedBottom(child);
 
-            final int bottomOffset = childBottom - child.getBottom();
+            final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+
+            final int bottomOffset = childBottom - child.getBottom() - lp.bottomMargin;
             if (bottomOffset > 0 && childBottom < bottomWithPadding) {
                 final int left = childLeft;
                 final int top = childBottom - bottomOffset;
@@ -101,7 +104,7 @@ public class DividerItemDecoration extends ItemDecoration {
                 mHorizontalDivider.draw(c);
             }
 
-            final int rightOffset = childRight - child.getRight();
+            final int rightOffset = childRight - child.getRight() - lp.rightMargin;
             if (rightOffset > 0 && childRight < rightWithPadding) {
                 final int left = childRight - rightOffset;
                 final int top = childTop;
