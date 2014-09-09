@@ -42,6 +42,9 @@ import org.lucasr.twowayview.widget.SpannableGridLayoutManager;
 import org.lucasr.twowayview.TwoWayView;
 import org.lucasr.twowayview.widget.StaggeredGridLayoutManager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LayoutFragment extends Fragment {
     private static final String ARG_LAYOUT_ID = "layout_id";
 
@@ -156,9 +159,13 @@ public class LayoutFragment extends Fragment {
     }
 
     public static class SimpleAdapter extends RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder> {
+        private static final int COUNT = 100;
+
         private final Context mContext;
         private final TwoWayView mRecyclerView;
+        private final List<Integer> mItems;
         private final int mLayoutId;
+        private int mCurrentItemId = 0;
 
         public static class SimpleViewHolder extends RecyclerView.ViewHolder {
             public final TextView title;
@@ -171,8 +178,24 @@ public class LayoutFragment extends Fragment {
 
         public SimpleAdapter(Context context, TwoWayView recyclerView, int layoutId) {
             mContext = context;
+            mItems = new ArrayList<Integer>(COUNT);
+            for (int i = 0; i < COUNT; i++) {
+                addItem(i);
+            }
+
             mRecyclerView = recyclerView;
             mLayoutId = layoutId;
+        }
+
+        public void addItem(int position) {
+            final int id = ++mCurrentItemId;
+            mItems.add(position, id);
+            notifyItemInserted(position);
+        }
+
+        public void removeItem(int position) {
+            mItems.remove(position);
+            notifyItemRemoved(position);
         }
 
         @Override
@@ -183,7 +206,7 @@ public class LayoutFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(SimpleViewHolder holder, int position) {
-            holder.title.setText(String.valueOf(position));
+            holder.title.setText(mItems.get(position).toString());
 
             boolean isVertical = (mRecyclerView.getOrientation() == Orientation.VERTICAL);
             final View itemView = holder.itemView;
@@ -250,7 +273,7 @@ public class LayoutFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return 100;
+            return mItems.size();
         }
     }
 }
