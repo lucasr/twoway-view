@@ -262,16 +262,6 @@ public class LayoutFragment extends Fragment {
         }
 
         @Override
-        public void onViewAttachedToWindow(SimpleViewHolder holder) {
-            super.onViewAttachedToWindow(holder);
-        }
-
-        @Override
-        public void onViewDetachedFromWindow(SimpleViewHolder holder) {
-            super.onViewDetachedFromWindow(holder);
-        }
-
-        @Override
         public int getItemCount() {
             return mItems.size();
         }
