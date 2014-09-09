@@ -528,7 +528,9 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             if (laneCount > 0) {
                 lanes = new Rect[laneCount];
                 for (int i = 0; i < laneCount; i++) {
-                    lanes[i].readFromParcel(in);
+                    final Rect lane = new Rect();
+                    lane.readFromParcel(in);
+                    lanes[i] = lane;
                 }
             }
 
