@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.ItemDecoration;
 import android.util.AttributeSet;
-import android.util.SparseArray;
 import android.view.View;
 
 /**
