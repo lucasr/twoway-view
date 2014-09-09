@@ -214,7 +214,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     }
 
     ItemEntry getItemEntryForPosition(int position) {
-        return mItemEntries.get(position, null);
+        return (mItemEntries != null ? mItemEntries.get(position, null) : null);
     }
 
     private boolean canUseLanes(Lanes lanes) {
