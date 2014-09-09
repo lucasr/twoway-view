@@ -61,7 +61,7 @@ public class LayoutAdapter extends RecyclerView.Adapter<LayoutAdapter.SimpleView
     }
 
     public void addItem(int position) {
-        final int id = ++mCurrentItemId;
+        final int id = mCurrentItemId++;
         mItems.add(position, id);
         notifyItemInserted(position);
     }
@@ -84,34 +84,37 @@ public class LayoutAdapter extends RecyclerView.Adapter<LayoutAdapter.SimpleView
         boolean isVertical = (mRecyclerView.getOrientation() == TwoWayLayoutManager.Orientation.VERTICAL);
         final View itemView = holder.itemView;
 
+        final int itemId = mItems.get(position);
+
         if (mLayoutId == R.layout.layout_staggered_grid) {
-            final int id;
-            if (position % 3 == 0) {
-                id = R.dimen.staggered_child_medium;
-            } else if (position % 5 == 0) {
-                id = R.dimen.staggered_child_large;
-            } else if (position % 7 == 0) {
-                id = R.dimen.staggered_child_xlarge;
+            final int dimenId;
+            if (itemId % 3 == 0) {
+                dimenId = R.dimen.staggered_child_medium;
+            } else if (itemId % 5 == 0) {
+                dimenId = R.dimen.staggered_child_large;
+            } else if (itemId % 7 == 0) {
+                dimenId = R.dimen.staggered_child_xlarge;
             } else {
-                id = R.dimen.staggered_child_small;
+                dimenId = R.dimen.staggered_child_small;
             }
 
             final int span;
-            if (position == 2) {
+            if (itemId == 2) {
                 span = 2;
             } else {
                 span = 1;
             }
 
-            final int size = mContext.getResources().getDimensionPixelSize(id);
+            final int size = mContext.getResources().getDimensionPixelSize(dimenId);
 
             final StaggeredGridLayoutManager.LayoutParams lp =
                     (StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams();
-            if (!isVertical && lp.width != id) {
+
+            if (!isVertical) {
                 lp.span = span;
                 lp.width = size;
                 itemView.setLayoutParams(lp);
-            } else if (isVertical && lp.height != id) {
+            } else {
                 lp.span = span;
                 lp.height = size;
                 itemView.setLayoutParams(lp);
@@ -120,8 +123,8 @@ public class LayoutAdapter extends RecyclerView.Adapter<LayoutAdapter.SimpleView
             final SpannableGridLayoutManager.LayoutParams lp =
                     (SpannableGridLayoutManager.LayoutParams) itemView.getLayoutParams();
 
-            final int span1 = (position == 0 || position == 3 ? 2 : 1);
-            final int span2 = (position == 0 ? 2 : (position == 3 ? 3 : 1));
+            final int span1 = (itemId == 0 || itemId == 3 ? 2 : 1);
+            final int span2 = (itemId == 0 ? 2 : (itemId == 3 ? 3 : 1));
 
             final int colSpan = (isVertical ? span2 : span1);
             final int rowSpan = (isVertical ? span1 : span2);
