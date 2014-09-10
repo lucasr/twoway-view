@@ -917,6 +917,10 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     }
 
     public int getFirstVisiblePosition() {
+        if (getChildCount() == 0) {
+            return RecyclerView.NO_POSITION;
+        }
+
         return mFirstPosition;
     }
 
