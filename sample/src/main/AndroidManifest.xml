@@ -16,7 +16,11 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
           package="org.lucasr.twowayview.sample" >
+
+    <!-- Required to block preview SDK from locking minSdkVersion -->
+    <uses-sdk tools:node="replace"/>
 
     <uses-permission android:name="android.permission.INTERNET" />
 
