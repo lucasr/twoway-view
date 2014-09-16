@@ -54,7 +54,7 @@ Grab via Maven:
 
 Gradle:
 ```groovy
-compile 'org.lucasr.twowayview:core:0.1.1'
+compile 'org.lucasr.twowayview:twowayview:0.1.1'
 ```
 
 
