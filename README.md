@@ -1,5 +1,5 @@
-What is it?
-===========
+TwoWayView
+==========
 
 The ultimate utility belt for Android's *RecyclerView*.
 
@@ -33,8 +33,8 @@ repositories {
 }
 
 dependencies {
-    compile 'org.lucasr.twowayview:core:1.0.0-SNAPSHOT'
-    compile 'org.lucasr.twowayview:layouts:1.0.0-SNAPSHOT'
+    compile 'org.lucasr.twowayview:core:1.0.0-SNAPSHOT@aar'
+    compile 'org.lucasr.twowayview:layouts:1.0.0-SNAPSHOT@aar'
 }
 ```
 
