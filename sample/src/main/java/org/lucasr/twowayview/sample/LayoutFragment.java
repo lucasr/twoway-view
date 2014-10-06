@@ -92,33 +92,35 @@ public class LayoutFragment extends Fragment {
         updateState(SCROLL_STATE_IDLE);
 
         final ItemClickSupport itemClick = ItemClickSupport.addTo(mRecyclerView);
-        final OnScrollSupport scroller = new OnScrollSupport(mRecyclerView);
-        scroller.setOnItemScrollListener(new OnScrollSupport.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView view, int scrollState) {
-                updateState(scrollState);
+        if (mLayoutId != R.layout.layout_staggered_grid) {
+            final OnScrollSupport scroller = new OnScrollSupport(mRecyclerView);
+            scroller.setOnItemScrollListener(new OnScrollSupport.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(RecyclerView view, int scrollState) {
+                    updateState(scrollState);
 
-            }
+                }
 
-            @Override
-            public void onScroll(RecyclerView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                @Override
+                public void onScroll(RecyclerView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
 
-                if (totalItemCount > 0) {
-                    int lastVisibleItem = firstVisibleItem + visibleItemCount;
+                    if (totalItemCount > 0) {
+                        int lastVisibleItem = firstVisibleItem + visibleItemCount;
 
-                    if ((lastVisibleItem == totalItemCount)) {
-                        LayoutAdapter adapter = (LayoutAdapter) view.getAdapter();
+                        if ((lastVisibleItem == totalItemCount)) {
+                            LayoutAdapter adapter = (LayoutAdapter) view.getAdapter();
 
-                        for (int i = totalItemCount; i < totalItemCount + 1; i++) {
-                            adapter.addItem(i);
+                            for (int i = totalItemCount; i < totalItemCount + 10; i++) {
+                                adapter.addItem(i);
+                            }
                         }
                     }
-                }
-                mPositionText.setText("First: " + mRecyclerView.getFirstVisiblePosition());
-                mCountText.setText("Count: " + mRecyclerView.getChildCount());
+                    mPositionText.setText("First: " + mRecyclerView.getFirstVisiblePosition());
+                    mCountText.setText("Count: " + mRecyclerView.getChildCount());
 
-            }
-        });
+                }
+            });
+        }
 
         itemClick.setOnItemClickListener(new OnItemClickListener() {
             @Override
