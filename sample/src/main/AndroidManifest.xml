@@ -21,7 +21,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <uses-sdk tools:node="replace" />
+    <uses-sdk tools:overrideLibrary="android.support.v4, android.support.v7.recyclerview, org.lucasr.twowayview, org.lucasr.twowayview.widget" />
 
     <application android:icon="@drawable/ic_launcher"
                  android:label="@string/app_name"
