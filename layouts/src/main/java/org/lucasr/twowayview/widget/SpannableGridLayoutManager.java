@@ -18,7 +18,6 @@ package org.lucasr.twowayview.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v7.widget.RecyclerView;
@@ -289,9 +288,9 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
 
             TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.SpannableGridViewChild);
             colSpan = Math.max(
-                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_colSpan, -1));
+                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_twvColSpan, -1));
             rowSpan = Math.max(
-                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_rowSpan, -1));
+                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_twvRowSpan, -1));
             a.recycle();
         }
 

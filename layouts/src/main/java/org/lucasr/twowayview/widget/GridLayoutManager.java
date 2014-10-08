@@ -50,9 +50,9 @@ public class GridLayoutManager extends BaseLayoutManager {
                 context.obtainStyledAttributes(attrs, R.styleable.GridLayoutManager, defStyle, 0);
 
         mNumColumns =
-                Math.max(1, a.getInt(R.styleable.GridLayoutManager_numColumns, defaultNumColumns));
+                Math.max(1, a.getInt(R.styleable.GridLayoutManager_twvNumColumns, defaultNumColumns));
         mNumRows =
-                Math.max(1, a.getInt(R.styleable.GridLayoutManager_numRows, defaultNumRows));
+                Math.max(1, a.getInt(R.styleable.GridLayoutManager_twvNumRows, defaultNumRows));
 
         a.recycle();
     }

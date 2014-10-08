@@ -34,8 +34,8 @@ public class DividerItemDecoration extends ItemDecoration {
         if (divider != null) {
             mVerticalDivider = mHorizontalDivider = divider;
         } else {
-            mVerticalDivider = a.getDrawable(R.styleable.DividerItemDecoration_verticalDivider);
-            mHorizontalDivider = a.getDrawable(R.styleable.DividerItemDecoration_horizontalDivider);
+            mVerticalDivider = a.getDrawable(R.styleable.DividerItemDecoration_twvVerticalDivider);
+            mHorizontalDivider = a.getDrawable(R.styleable.DividerItemDecoration_twvHorizontalDivider);
         }
 
         a.recycle();

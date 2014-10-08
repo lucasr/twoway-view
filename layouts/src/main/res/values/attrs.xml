@@ -18,8 +18,8 @@
 <resources>
 
     <declare-styleable name="GridLayoutManager">
-        <attr name="numColumns" format="integer"/>
-        <attr name="numRows" format="integer"/>
+        <attr name="twvNumColumns" format="integer"/>
+        <attr name="twvNumRows" format="integer"/>
     </declare-styleable>
 
     <declare-styleable name="SpacingItemDecoration">
@@ -29,17 +29,17 @@
 
     <declare-styleable name="DividerItemDecoration">
         <attr name="android:divider"/>
-        <attr name="verticalDivider" format="reference"/>
-        <attr name="horizontalDivider" format="reference"/>
+        <attr name="twvVerticalDivider" format="reference"/>
+        <attr name="twvHorizontalDivider" format="reference"/>
     </declare-styleable>
 
     <declare-styleable name="StaggeredGridViewChild">
-        <attr name="span" format="integer"/>
+        <attr name="twvSpan" format="integer"/>
     </declare-styleable>
 
     <declare-styleable name="SpannableGridViewChild">
-        <attr name="colSpan" format="integer"/>
-        <attr name="rowSpan" format="integer"/>
+        <attr name="twvColSpan" format="integer"/>
+        <attr name="twvRowSpan" format="integer"/>
     </declare-styleable>
 
 </resources>

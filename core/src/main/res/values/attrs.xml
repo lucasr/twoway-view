@@ -18,7 +18,7 @@
 <resources>
 
     <declare-styleable name="TwoWayView">
-        <attr name="layoutManager" format="string"/>
+        <attr name="twvLayoutManager" format="string"/>
     </declare-styleable>
 
     <declare-styleable name="TwoWayLayoutManager">

@@ -261,7 +261,7 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
             super(c, attrs);
 
             TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.StaggeredGridViewChild);
-            span = Math.max(DEFAULT_SPAN, a.getInt(R.styleable.StaggeredGridViewChild_span, -1));
+            span = Math.max(DEFAULT_SPAN, a.getInt(R.styleable.StaggeredGridViewChild_twvSpan, -1));
             a.recycle();
         }
 

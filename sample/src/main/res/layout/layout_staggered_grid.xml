@@ -22,6 +22,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/TwoWayView"
-    app:layoutManager="StaggeredGridLayoutManager"
-    app:numColumns="2"
-    app:numRows="2" />
+    android:paddingTop="120dp"
+    android:clipToPadding="false"
+    app:twvLayoutManager="StaggeredGridLayoutManager"
+    app:twvNumColumns="2"
+    app:twvNumRows="2" />

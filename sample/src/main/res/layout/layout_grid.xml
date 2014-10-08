@@ -22,6 +22,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/TwoWayView"
-    app:layoutManager="GridLayoutManager"
-    app:numColumns="3"
-    app:numRows="3" />
+    android:paddingTop="120dp"
+    android:clipToPadding="false"
+    app:twvLayoutManager="GridLayoutManager"
+    app:twvNumColumns="3"
+    app:twvNumRows="3" />
