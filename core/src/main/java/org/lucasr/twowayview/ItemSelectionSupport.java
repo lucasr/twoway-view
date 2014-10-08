@@ -344,7 +344,7 @@ public class ItemSelectionSupport {
         ItemSelectionSupport itemSelectionSupport = from(recyclerView);
         if (itemSelectionSupport == null) {
             itemSelectionSupport = new ItemSelectionSupport(recyclerView);
-            recyclerView.setTag(R.id.item_selection_support, itemSelectionSupport);
+            recyclerView.setTag(R.id.twowayview_item_selection_support, itemSelectionSupport);
         } else {
             // TODO: Log warning
         }
@@ -362,7 +362,7 @@ public class ItemSelectionSupport {
         itemSelection.clearChoices();
 
         recyclerView.removeOnItemTouchListener(itemSelection.mTouchListener);
-        recyclerView.setTag(R.id.item_selection_support, null);
+        recyclerView.setTag(R.id.twowayview_item_selection_support, null);
     }
 
     public static ItemSelectionSupport from(RecyclerView recyclerView) {
@@ -370,7 +370,7 @@ public class ItemSelectionSupport {
             return null;
         }
 
-        return (ItemSelectionSupport) recyclerView.getTag(R.id.item_selection_support);
+        return (ItemSelectionSupport) recyclerView.getTag(R.id.twowayview_item_selection_support);
     }
 
     private static class CheckedStates extends SparseBooleanArray implements Parcelable {
