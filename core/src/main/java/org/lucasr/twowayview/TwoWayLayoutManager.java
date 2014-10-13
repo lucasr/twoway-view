@@ -85,7 +85,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         a.recycle();
     }
 
-    public TwoWayLayoutManager(Context context, Orientation orientation) {
+    public TwoWayLayoutManager(Orientation orientation) {
         mIsVertical = (orientation == Orientation.VERTICAL);
     }
 
