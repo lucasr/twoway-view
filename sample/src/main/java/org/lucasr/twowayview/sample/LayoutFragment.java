@@ -28,15 +28,16 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
-import static android.support.v7.widget.RecyclerView.SCROLL_STATE_DRAGGING;
-import static android.support.v7.widget.RecyclerView.SCROLL_STATE_SETTLING;
-
 import org.lucasr.twowayview.ItemClickSupport;
 import org.lucasr.twowayview.ItemClickSupport.OnItemClickListener;
 import org.lucasr.twowayview.ItemClickSupport.OnItemLongClickListener;
-import org.lucasr.twowayview.widget.DividerItemDecoration;
+import org.lucasr.twowayview.OnScrollSupport;
 import org.lucasr.twowayview.TwoWayView;
+import org.lucasr.twowayview.widget.DividerItemDecoration;
+
+import static android.support.v7.widget.RecyclerView.SCROLL_STATE_DRAGGING;
+import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
+import static android.support.v7.widget.RecyclerView.SCROLL_STATE_SETTLING;
 
 public class LayoutFragment extends Fragment {
     private static final String ARG_LAYOUT_ID = "layout_id";
@@ -91,6 +92,35 @@ public class LayoutFragment extends Fragment {
         updateState(SCROLL_STATE_IDLE);
 
         final ItemClickSupport itemClick = ItemClickSupport.addTo(mRecyclerView);
+        if (mLayoutId != R.layout.layout_staggered_grid) {
+            final OnScrollSupport scroller = new OnScrollSupport(mRecyclerView);
+            scroller.setOnItemScrollListener(new OnScrollSupport.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(RecyclerView view, int scrollState) {
+                    updateState(scrollState);
+
+                }
+
+                @Override
+                public void onScroll(RecyclerView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+                    if (totalItemCount > 0) {
+                        int lastVisibleItem = firstVisibleItem + visibleItemCount;
+
+                        if ((lastVisibleItem == totalItemCount)) {
+                            LayoutAdapter adapter = (LayoutAdapter) view.getAdapter();
+
+                            for (int i = totalItemCount; i < totalItemCount + 10; i++) {
+                                adapter.addItem(i);
+                            }
+                        }
+                    }
+                    mPositionText.setText("First: " + mRecyclerView.getFirstVisiblePosition());
+                    mCountText.setText("Count: " + mRecyclerView.getChildCount());
+
+                }
+            });
+        }
 
         itemClick.setOnItemClickListener(new OnItemClickListener() {
             @Override
@@ -109,18 +139,6 @@ public class LayoutFragment extends Fragment {
             }
         });
 
-        mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(int scrollState) {
-                updateState(scrollState);
-            }
-
-            @Override
-            public void onScrolled(int i, int i2) {
-                mPositionText.setText("First: " + mRecyclerView.getFirstVisiblePosition());
-                mCountText.setText("Count: " + mRecyclerView.getChildCount());
-            }
-        });
 
         final Drawable divider = getResources().getDrawable(R.drawable.divider);
         mRecyclerView.addItemDecoration(new DividerItemDecoration(divider));
@@ -130,7 +148,7 @@ public class LayoutFragment extends Fragment {
 
     private void updateState(int scrollState) {
         String stateName = "Undefined";
-        switch(scrollState) {
+        switch (scrollState) {
             case SCROLL_STATE_IDLE:
                 stateName = "Idle";
                 break;
