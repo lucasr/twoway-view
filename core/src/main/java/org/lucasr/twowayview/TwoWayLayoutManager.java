@@ -36,7 +36,7 @@ import android.view.ViewGroup.MarginLayoutParams;
 import java.util.List;
 
 public abstract class TwoWayLayoutManager extends LayoutManager {
-    private static final String LOGTAG = "AbsLayoutManager";
+    private static final String LOGTAG = "TwoWayLayoutManager";
 
     public static enum Orientation {
         HORIZONTAL,
