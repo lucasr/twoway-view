@@ -484,8 +484,13 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         // first visible position. This will ensure we'll ensure
         // the layout will sync with the adapter changes.
         final View firstChild = findViewByPosition(mFirstPosition);
-        mPendingScrollPosition = mFirstPosition;
-        mPendingScrollOffset = getChildStart(firstChild);
+        if (firstChild != null) {
+            mPendingScrollPosition = mFirstPosition;
+            mPendingScrollOffset = getChildStart(firstChild);
+        } else {
+            mPendingScrollPosition = RecyclerView.NO_POSITION;
+            mPendingScrollOffset = 0;
+        }
         requestLayout();
     }
 
