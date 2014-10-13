@@ -5,8 +5,16 @@ repositories {
 }
 
 android {
-    compileSdkVersion 'android-L'
-    buildToolsVersion '20.0.0'
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        applicationId "org.lucasr.twowayview.sample"
+        minSdkVersion 7
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+    }
 }
 
 dependencies {

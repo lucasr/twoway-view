@@ -15,12 +15,7 @@
    limitations under the License.
 -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.lucasr.twowayview.widget"
-          android:versionCode="1"
-          android:versionName="Alpha 1" >
-
-    <uses-sdk android:minSdkVersion="7"
-              android:targetSdkVersion="16" />
+<manifest
+    package="org.lucasr.twowayview.widget">
 
 </manifest>

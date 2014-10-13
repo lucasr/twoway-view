@@ -8,3 +8,8 @@ buildscript {
     }
 }
 
+ext {
+    targetSdkVersion = 20
+    compileSdkVersion = 20
+    buildToolsVersion = "20.0.0"
+}
