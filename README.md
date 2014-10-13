@@ -1,7 +1,7 @@
 TwoWayView
 ==========
 
-The ultimate utility belt for Android's *RecyclerView*.
+*RecyclerView* made simple.
 
 ![](images/sample.png)
 
