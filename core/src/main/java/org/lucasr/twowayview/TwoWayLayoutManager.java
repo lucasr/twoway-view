@@ -68,13 +68,13 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     public TwoWayLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TwoWayLayoutManager, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.twowayview_TwoWayLayoutManager, defStyle, 0);
 
         final int indexCount = a.getIndexCount();
         for (int i = 0; i < indexCount; i++) {
             final int attr = a.getIndex(i);
 
-            if (attr == R.styleable.TwoWayLayoutManager_android_orientation) {
+            if (attr == R.styleable.twowayview_TwoWayLayoutManager_android_orientation) {
                 final int orientation = a.getInt(attr, -1);
                 if (orientation >= 0) {
                     setOrientation(Orientation.values()[orientation]);

@@ -286,11 +286,11 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
 
-            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.SpannableGridViewChild);
+            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.twowayview_SpannableGridViewChild);
             colSpan = Math.max(
-                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_twvColSpan, -1));
+                    DEFAULT_SPAN, a.getInt(R.styleable.twowayview_SpannableGridViewChild_twowayview_colSpan, -1));
             rowSpan = Math.max(
-                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_twvRowSpan, -1));
+                    DEFAULT_SPAN, a.getInt(R.styleable.twowayview_SpannableGridViewChild_twowayview_rowSpan, -1));
             a.recycle();
         }
 

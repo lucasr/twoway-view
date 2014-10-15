@@ -11,6 +11,7 @@ dependencies {
 android {
     compileSdkVersion 'android-L'
     buildToolsVersion '20.0.0'
+    resourcePrefix 'twowayview_'
 }
 
 apply from: 'https://raw.github.com/chrisbanes/gradle-mvn-push/master/gradle-mvn-push.gradle'

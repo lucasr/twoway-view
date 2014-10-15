@@ -15,31 +15,31 @@
    limitations under the License.
 -->
 
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <declare-styleable name="GridLayoutManager">
-        <attr name="twvNumColumns" format="integer"/>
-        <attr name="twvNumRows" format="integer"/>
+    <declare-styleable name="twowayview_GridLayoutManager">
+        <attr name="twowayview_numColumns" format="integer"/>
+        <attr name="twowayview_numRows" format="integer"/>
     </declare-styleable>
 
-    <declare-styleable name="SpacingItemDecoration">
-        <attr name="android:verticalSpacing"/>
-        <attr name="android:horizontalSpacing"/>
+    <declare-styleable name="twowayview_SpacingItemDecoration">
+        <attr name="android:verticalSpacing" tools:ignore="ResourceName"/>
+        <attr name="android:horizontalSpacing" tools:ignore="ResourceName"/>
     </declare-styleable>
 
-    <declare-styleable name="DividerItemDecoration">
-        <attr name="android:divider"/>
-        <attr name="twvVerticalDivider" format="reference"/>
-        <attr name="twvHorizontalDivider" format="reference"/>
+    <declare-styleable name="twowayview_DividerItemDecoration">
+        <attr name="android:divider" tools:ignore="ResourceName"/>
+        <attr name="twowayview_verticalDivider" format="reference"/>
+        <attr name="twowayview_horizontalDivider" format="reference"/>
     </declare-styleable>
 
-    <declare-styleable name="StaggeredGridViewChild">
-        <attr name="twvSpan" format="integer"/>
+    <declare-styleable name="twowayview_StaggeredGridViewChild">
+        <attr name="twowayview_span" format="integer"/>
     </declare-styleable>
 
-    <declare-styleable name="SpannableGridViewChild">
-        <attr name="twvColSpan" format="integer"/>
-        <attr name="twvRowSpan" format="integer"/>
+    <declare-styleable name="twowayview_SpannableGridViewChild">
+        <attr name="twowayview_colSpan" format="integer"/>
+        <attr name="twowayview_rowSpan" format="integer"/>
     </declare-styleable>
 
 </resources>

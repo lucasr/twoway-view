@@ -24,4 +24,4 @@
     android:paddingTop="120dp"
     style="@style/TwoWayView"
     android:clipToPadding="false"
-    app:twvLayoutManager="ListLayoutManager"/>
+    app:twowayview_layoutManager="ListLayoutManager"/>

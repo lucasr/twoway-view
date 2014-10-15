@@ -47,12 +47,12 @@ public class GridLayoutManager extends BaseLayoutManager {
         super(context, attrs, defStyle);
 
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.GridLayoutManager, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.twowayview_GridLayoutManager, defStyle, 0);
 
         mNumColumns =
-                Math.max(1, a.getInt(R.styleable.GridLayoutManager_twvNumColumns, defaultNumColumns));
+                Math.max(1, a.getInt(R.styleable.twowayview_GridLayoutManager_twowayview_numColumns, defaultNumColumns));
         mNumRows =
-                Math.max(1, a.getInt(R.styleable.GridLayoutManager_twvNumRows, defaultNumRows));
+                Math.max(1, a.getInt(R.styleable.twowayview_GridLayoutManager_twowayview_numRows, defaultNumRows));
 
         a.recycle();
     }

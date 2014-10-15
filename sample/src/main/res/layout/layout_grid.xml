@@ -24,6 +24,6 @@
     style="@style/TwoWayView"
     android:paddingTop="120dp"
     android:clipToPadding="false"
-    app:twvLayoutManager="GridLayoutManager"
-    app:twvNumColumns="3"
-    app:twvNumRows="3" />
+    app:twowayview_layoutManager="GridLayoutManager"
+    app:twowayview_numColumns="3"
+    app:twowayview_numRows="3" />

@@ -24,6 +24,6 @@
     style="@style/TwoWayView"
     android:paddingTop="120dp"
     android:clipToPadding="false"
-    app:twvLayoutManager="StaggeredGridLayoutManager"
-    app:twvNumColumns="2"
-    app:twvNumRows="2" />
+    app:twowayview_layoutManager="StaggeredGridLayoutManager"
+    app:twowayview_numColumns="2"
+    app:twowayview_numRows="2" />

@@ -28,14 +28,14 @@ public class DividerItemDecoration extends ItemDecoration {
 
     public DividerItemDecoration(Context context, AttributeSet attrs, int defStyle) {
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.DividerItemDecoration, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.twowayview_DividerItemDecoration, defStyle, 0);
 
-        final Drawable divider = a.getDrawable(R.styleable.DividerItemDecoration_android_divider);
+        final Drawable divider = a.getDrawable(R.styleable.twowayview_DividerItemDecoration_android_divider);
         if (divider != null) {
             mVerticalDivider = mHorizontalDivider = divider;
         } else {
-            mVerticalDivider = a.getDrawable(R.styleable.DividerItemDecoration_twvVerticalDivider);
-            mHorizontalDivider = a.getDrawable(R.styleable.DividerItemDecoration_twvHorizontalDivider);
+            mVerticalDivider = a.getDrawable(R.styleable.twowayview_DividerItemDecoration_twowayview_verticalDivider);
+            mHorizontalDivider = a.getDrawable(R.styleable.twowayview_DividerItemDecoration_twowayview_horizontalDivider);
         }
 
         a.recycle();

@@ -15,14 +15,14 @@
    limitations under the License.
 -->
 
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <declare-styleable name="TwoWayView">
-        <attr name="twvLayoutManager" format="string"/>
+    <declare-styleable name="twowayview_TwoWayView">
+        <attr name="twowayview_layoutManager" format="string"/>
     </declare-styleable>
 
-    <declare-styleable name="TwoWayLayoutManager">
-        <attr name="android:orientation"/>
+    <declare-styleable name="twowayview_TwoWayLayoutManager">
+        <attr name="android:orientation" tools:ignore="ResourceName"/>
     </declare-styleable>
 
 </resources>

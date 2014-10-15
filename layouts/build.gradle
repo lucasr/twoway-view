@@ -7,6 +7,7 @@ repositories {
 android {
     compileSdkVersion 'android-L'
     buildToolsVersion '20.0.0'
+    resourcePrefix 'twowayview_'
 }
 
 dependencies {

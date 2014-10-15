@@ -46,9 +46,9 @@ public class TwoWayView extends RecyclerView {
         super(context, attrs, defStyle);
 
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TwoWayView, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.twowayview_TwoWayView, defStyle, 0);
 
-        final String name = a.getString(R.styleable.TwoWayView_twvLayoutManager);
+        final String name = a.getString(R.styleable.twowayview_TwoWayView_twowayview_layoutManager);
         if (!TextUtils.isEmpty(name)) {
             loadLayoutManagerFromName(context, attrs, name);
         }
