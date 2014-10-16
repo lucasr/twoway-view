@@ -38,12 +38,12 @@ Grab via Maven:
 <dependency>
   <groupId>org.lucasr.twowayview</groupId>
   <artifactId>twowayview</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'org.lucasr.twowayview:twowayview:0.1.1'
+compile 'org.lucasr.twowayview:twowayview:0.1.2'
 ```
 
 Want to help?
