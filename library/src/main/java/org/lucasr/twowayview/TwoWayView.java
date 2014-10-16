@@ -3018,9 +3018,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int lastEnd = getChildEndEdge(getChildAt(childCount - 1));
 
         final int paddingTop = getPaddingTop();
-        final int paddingBottom = getPaddingBottom();
         final int paddingLeft = getPaddingLeft();
-        final int paddingRight = getPaddingRight();
 
         final int paddingStart = (mIsVertical ? paddingTop : paddingLeft);
 
