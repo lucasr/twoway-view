@@ -3690,7 +3690,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     }
 
     public void scrollBy(int offset) {
-        scrollListItemsBy(offset);
+        scrollListItemsBy(-offset);
     }
 
     /**
