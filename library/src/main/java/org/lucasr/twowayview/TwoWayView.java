@@ -5023,7 +5023,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         // Possibly changed again in fillBefore if we add rows above this one.
         mFirstPosition = position;
 
-        final int offsetBefore = getChildStartEdge(temp) + mItemMargin;
+        final int offsetBefore = getChildStartEdge(temp) - mItemMargin;
         final View before = fillBefore(position - 1, offsetBefore);
 
         // This will correct for the top of the first view not touching the top of the list
