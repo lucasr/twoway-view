@@ -207,7 +207,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
     private int mSyncMode;
     private int mSyncPosition;
     private long mSyncRowId;
-    private long mSyncHeight;
+    private long mSyncSize;
     private int mSelectedStart;
 
     private int mNextSelectedPosition;
@@ -4283,7 +4283,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                                 // Same row id is selected
                                 mSyncPosition = newPos;
 
-                                if (mSyncHeight == getHeight()) {
+                                if (mSyncSize == getSize()) {
                                     // If we are at the same height as when we saved state, try
                                     // to restore the scroll position too.
                                     mLayoutMode = LAYOUT_SYNC;
@@ -5462,7 +5462,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             ss.firstId = mPendingSync.firstId;
             ss.viewStart = mPendingSync.viewStart;
             ss.position = mPendingSync.position;
-            ss.height = mPendingSync.height;
+            ss.size = mPendingSync.size;
 
             return ss;
         }
@@ -5470,7 +5470,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         boolean haveChildren = (getChildCount() > 0 && mItemCount > 0);
         long selectedId = getSelectedItemId();
         ss.selectedId = selectedId;
-        ss.height = getHeight();
+        ss.size = getSize();
 
         if (selectedId >= 0) {
             ss.viewStart = mSelectedStart;
@@ -5530,7 +5530,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         super.onRestoreInstanceState(ss.getSuperState());
 
         mDataChanged = true;
-        mSyncHeight = ss.height;
+        mSyncSize = ss.size;
 
         if (ss.selectedId >= 0) {
             mNeedSync = true;
@@ -6083,7 +6083,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         long firstId;
         int viewStart;
         int position;
-        int height;
+        int size;
         int checkedItemCount;
         SparseBooleanArray checkState;
         LongSparseArray<Integer> checkIdState;
@@ -6105,7 +6105,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             firstId = in.readLong();
             viewStart = in.readInt();
             position = in.readInt();
-            height = in.readInt();
+            size = in.readInt();
 
             checkedItemCount = in.readInt();
             checkState = in.readSparseBooleanArray();
@@ -6129,7 +6129,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
             out.writeLong(firstId);
             out.writeInt(viewStart);
             out.writeInt(position);
-            out.writeInt(height);
+            out.writeInt(size);
 
             out.writeInt(checkedItemCount);
             out.writeSparseBooleanArray(checkState);
@@ -6150,7 +6150,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                     + " selectedId=" + selectedId
                     + " firstId=" + firstId
                     + " viewStart=" + viewStart
-                    + " height=" + height
+                    + " size=" + size
                     + " position=" + position
                     + " checkState=" + checkState + "}";
         }
