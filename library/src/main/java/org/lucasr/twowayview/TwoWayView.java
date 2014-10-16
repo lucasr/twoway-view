@@ -1705,30 +1705,16 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         switch (action) {
         case AccessibilityNodeInfo.ACTION_SCROLL_FORWARD:
             if (isEnabled() && getLastVisiblePosition() < getCount() - 1) {
-                final int viewportSize;
-                if (mIsVertical) {
-                    viewportSize = getHeight() - getPaddingTop() - getPaddingBottom();
-                } else {
-                    viewportSize = getWidth() - getPaddingLeft() - getPaddingRight();
-                }
-
                 // TODO: Use some form of smooth scroll instead
-                scrollListItemsBy(viewportSize);
+                scrollListItemsBy(getAvailableSize());
                 return true;
             }
             return false;
 
         case AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD:
             if (isEnabled() && mFirstPosition > 0) {
-                final int viewportSize;
-                if (mIsVertical) {
-                    viewportSize = getHeight() - getPaddingTop() - getPaddingBottom();
-                } else {
-                    viewportSize = getWidth() - getPaddingLeft() - getPaddingRight();
-                }
-
                 // TODO: Use some form of smooth scroll instead
-                scrollListItemsBy(-viewportSize);
+                scrollListItemsBy(-getAvailableSize());
                 return true;
             }
             return false;
@@ -2019,10 +2005,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
      * @param numChildren The number of children in the view group.
      */
     private void measureAndAdjustDown(View child, int childIndex, int numChildren) {
-        int oldHeight = child.getHeight();
+        int oldSize = getChildSize(child);
         measureChild(child);
 
-        if (child.getMeasuredHeight() == oldHeight) {
+        if (getChildMeasuredSize(child) == oldSize) {
             return;
         }
 
@@ -2030,9 +2016,9 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         relayoutMeasuredChild(child);
 
         // adjust views below appropriately
-        final int heightDelta = child.getMeasuredHeight() - oldHeight;
+        final int sizeDelta = getChildMeasuredSize(child) - oldSize;
         for (int i = childIndex + 1; i < numChildren; i++) {
-            getChildAt(i).offsetTopAndBottom(heightDelta);
+            getChildAt(i).offsetTopAndBottom(sizeDelta);
         }
     }
 
@@ -2136,7 +2122,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
      *   an arrow event.
      */
     public int getMaxScrollAmount() {
-        return (int) (MAX_SCROLL_FACTOR * getHeight());
+        return (int) (MAX_SCROLL_FACTOR * getSize());
     }
 
     /**
@@ -2748,7 +2734,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                 (overscrollMode == ViewCompat.OVER_SCROLL_IF_CONTENT_SCROLLS && !contentFits())) {
             mTouchMode = TOUCH_MODE_OVERSCROLL;
 
-            float pull = (float) overscroll / (mIsVertical ? getHeight() : getWidth());
+            float pull = (float) overscroll / getSize();
             if (delta > 0) {
                 mStartEdge.onPull(pull);
 
@@ -2916,12 +2902,32 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         }
     }
 
+    private int getSize() {
+        return (mIsVertical ? getHeight() : getWidth());
+    }
+
+    private int getAvailableSize() {
+        if (mIsVertical) {
+            return getHeight() - getPaddingBottom() - getPaddingTop();
+        } else {
+            return getWidth() - getPaddingRight() - getPaddingLeft();
+        }
+    }
+
     private int getChildStartEdge(View child) {
         return (mIsVertical ? child.getTop() : child.getLeft());
     }
 
     private int getChildEndEdge(View child) {
         return (mIsVertical ? child.getBottom() : child.getRight());
+    }
+
+    private int getChildSize(View child) {
+        return (mIsVertical ? child.getHeight() : child.getWidth());
+    }
+
+    private int getChildMeasuredSize(View child) {
+        return (mIsVertical ? child.getMeasuredHeight() : child.getMeasuredWidth());
     }
 
     private boolean contentFits() {
@@ -2996,12 +3002,7 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         final int end = getEndEdge();
         final int spaceAfter = lastEnd - end;
 
-        final int size;
-        if (mIsVertical) {
-            size = getHeight() - paddingBottom - paddingTop;
-        } else {
-            size = getWidth() - paddingRight - paddingLeft;
-        }
+        final int size = getAvailableSize();
 
         if (incrementalDelta < 0) {
             incrementalDelta = Math.max(-(size - 1), incrementalDelta);
@@ -4478,8 +4479,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         if (mIsVertical && lp.height == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (!mIsVertical) {
-            final int maxHeight = getHeight() - getPaddingTop() - getPaddingBottom();
-            return MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.EXACTLY);
+            final int maxSize = getAvailableSize();
+            return MeasureSpec.makeMeasureSpec(maxSize, MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
         }
