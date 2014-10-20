@@ -7,6 +7,7 @@ repositories {
 android {
     compileSdkVersion 21
     buildToolsVersion '21.0.1'
+    resourcePrefix 'twowayview_'
 
     defaultConfig {
         minSdkVersion 10
