@@ -88,9 +88,8 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
         super(context, attrs, defStyle, DEFAULT_NUM_COLS, DEFAULT_NUM_ROWS);
     }
 
-    public SpannableGridLayoutManager(Context context, Orientation orientation,
-                                      int numColumns, int numRows) {
-        super(context, orientation, numColumns, numRows);
+    public SpannableGridLayoutManager(Orientation orientation, int numColumns, int numRows) {
+        super(orientation, numColumns, numRows);
     }
 
     private int getChildWidth(int colSpan) {

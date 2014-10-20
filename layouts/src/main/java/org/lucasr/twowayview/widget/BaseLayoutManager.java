@@ -132,8 +132,8 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         super(context, attrs, defStyle);
     }
 
-    public BaseLayoutManager(Context context, Orientation orientation) {
-        super(context, orientation);
+    public BaseLayoutManager(Orientation orientation) {
+        super(orientation);
     }
 
     protected void pushChildFrame(ItemEntry entry, Rect childFrame, int lane, int laneSpan,
@@ -210,11 +210,19 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     }
 
     void setItemEntryForPosition(int position, ItemEntry entry) {
-        mItemEntries.put(position, entry);
+        if (mItemEntries != null) {
+            mItemEntries.put(position, entry);
+        }
     }
 
     ItemEntry getItemEntryForPosition(int position) {
         return (mItemEntries != null ? mItemEntries.get(position, null) : null);
+    }
+
+    void clearItemEntries(){
+        if (mItemEntries != null) {
+            mItemEntries.clear();
+        }
     }
 
     private boolean canUseLanes(Lanes lanes) {
@@ -243,7 +251,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         // place items e.g. the lane is dynamically decided in
         // some of the built-in layouts. Clear state so that the
         // next layout pass doesn't run with bogus layout assumptions.
-        mItemEntries.clear();
+        clearItemEntries();
     }
 
     private void ensureLayoutState() {
