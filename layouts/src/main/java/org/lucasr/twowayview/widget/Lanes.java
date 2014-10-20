@@ -69,7 +69,7 @@ class Lanes {
 
     public Lanes(BaseLayoutManager layout, int laneCount) {
         mLayout = layout;
-        mIsVertical = (layout.getOrientation() == Orientation.VERTICAL);
+        mIsVertical = layout.isVertical();
 
         mLanes = new Rect[laneCount];
         mSavedLanes = new Rect[laneCount];
