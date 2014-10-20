@@ -111,12 +111,12 @@ public class LayoutFragment extends Fragment {
 
         mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(int scrollState) {
+            public void onScrollStateChanged(RecyclerView recyclerView, int scrollState) {
                 updateState(scrollState);
             }
 
             @Override
-            public void onScrolled(int i, int i2) {
+            public void onScrolled(RecyclerView recyclerView, int i, int i2) {
                 mPositionText.setText("First: " + mRecyclerView.getFirstVisiblePosition());
                 mCountText.setText("Count: " + mRecyclerView.getChildCount());
             }
