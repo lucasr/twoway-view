@@ -28,7 +28,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
-import org.lucasr.twowayview.TwoWayView;
 import org.lucasr.twowayview.widget.Lanes.LaneInfo;
 
 public class SpannableGridLayoutManager extends GridLayoutManager {

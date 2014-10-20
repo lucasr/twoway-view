@@ -17,10 +17,6 @@
 
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <declare-styleable name="twowayview_TwoWayView">
-        <attr name="twowayview_layoutManager" format="string"/>
-    </declare-styleable>
-
     <declare-styleable name="twowayview_TwoWayLayoutManager">
         <attr name="android:orientation" tools:ignore="ResourceName"/>
     </declare-styleable>

@@ -36,7 +36,7 @@ import org.lucasr.twowayview.ItemClickSupport;
 import org.lucasr.twowayview.ItemClickSupport.OnItemClickListener;
 import org.lucasr.twowayview.ItemClickSupport.OnItemLongClickListener;
 import org.lucasr.twowayview.widget.DividerItemDecoration;
-import org.lucasr.twowayview.TwoWayView;
+import org.lucasr.twowayview.widget.TwoWayView;
 
 public class LayoutFragment extends Fragment {
     private static final String ARG_LAYOUT_ID = "layout_id";

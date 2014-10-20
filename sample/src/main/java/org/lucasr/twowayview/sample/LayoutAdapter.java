@@ -24,7 +24,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import org.lucasr.twowayview.TwoWayLayoutManager;
-import org.lucasr.twowayview.TwoWayView;
+import org.lucasr.twowayview.widget.TwoWayView;
 import org.lucasr.twowayview.widget.SpannableGridLayoutManager;
 import org.lucasr.twowayview.widget.StaggeredGridLayoutManager;
 

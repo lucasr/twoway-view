@@ -17,6 +17,10 @@
 
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <declare-styleable name="twowayview_TwoWayView">
+        <attr name="twowayview_layoutManager" format="string"/>
+    </declare-styleable>
+
     <declare-styleable name="twowayview_GridLayoutManager">
         <attr name="twowayview_numColumns" format="integer"/>
         <attr name="twowayview_numRows" format="integer"/>

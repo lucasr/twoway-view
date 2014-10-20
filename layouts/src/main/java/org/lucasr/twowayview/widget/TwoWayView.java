@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.lucasr.twowayview;
+package org.lucasr.twowayview.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -22,6 +22,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 
+import org.lucasr.twowayview.TwoWayLayoutManager;
 import org.lucasr.twowayview.TwoWayLayoutManager.Orientation;
 
 import java.lang.reflect.Constructor;
