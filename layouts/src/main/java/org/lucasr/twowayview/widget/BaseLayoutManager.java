@@ -345,6 +345,11 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         handleAdapterChange();
     }
 
+    @Override
+    public void onItemsChanged(RecyclerView recyclerView) {
+        super.onItemsChanged(recyclerView);
+        handleAdapterChange();
+    }
 
     @Override
     public void setOrientation(Orientation orientation) {

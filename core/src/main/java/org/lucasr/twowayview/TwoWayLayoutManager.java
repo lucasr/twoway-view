@@ -743,6 +743,12 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     }
 
     @Override
+    public void onItemsChanged(RecyclerView recyclerView) {
+        super.onItemsChanged(recyclerView);
+        handleAdapterChange();
+    }
+
+    @Override
     public RecyclerView.LayoutParams generateDefaultLayoutParams() {
         if (mIsVertical) {
             return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
