@@ -77,15 +77,16 @@ public class TwoWayView extends RecyclerView {
 
             setLayoutManager(constructor.newInstance(sConstructorArgs));
         } catch (Exception e) {
-            throw new IllegalStateException("Could not load AbsLayoutManager from class: " + name, e);
+            throw new IllegalStateException("Could not load TwoWayLayoutManager from " +
+                                             "class: " + name, e);
         }
     }
 
     @Override
     public void setLayoutManager(LayoutManager layout) {
         if (!(layout instanceof TwoWayLayoutManager)) {
-            throw new IllegalArgumentException("TwoWayView can only use AbsLayoutManager subclasses " +
-                                               "as its layout manager");
+            throw new IllegalArgumentException("TwoWayView can only use TwoWayLayoutManager " +
+                                                "subclasses as its layout manager");
         }
 
         super.setLayoutManager(layout);
