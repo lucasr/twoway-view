@@ -590,6 +590,11 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         return null;
     }
 
+    protected void setPendingScrollPositionWithOffset(int position, int offset) {
+        mPendingScrollPosition = position;
+        mPendingScrollOffset = offset;
+    }
+
     protected int getPendingScrollPosition() {
         if (mPendingSavedState != null) {
             return mPendingSavedState.anchorItemPosition;
@@ -796,8 +801,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     }
 
     public void scrollToPositionWithOffset(int position, int offset) {
-        mPendingScrollPosition = position;
-        mPendingScrollOffset = offset;
+        setPendingScrollPositionWithOffset(position, offset);
         requestLayout();
     }
 
