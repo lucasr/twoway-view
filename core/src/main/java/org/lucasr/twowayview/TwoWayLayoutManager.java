@@ -109,11 +109,11 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         }
     }
 
-    private int getChildStart(View child) {
+    protected int getChildStart(View child) {
         return (mIsVertical ? getDecoratedTop(child) : getDecoratedLeft(child));
     }
 
-    private int getChildEnd(View child) {
+    protected int getChildEnd(View child) {
         return (mIsVertical ?  getDecoratedBottom(child) : getDecoratedRight(child));
     }
 
