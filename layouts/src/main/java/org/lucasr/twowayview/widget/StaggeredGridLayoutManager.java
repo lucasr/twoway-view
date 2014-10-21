@@ -28,7 +28,6 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.lucasr.twowayview.TwoWayView;
 import org.lucasr.twowayview.widget.Lanes.LaneInfo;
 
 public class StaggeredGridLayoutManager extends GridLayoutManager {
@@ -88,9 +87,8 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
         super(context, attrs, defStyle, DEFAULT_NUM_COLS, DEFAULT_NUM_ROWS);
     }
 
-    public StaggeredGridLayoutManager(Context context, Orientation orientation,
-                                      int numColumns, int numRows) {
-        super(context, orientation, numColumns, numRows);
+    public StaggeredGridLayoutManager(Orientation orientation, int numColumns, int numRows) {
+        super(orientation, numColumns, numRows);
     }
 
     @Override
@@ -260,8 +258,8 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
 
-            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.StaggeredGridViewChild);
-            span = Math.max(DEFAULT_SPAN, a.getInt(R.styleable.StaggeredGridViewChild_span, -1));
+            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.twowayview_StaggeredGridViewChild);
+            span = Math.max(DEFAULT_SPAN, a.getInt(R.styleable.twowayview_StaggeredGridViewChild_twowayview_span, -1));
             a.recycle();
         }
 

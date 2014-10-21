@@ -83,7 +83,7 @@ public class ItemClickSupport {
         ItemClickSupport itemClickSupport = from(recyclerView);
         if (itemClickSupport == null) {
             itemClickSupport = new ItemClickSupport(recyclerView);
-            recyclerView.setTag(R.id.item_click_support, itemClickSupport);
+            recyclerView.setTag(R.id.twowayview_item_click_support, itemClickSupport);
         } else {
             // TODO: Log warning
         }
@@ -99,7 +99,7 @@ public class ItemClickSupport {
         }
 
         recyclerView.removeOnItemTouchListener(itemClickSupport.mTouchListener);
-        recyclerView.setTag(R.id.item_click_support, null);
+        recyclerView.setTag(R.id.twowayview_item_click_support, null);
     }
 
     public static ItemClickSupport from(RecyclerView recyclerView) {
@@ -107,7 +107,7 @@ public class ItemClickSupport {
             return null;
         }
 
-        return (ItemClickSupport) recyclerView.getTag(R.id.item_click_support);
+        return (ItemClickSupport) recyclerView.getTag(R.id.twowayview_item_click_support);
     }
 
     private class TouchListener extends ClickItemTouchListener {

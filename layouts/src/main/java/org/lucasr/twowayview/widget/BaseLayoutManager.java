@@ -132,8 +132,8 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         super(context, attrs, defStyle);
     }
 
-    public BaseLayoutManager(Context context, Orientation orientation) {
-        super(context, orientation);
+    public BaseLayoutManager(Orientation orientation) {
+        super(orientation);
     }
 
     protected void pushChildFrame(ItemEntry entry, Rect childFrame, int lane, int laneSpan,
@@ -210,11 +210,19 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     }
 
     void setItemEntryForPosition(int position, ItemEntry entry) {
-        mItemEntries.put(position, entry);
+        if (mItemEntries != null) {
+            mItemEntries.put(position, entry);
+        }
     }
 
     ItemEntry getItemEntryForPosition(int position) {
-        return mItemEntries.get(position, null);
+        return (mItemEntries != null ? mItemEntries.get(position, null) : null);
+    }
+
+    void clearItemEntries(){
+        if (mItemEntries != null) {
+            mItemEntries.clear();
+        }
     }
 
     private boolean canUseLanes(Lanes lanes) {
@@ -243,7 +251,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         // place items e.g. the lane is dynamically decided in
         // some of the built-in layouts. Clear state so that the
         // next layout pass doesn't run with bogus layout assumptions.
-        mItemEntries.clear();
+        clearItemEntries();
     }
 
     private void ensureLayoutState() {
@@ -337,6 +345,11 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         handleAdapterChange();
     }
 
+    @Override
+    public void onItemsChanged(RecyclerView recyclerView) {
+        super.onItemsChanged(recyclerView);
+        handleAdapterChange();
+    }
 
     @Override
     public void setOrientation(Orientation orientation) {
@@ -528,14 +541,16 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             if (laneCount > 0) {
                 lanes = new Rect[laneCount];
                 for (int i = 0; i < laneCount; i++) {
-                    lanes[i].readFromParcel(in);
+                    final Rect lane = new Rect();
+                    lane.readFromParcel(in);
+                    lanes[i] = lane;
                 }
             }
 
-            final int itemLanesCount = in.readInt();
-            if (itemLanesCount > 0) {
-                itemEntries = new SparseArray<ItemEntry>(itemLanesCount);
-                for (int i = 0; i < itemLanesCount; i++) {
+            final int itemEntriesCount = in.readInt();
+            if (itemEntriesCount > 0) {
+                itemEntries = new SparseArray<ItemEntry>(itemEntriesCount);
+                for (int i = 0; i < itemEntriesCount; i++) {
                     final int key = in.readInt();
                     final ItemEntry value = in.readParcelable(getClass().getClassLoader());
                     itemEntries.put(key, value);
@@ -557,10 +572,10 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
                 lanes[i].writeToParcel(out, Rect.PARCELABLE_WRITE_RETURN_VALUE);
             }
 
-            final int itemLanesCount = (itemEntries != null ? itemEntries.size() : 0);
-            out.writeInt(itemLanesCount);
+            final int itemEntriesCount = (itemEntries != null ? itemEntries.size() : 0);
+            out.writeInt(itemEntriesCount);
 
-            for (int i = 0; i < itemLanesCount; i++) {
+            for (int i = 0; i < itemEntriesCount; i++) {
                 out.writeInt(itemEntries.keyAt(i));
                 out.writeParcelable(itemEntries.valueAt(i), flags);
             }

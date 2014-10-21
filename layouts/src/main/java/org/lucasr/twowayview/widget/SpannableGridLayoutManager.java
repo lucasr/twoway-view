@@ -18,7 +18,6 @@ package org.lucasr.twowayview.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v7.widget.RecyclerView;
@@ -29,7 +28,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
-import org.lucasr.twowayview.TwoWayView;
 import org.lucasr.twowayview.widget.Lanes.LaneInfo;
 
 public class SpannableGridLayoutManager extends GridLayoutManager {
@@ -89,9 +87,8 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
         super(context, attrs, defStyle, DEFAULT_NUM_COLS, DEFAULT_NUM_ROWS);
     }
 
-    public SpannableGridLayoutManager(Context context, Orientation orientation,
-                                      int numColumns, int numRows) {
-        super(context, orientation, numColumns, numRows);
+    public SpannableGridLayoutManager(Orientation orientation, int numColumns, int numRows) {
+        super(orientation, numColumns, numRows);
     }
 
     private int getChildWidth(int colSpan) {
@@ -287,11 +284,11 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
 
-            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.SpannableGridViewChild);
+            TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.twowayview_SpannableGridViewChild);
             colSpan = Math.max(
-                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_colSpan, -1));
+                    DEFAULT_SPAN, a.getInt(R.styleable.twowayview_SpannableGridViewChild_twowayview_colSpan, -1));
             rowSpan = Math.max(
-                    DEFAULT_SPAN, a.getInt(R.styleable.SpannableGridViewChild_rowSpan, -1));
+                    DEFAULT_SPAN, a.getInt(R.styleable.twowayview_SpannableGridViewChild_twowayview_rowSpan, -1));
             a.recycle();
         }
 

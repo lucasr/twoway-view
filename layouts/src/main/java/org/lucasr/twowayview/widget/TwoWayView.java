@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.lucasr.twowayview;
+package org.lucasr.twowayview.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -22,6 +22,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 
+import org.lucasr.twowayview.TwoWayLayoutManager;
 import org.lucasr.twowayview.TwoWayLayoutManager.Orientation;
 
 import java.lang.reflect.Constructor;
@@ -46,9 +47,9 @@ public class TwoWayView extends RecyclerView {
         super(context, attrs, defStyle);
 
         final TypedArray a =
-                context.obtainStyledAttributes(attrs, R.styleable.TwoWayView, defStyle, 0);
+                context.obtainStyledAttributes(attrs, R.styleable.twowayview_TwoWayView, defStyle, 0);
 
-        final String name = a.getString(R.styleable.TwoWayView_layoutManager);
+        final String name = a.getString(R.styleable.twowayview_TwoWayView_twowayview_layoutManager);
         if (!TextUtils.isEmpty(name)) {
             loadLayoutManagerFromName(context, attrs, name);
         }
@@ -77,15 +78,16 @@ public class TwoWayView extends RecyclerView {
 
             setLayoutManager(constructor.newInstance(sConstructorArgs));
         } catch (Exception e) {
-            throw new IllegalStateException("Could not load AbsLayoutManager from class: " + name, e);
+            throw new IllegalStateException("Could not load TwoWayLayoutManager from " +
+                                             "class: " + name, e);
         }
     }
 
     @Override
     public void setLayoutManager(LayoutManager layout) {
         if (!(layout instanceof TwoWayLayoutManager)) {
-            throw new IllegalArgumentException("TwoWayView can only use AbsLayoutManager subclasses " +
-                                               "as its layout manager");
+            throw new IllegalArgumentException("TwoWayView can only use TwoWayLayoutManager " +
+                                                "subclasses as its layout manager");
         }
 
         super.setLayoutManager(layout);
@@ -104,5 +106,10 @@ public class TwoWayView extends RecyclerView {
     public int getFirstVisiblePosition() {
         TwoWayLayoutManager layout = (TwoWayLayoutManager) getLayoutManager();
         return layout.getFirstVisiblePosition();
+    }
+
+    public int getLastVisiblePosition() {
+        TwoWayLayoutManager layout = (TwoWayLayoutManager) getLayoutManager();
+        return layout.getLastVisiblePosition();
     }
 }

@@ -15,13 +15,13 @@
   ~ limitations under the License.
   -->
 
-<org.lucasr.twowayview.TwoWayView
+<org.lucasr.twowayview.widget.TwoWayView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/list"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     style="@style/TwoWayView"
-    app:layoutManager="StaggeredGridLayoutManager"
-    app:numColumns="2"
-    app:numRows="2" />
+    app:twowayview_layoutManager="StaggeredGridLayoutManager"
+    app:twowayview_numColumns="2"
+    app:twowayview_numRows="2" />
