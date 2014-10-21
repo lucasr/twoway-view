@@ -115,7 +115,7 @@ public class GridLayoutManager extends BaseLayoutManager {
 
         mNumColumns = numColumns;
         if (isVertical()) {
-            forceCreateLanes();
+            resetLayoutState();
             requestLayout();
         }
     }
@@ -131,7 +131,7 @@ public class GridLayoutManager extends BaseLayoutManager {
 
         mNumRows = numRows;
         if (!isVertical()) {
-            forceCreateLanes();
+            resetLayoutState();
             requestLayout();
         }
     }

@@ -200,11 +200,6 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         return (getOrientation() == Orientation.VERTICAL);
     }
 
-    void forceCreateLanes() {
-        mLanes = null;
-        ensureLayoutState();
-    }
-
     Lanes getLanes() {
         return mLanes;
     }
@@ -254,6 +249,11 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         clearItemEntries();
     }
 
+    void resetLayoutState() {
+        mLanes = null;
+        ensureLayoutState();
+    }
+
     private void ensureLayoutState() {
         final int laneCount = getLaneCount();
         if (laneCount == 0 || getWidth() == 0 || getHeight() == 0) {
@@ -276,7 +276,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     @Override
     public void onAdapterChanged(Adapter oldAdapter, Adapter newAdapter) {
         super.onAdapterChanged(oldAdapter, newAdapter);
-        forceCreateLanes();
+        resetLayoutState();
     }
 
     @Override
@@ -357,7 +357,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         super.setOrientation(orientation);
 
         if (changed) {
-            forceCreateLanes();
+            resetLayoutState();
         }
     }
 
