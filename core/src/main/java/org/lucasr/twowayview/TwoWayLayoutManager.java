@@ -486,17 +486,14 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     private void handleAdapterChange() {
         // Refresh state by requesting layout without changing the
-        // first visible position. This will ensure we'll ensure
-        // the layout will sync with the adapter changes.
+        // first visible position. This will ensure the layout will
+        // sync with the adapter changes.
         final View firstChild = findViewByPosition(mFirstPosition);
         if (firstChild != null) {
-            mPendingScrollPosition = mFirstPosition;
-            mPendingScrollOffset = getChildStart(firstChild);
+            setPendingScrollPositionWithOffset(mFirstPosition, getChildStart(firstChild));
         } else {
-            mPendingScrollPosition = RecyclerView.NO_POSITION;
-            mPendingScrollOffset = 0;
+            setPendingScrollPositionWithOffset(RecyclerView.NO_POSITION, 0);
         }
-        requestLayout();
     }
 
     private void updateLayoutEdgesFromNewChild(View newChild) {
@@ -716,8 +713,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
         onLayoutScrapList(recycler, state);
 
-        mPendingScrollPosition = RecyclerView.NO_POSITION;
-        mPendingScrollOffset = 0;
+        setPendingScrollPositionWithOffset(RecyclerView.NO_POSITION, 0);
         mPendingSavedState = null;
     }
 
@@ -740,16 +736,18 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     public void onItemsAdded(RecyclerView recyclerView, int positionStart, int itemCount) {
         if (positionStart < mFirstPosition) {
             mFirstPosition += itemCount;
-            handleAdapterChange();
         }
+
+        handleAdapterChange();
     }
 
     @Override
     public void onItemsRemoved(RecyclerView recyclerView, int positionStart, int itemCount) {
         if (positionStart < mFirstPosition) {
             mFirstPosition -= itemCount;
-            handleAdapterChange();
         }
+
+        handleAdapterChange();
     }
 
     @Override

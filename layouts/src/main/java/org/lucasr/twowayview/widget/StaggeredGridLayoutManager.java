@@ -138,6 +138,14 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
 
             if (entry != null) {
                 mTempLaneInfo.set(entry.startLane, entry.anchorLane);
+
+                // The lanes might have been invalidated because an added or
+                // removed item. See BaseLayoutManager.invalidateItemLanes().
+                if (mTempLaneInfo.isUndefined()) {
+                    lanes.findLane(mTempLaneInfo, getLaneSpanForPosition(i), Direction.END);
+                    entry.setLane(mTempLaneInfo);
+                }
+
                 lanes.getChildFrame(mTempRect, entry.width, entry.height, mTempLaneInfo,
                         Direction.END);
             } else {
@@ -150,7 +158,9 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
                 // views have stable aspect ratio, lane size is fixed, etc.
                 measureChild(child, Direction.END);
 
-                entry = (StaggeredItemEntry) cacheChildLaneAndSpan(child, Direction.END);
+                // The measureChild() call ensures an entry is created for
+                // this position.
+                entry = (StaggeredItemEntry) getItemEntryForPosition(i);
 
                 mTempLaneInfo.set(entry.startLane, entry.anchorLane);
                 lanes.getChildFrame(mTempRect, getDecoratedMeasuredWidth(child),
@@ -173,13 +183,23 @@ public class StaggeredGridLayoutManager extends GridLayoutManager {
     ItemEntry cacheChildLaneAndSpan(View child, Direction direction) {
         final int position = getPosition(child);
 
-        StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
-        if (entry == null) {
-            getLaneForChild(mTempLaneInfo, child, direction);
+        mTempLaneInfo.setUndefined();
 
+        StaggeredItemEntry entry = (StaggeredItemEntry) getItemEntryForPosition(position);
+        if (entry != null) {
+            mTempLaneInfo.set(entry.startLane, entry.anchorLane);
+        }
+
+        if (mTempLaneInfo.isUndefined()) {
+            getLaneForChild(mTempLaneInfo, child, direction);
+        }
+
+        if (entry == null) {
             entry = new StaggeredItemEntry(mTempLaneInfo.startLane, mTempLaneInfo.anchorLane,
                     getLaneSpanForChild(child));
             setItemEntryForPosition(position, entry);
+        } else {
+            entry.setLane(mTempLaneInfo);
         }
 
         return entry;
