@@ -24,6 +24,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.RecyclerView.Recycler;
@@ -115,6 +116,10 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     protected int getChildEnd(View child) {
         return (mIsVertical ?  getDecoratedBottom(child) : getDecoratedRight(child));
+    }
+
+    protected Adapter getAdapter() {
+        return (mRecyclerView != null ? mRecyclerView.getAdapter() : null);
     }
 
     private void offsetChildren(int offset) {
