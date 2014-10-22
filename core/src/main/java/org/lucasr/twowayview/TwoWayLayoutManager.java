@@ -661,8 +661,8 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     }
 
     @Override
-    public void onDetachedFromWindow(RecyclerView view) {
-        super.onDetachedFromWindow(view);
+    public void onDetachedFromWindow(RecyclerView view, Recycler recycler) {
+        super.onDetachedFromWindow(view, recycler);
         mRecyclerView = null;
     }
 
