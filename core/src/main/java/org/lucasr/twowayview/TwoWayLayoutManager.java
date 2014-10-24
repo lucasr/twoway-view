@@ -51,8 +51,6 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     private RecyclerView mRecyclerView;
 
-    private int mFirstPosition;
-
     private boolean mIsVertical = true;
 
     private SavedState mPendingSavedState = null;
@@ -159,8 +157,6 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
             detachChild(child, direction);
         }
 
-        mFirstPosition += detachedCount;
-
         while (--detachedCount >= 0) {
             final View child = getChildAt(0);
             removeAndRecycleView(child, recycler);
@@ -203,6 +199,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
         final int start = getStartWithPadding();
         final int end = getEndWithPadding();
+        final int firstPosition = getFirstVisiblePosition();
 
         final int totalSpace = getTotalSpace();
         if (delta < 0) {
@@ -211,9 +208,9 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
             delta = Math.min(totalSpace - 1, delta);
         }
 
-        final boolean cannotScrollBackward = (mFirstPosition == 0 &&
+        final boolean cannotScrollBackward = (firstPosition == 0 &&
                 mLayoutStart >= start && delta <= 0);
-        final boolean cannotScrollForward = (mFirstPosition + childCount == state.getItemCount() &&
+        final boolean cannotScrollForward = (firstPosition + childCount == state.getItemCount() &&
                 mLayoutEnd <= end && delta >= 0);
 
         if (cannotScrollForward || cannotScrollBackward) {
@@ -237,12 +234,13 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     private void fillGap(Direction direction, Recycler recycler, State state) {
         final int childCount = getChildCount();
         final int extraSpace = getExtraLayoutSpace(state);
+        final int firstPosition = getFirstVisiblePosition();
 
         if (direction == Direction.END) {
-            fillAfter(mFirstPosition + childCount, recycler, state, extraSpace);
+            fillAfter(firstPosition + childCount, recycler, state, extraSpace);
             correctTooHigh(childCount, recycler, state);
         } else {
-            fillBefore(mFirstPosition - 1, recycler, extraSpace);
+            fillBefore(firstPosition - 1, recycler, extraSpace);
             correctTooLow(childCount, recycler, state);
         }
     }
@@ -258,8 +256,6 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
             makeAndAddView(position, Direction.START, recycler);
             position--;
         }
-
-        mFirstPosition = position + 1;
     }
 
     private void fillAfter(int pos, Recycler recycler, State state) {
@@ -282,10 +278,6 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         }
 
         makeAndAddView(position, Direction.END, recycler);
-
-        // Possibly changed again in fillBefore if we add children
-        // before this one.
-        mFirstPosition = position;
 
         final int extraSpaceBefore;
         final int extraSpaceAfter;
@@ -312,7 +304,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     private void correctTooHigh(int childCount, Recycler recycler, State state) {
         // First see if the last item is visible. If it is not, it is OK for the
         // top of the list to be pushed up.
-        final int lastPosition = mFirstPosition + childCount - 1;
+        final int lastPosition = getLastVisiblePosition();
         if (lastPosition != state.getItemCount() - 1 || childCount == 0) {
             return;
         }
@@ -320,6 +312,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         // This is bottom of our drawable area.
         final int start = getStartWithPadding();
         final int end = getEndWithPadding();
+        final int firstPosition = getFirstVisiblePosition();
 
         // This is how far the end edge of the last view is from the end of the
         // drawable area.
@@ -327,8 +320,8 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
         // Make sure we are 1) Too high, and 2) Either there are more rows above the
         // first row or the first row is scrolled off the top of the drawable area
-        if (endOffset > 0 && (mFirstPosition > 0 || mLayoutStart < start))  {
-            if (mFirstPosition == 0) {
+        if (endOffset > 0 && (firstPosition > 0 || mLayoutStart < start))  {
+            if (firstPosition == 0) {
                 // Don't pull the top too far down.
                 endOffset = Math.min(endOffset, start - mLayoutStart);
             }
@@ -336,10 +329,10 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
             // Move everything down
             offsetChildren(endOffset);
 
-            if (mFirstPosition > 0) {
-                // Fill the gap that was opened above mFirstPosition with more
+            if (firstPosition > 0) {
+                // Fill the gap that was opened above first position with more
                 // children, if possible.
-                fillBefore(mFirstPosition - 1, recycler);
+                fillBefore(firstPosition - 1, recycler);
 
                 // Close up the remaining gap.
                 adjustViewsStartOrEnd();
@@ -350,19 +343,19 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     private void correctTooLow(int childCount, Recycler recycler, State state) {
         // First see if the first item is visible. If it is not, it is OK for the
         // end of the list to be pushed forward.
-        if (mFirstPosition != 0 || childCount == 0) {
+        final int firstPosition = getFirstVisiblePosition();
+        if (firstPosition != 0 || childCount == 0) {
             return;
         }
 
         final int start = getStartWithPadding();
         final int end = getEndWithPadding();
         final int itemCount = state.getItemCount();
+        final int lastPosition = getLastVisiblePosition();
 
         // This is how far the start edge of the first view is from the start of the
         // drawable area.
         int startOffset = mLayoutStart - start;
-
-        final int lastPosition = mFirstPosition + childCount - 1;
 
         // Make sure we are 1) Too low, and 2) Either there are more columns/rows below the
         // last column/row or the last column/row is scrolled off the end of the
@@ -442,14 +435,16 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     }
 
     private void fillFromScrapList(List<ViewHolder> scrapList, Direction direction) {
+        final int firstPosition = getFirstVisiblePosition();
+
         int position;
         if (direction == Direction.END) {
-            position = mFirstPosition + getChildCount();
+            position = firstPosition + getChildCount();
         } else {
-            position = mFirstPosition - 1;
+            position = firstPosition - 1;
         }
 
-        View scrapChild = null;
+        View scrapChild;
         while ((scrapChild = findNextScrapView(scrapList, direction, position)) != null) {
             setupChild(scrapChild, direction);
             position += (direction == Direction.END ? 1 : -1);
@@ -484,13 +479,14 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         return child;
     }
 
-    private void handleAdapterChange() {
+    private void handleUpdate() {
         // Refresh state by requesting layout without changing the
         // first visible position. This will ensure the layout will
         // sync with the adapter changes.
-        final View firstChild = findViewByPosition(mFirstPosition);
+        final int firstPosition = getFirstVisiblePosition();
+        final View firstChild = findViewByPosition(firstPosition);
         if (firstChild != null) {
-            setPendingScrollPositionWithOffset(mFirstPosition, getChildStart(firstChild));
+            setPendingScrollPositionWithOffset(firstPosition, getChildStart(firstChild));
         } else {
             setPendingScrollPositionWithOffset(RecyclerView.NO_POSITION, 0);
         }
@@ -613,6 +609,38 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         return mPendingScrollOffset;
     }
 
+    protected int getAnchorItemPosition(State state) {
+        final int itemCount = state.getItemCount();
+
+        int pendingPosition = getPendingScrollPosition();
+        if (pendingPosition != RecyclerView.NO_POSITION) {
+            if (pendingPosition < 0 || pendingPosition >= itemCount) {
+                pendingPosition = RecyclerView.NO_POSITION;
+            }
+        }
+
+        if (pendingPosition != RecyclerView.NO_POSITION) {
+            return pendingPosition;
+        } else if (getChildCount() > 0) {
+            return findFirstValidChildPosition(itemCount);
+        } else {
+            return 0;
+        }
+    }
+
+    private int findFirstValidChildPosition(int itemCount) {
+        final int childCount = getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            final View view = getChildAt(i);
+            final int position = getPosition(view);
+            if (position >= 0 && position < itemCount) {
+                return position;
+            }
+        }
+
+        return 0;
+    }
+
     @Override
     public int getDecoratedMeasuredWidth(View child) {
         final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
@@ -680,13 +708,6 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     @Override
     public void onLayoutChildren(Recycler recycler, State state) {
-        int pendingPosition = getPendingScrollPosition();
-        if (pendingPosition != RecyclerView.NO_POSITION) {
-            if (pendingPosition < 0 || pendingPosition >= state.getItemCount()) {
-                pendingPosition = RecyclerView.NO_POSITION;
-            }
-        }
-
         final ItemSelectionSupport itemSelection = ItemSelectionSupport.from(mRecyclerView);
         if (itemSelection != null) {
             final Bundle itemSelectionState = getPendingItemSelectionState();
@@ -699,15 +720,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
             }
         }
 
-        final int anchorItemPosition;
-        if (pendingPosition != RecyclerView.NO_POSITION) {
-            anchorItemPosition = pendingPosition;
-        } else if (getChildCount() > 0) {
-            anchorItemPosition = mFirstPosition;
-        } else {
-            anchorItemPosition = 0;
-        }
-
+        final int anchorItemPosition = getAnchorItemPosition(state);
         detachAndScrapAttachedViews(recycler);
         fillSpecific(anchorItemPosition, recycler, state);
 
@@ -734,26 +747,27 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     @Override
     public void onItemsAdded(RecyclerView recyclerView, int positionStart, int itemCount) {
-        if (positionStart < mFirstPosition) {
-            mFirstPosition += itemCount;
-        }
-
-        handleAdapterChange();
+        handleUpdate();
     }
 
     @Override
     public void onItemsRemoved(RecyclerView recyclerView, int positionStart, int itemCount) {
-        if (positionStart < mFirstPosition) {
-            mFirstPosition -= itemCount;
-        }
+        handleUpdate();
+    }
 
-        handleAdapterChange();
+    @Override
+    public void onItemsUpdated(RecyclerView recyclerView, int positionStart, int itemCount) {
+        handleUpdate();
+    }
+
+    @Override
+    public void onItemsMoved(RecyclerView recyclerView, int from, int to, int itemCount) {
+        handleUpdate();
     }
 
     @Override
     public void onItemsChanged(RecyclerView recyclerView) {
-        super.onItemsChanged(recyclerView);
-        handleAdapterChange();
+        handleUpdate();
     }
 
     @Override
@@ -817,7 +831,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
                     return null;
                 }
 
-                final int direction = targetPosition < mFirstPosition ? -1 : 1;
+                final int direction = targetPosition < getFirstVisiblePosition() ? -1 : 1;
                 if (mIsVertical) {
                     return new PointF(0, direction);
                 } else {
@@ -889,7 +903,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
         int anchorItemPosition = getPendingScrollPosition();
         if (anchorItemPosition == RecyclerView.NO_POSITION) {
-            anchorItemPosition = mFirstPosition;
+            anchorItemPosition = getFirstVisiblePosition();
         }
         state.anchorItemPosition = anchorItemPosition;
 
@@ -925,16 +939,16 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     public int getFirstVisiblePosition() {
         if (getChildCount() == 0) {
-            return RecyclerView.NO_POSITION;
+            return 0;
         }
 
-        return mFirstPosition;
+        return getPosition(getChildAt(0));
     }
 
     public int getLastVisiblePosition() {
         final int childCount = getChildCount();
         if (childCount == 0) {
-            return RecyclerView.NO_POSITION;
+            return 0;
         }
 
         return getPosition(getChildAt(childCount - 1));

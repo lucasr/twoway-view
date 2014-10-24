@@ -362,15 +362,14 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             return;
         }
 
-        mItemEntries.setAdapterSize(state.getItemCount());
+        final int itemCount = state.getItemCount();
+        mItemEntries.setAdapterSize(itemCount);
 
-        final int pendingPosition = getPendingScrollPosition();
-        final boolean hasValidPendingPosition = (pendingPosition != RecyclerView.NO_POSITION &&
-                pendingPosition >= 0 && pendingPosition < state.getItemCount());
+        final int anchorItemPosition = getAnchorItemPosition(state);
 
         // Only move layout if we're not restoring a layout state.
-        if (hasValidPendingPosition && (refreshingLanes || !restoringLanes)) {
-            moveLayoutToPosition(pendingPosition, getPendingScrollOffset(), recycler, state);
+        if (anchorItemPosition > 0 && (refreshingLanes || !restoringLanes)) {
+            moveLayoutToPosition(anchorItemPosition, getPendingScrollOffset(), recycler, state);
         }
 
         mLanes.reset(Direction.START);
@@ -411,8 +410,8 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     @Override
     public void onItemsChanged(RecyclerView recyclerView) {
-        super.onItemsChanged(recyclerView);
         clearItemEntries();
+        super.onItemsChanged(recyclerView);
     }
 
     @Override
