@@ -262,11 +262,6 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
                  lanes.getLaneSize() == laneSize);
     }
 
-    void resetLayoutState() {
-        mLanes = null;
-        ensureLayoutState();
-    }
-
     private boolean ensureLayoutState() {
         final int laneCount = getLaneCount();
         if (laneCount == 0 || getWidth() == 0 || getHeight() == 0 || canUseLanes(mLanes)) {
@@ -317,12 +312,6 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         if (positionStart <= getLastVisiblePosition()) {
             requestLayout();
         }
-    }
-
-    @Override
-    public void onAdapterChanged(Adapter oldAdapter, Adapter newAdapter) {
-        super.onAdapterChanged(oldAdapter, newAdapter);
-        resetLayoutState();
     }
 
     @Override
@@ -412,16 +401,6 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     public void onItemsChanged(RecyclerView recyclerView) {
         clearItemEntries();
         super.onItemsChanged(recyclerView);
-    }
-
-    @Override
-    public void setOrientation(Orientation orientation) {
-        final boolean changed = (getOrientation() != orientation);
-        super.setOrientation(orientation);
-
-        if (changed) {
-            resetLayoutState();
-        }
     }
 
     @Override
