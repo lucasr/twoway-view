@@ -3779,12 +3779,10 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
                             getChildEndEdge(getChildAt(childCount - 1)) == end && distance > 0)) {
             finishSmoothScrolling();
         } else {
-            int initialPosition = distance < 0 ? Integer.MAX_VALUE : 0;
-            mScroller.startScroll(mIsVertical ? 0 : initialPosition,
-                                  mIsVertical ? initialPosition : 0,
-                                  mIsVertical ? 0 : -distance,
-                                  mIsVertical ? -distance : 0,
-                                  duration);
+            mScroller.startScroll(0, 0,
+                                   mIsVertical ? 0 : -distance,
+                                   mIsVertical ? -distance : 0,
+                                   duration);
 
             mLastTouchPos = 0;
 
