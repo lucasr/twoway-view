@@ -4857,11 +4857,11 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         // Compensate item margin on the first item of the list if the item margin
         // is negative to avoid incorrect offset for the very first child.
         if (mIsVertical) {
-            top = offset - (mItemMargin < 0 && position == 0 && !flow ? mItemMargin : 0);
+            top = offset;
             left = getPaddingLeft();
         } else {
             top = getPaddingTop();
-            left = offset - (mItemMargin < 0 && position == 0 && !flow ? mItemMargin: 0);
+            left = offset;
         }
 
         if (!mDataChanged) {
