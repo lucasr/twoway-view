@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+Version 0.1.3
+-------------
+
+ * Fix measure spec in horizontal mode
+
 Version 0.1.2
 -------------
 
