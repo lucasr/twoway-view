@@ -4618,8 +4618,8 @@ public class TwoWayView extends AdapterView<ListAdapter> implements
         if (mIsVertical && lp.height == LayoutParams.WRAP_CONTENT) {
             return MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         } else if (!mIsVertical) {
-            final int maxSize = getAvailableSize();
-            return MeasureSpec.makeMeasureSpec(maxSize, MeasureSpec.EXACTLY);
+            final int maxHeight = getHeight() - getPaddingTop() - getPaddingBottom();
+            return MeasureSpec.makeMeasureSpec(maxHeight, MeasureSpec.EXACTLY);
         } else {
             return MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
         }
