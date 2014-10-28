@@ -23,4 +23,6 @@
                                   android:layout_width="fill_parent"
                                   android:layout_height="fill_parent"
                                   android:drawSelectorOnTop="false"
+                                  android:requiresFadingEdge="vertical|horizontal"
+                                  android:fadingEdgeLength="20dp"
                                   tools:context=".MainActivity" />
