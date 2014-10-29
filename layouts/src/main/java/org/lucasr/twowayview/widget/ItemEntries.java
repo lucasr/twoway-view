@@ -32,6 +32,7 @@ class ItemEntries {
 
     private ItemEntry[] mItemEntries;
     private int mAdapterSize;
+    private boolean mRestoringItem;
 
     private int sizeForPosition(int position) {
         int len = mItemEntries.length;
@@ -39,7 +40,9 @@ class ItemEntries {
             len *= 2;
         }
 
-        if (len > mAdapterSize) {
+        // We don't apply any constraints while restoring
+        // item entries.
+        if (!mRestoringItem && len > mAdapterSize) {
             len = mAdapterSize;
         }
 
@@ -69,6 +72,12 @@ class ItemEntries {
     public void putItemEntry(int position, ItemEntry entry) {
         ensureSize(position);
         mItemEntries[position] = entry;
+    }
+
+    public void restoreItemEntry(int position, ItemEntry entry) {
+        mRestoringItem = true;
+        putItemEntry(position, entry);
+        mRestoringItem = false;
     }
 
     public int size() {
