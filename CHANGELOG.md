@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 0.1.4
+-------------
+
+ * Fading edge support
+ * Misc bug fixes
+
 Version 0.1.3
 -------------
 
