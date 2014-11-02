@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.DragEvent;
 import android.view.View;
 import android.widget.AbsListView;
+import org.lucasr.twowayview.TwoWayLayoutManager;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
 /*package*/ final class Reorderer implements View.OnDragListener {
@@ -66,7 +67,12 @@ import android.widget.AbsListView;
         @Override
         public void run() {
             if(isScrolling) {
-                twv.smoothScrollBy(scrollDistance, 500);
+                if(twv.getOrientation() == TwoWayLayoutManager.Orientation.VERTICAL) {
+                    twv.smoothScrollBy(0, scrollDistance);
+                }
+                else {
+                    twv.smoothScrollBy(scrollDistance, 0);
+                }
                 scrollHandler.postDelayed(this, 250);
             }
         }
@@ -91,29 +97,28 @@ import android.widget.AbsListView;
             lastKnownPosition = AbsListView.INVALID_POSITION;
         }
         else if(ev.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
-            // TODO: fix scrolling with the dragged item - this is semi FUBAR - need to handle orientation as well
-            int twvHeight = twv.getHeight();
-            int[] globalCoords = new int[2];
-            twv.getLocationInWindow(globalCoords);
-            int bottomOffset = twvHeight - y;
+            boolean isVertical = (twv.getOrientation() == TwoWayLayoutManager.Orientation.VERTICAL);
+            int pointer = (isVertical ? y : x);
+            int bottomBound = (isVertical ? twv.getHeight() : twv.getWidth());
+            int bottomOffset = bottomBound - pointer;
 
-            View firstVisibleView = twv.getChildAt(0);
-            scrollDistance = twvHeight / 8;
+            View firstVisibleView = twv.getChildAt(twv.getFirstVisiblePosition());
+            scrollDistance = bottomBound / 8;
             int scrollThreshold = scrollDistance / 2;
             if(firstVisibleView != null) {
-                int height = firstVisibleView.getHeight();
-                scrollDistance = ((height * 2) + (height / 2));
-                scrollThreshold = height / 8;
+                int bound = (isVertical ? firstVisibleView.getHeight() : firstVisibleView.getWidth());
+                scrollDistance = ((bound * 2) + (bound / 2));
+                scrollThreshold = bound / 8;
             }
 
-            if(y <= scrollThreshold && bottomOffset >= scrollThreshold) {
+            if(pointer <= scrollThreshold && bottomOffset >= scrollThreshold) {
                 scrollDistance = -scrollDistance;
                 if(!isScrolling) {
                     scrollHandler.post(scrollRunnable);
                     isScrolling = true;
                 }
             }
-            else if(y >= scrollThreshold && bottomOffset <= scrollThreshold) {
+            else if(pointer >= scrollThreshold && bottomOffset <= scrollThreshold) {
                 if(!isScrolling) {
                     scrollHandler.post(scrollRunnable);
                     isScrolling = true;
