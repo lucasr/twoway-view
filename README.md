@@ -48,13 +48,13 @@ Grab via Maven:
 <dependency>
   <groupId>org.lucasr.twowayview</groupId>
   <artifactId>twowayview</artifactId>
-  <version>0.1.3</version>
+  <version>0.1.4</version>
 </dependency>
 ```
 
 Gradle:
 ```groovy
-compile 'org.lucasr.twowayview:twowayview:0.1.3'
+compile 'org.lucasr.twowayview:twowayview:0.1.4'
 ```
 
 

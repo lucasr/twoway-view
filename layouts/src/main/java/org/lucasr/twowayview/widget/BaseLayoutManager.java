@@ -352,7 +352,10 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         }
 
         final int itemCount = state.getItemCount();
-        mItemEntries.setAdapterSize(itemCount);
+
+        if (mItemEntries != null) {
+            mItemEntries.setAdapterSize(itemCount);
+        }
 
         final int anchorItemPosition = getAnchorItemPosition(state);
 
@@ -594,7 +597,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
                 itemEntries = new ItemEntries();
                 for (int i = 0; i < itemEntriesCount; i++) {
                     final ItemEntry entry = in.readParcelable(getClass().getClassLoader());
-                    itemEntries.putItemEntry(i, entry);
+                    itemEntries.restoreItemEntry(i, entry);
                 }
             }
         }
