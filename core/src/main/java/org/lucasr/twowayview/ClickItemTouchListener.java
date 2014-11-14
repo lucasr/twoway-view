@@ -75,6 +75,7 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
     private class ItemClickGestureListener extends SimpleOnGestureListener {
         private final RecyclerView mHostView;
         private View mTargetChild;
+        private boolean mFling;
 
         public ItemClickGestureListener(RecyclerView hostView) {
             mHostView = hostView;
@@ -92,10 +93,15 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
 
         @Override
         public boolean onDown(MotionEvent event) {
-            final int x = (int) event.getX();
-            final int y = (int) event.getY();
+            if (!mFling) {
+                final int x = (int) event.getX();
+                final int y = (int) event.getY();
 
-            mTargetChild = mHostView.findChildViewUnder(x, y);
+                mTargetChild = mHostView.findChildViewUnder(x, y);
+            } else {
+                mTargetChild = null;
+                mFling = false;
+            }
             return (mTargetChild != null);
         }
 
@@ -133,6 +139,12 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
             }
 
             return false;
+        }
+
+        @Override
+        public boolean onFling(MotionEvent event, MotionEvent event2, float v, float v2) {
+            mFling = true;
+            return super.onFling(event, event2, v, v2);
         }
 
         @Override
