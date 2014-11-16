@@ -18,7 +18,6 @@ package org.lucasr.twowayview.widget;
 
 import android.content.Context;
 import android.graphics.Rect;
-import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v7.widget.RecyclerView;
@@ -27,7 +26,6 @@ import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
 import android.util.AttributeSet;
-import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
@@ -35,12 +33,14 @@ import android.view.ViewGroup.MarginLayoutParams;
 import org.lucasr.twowayview.TwoWayLayoutManager;
 import org.lucasr.twowayview.widget.Lanes.LaneInfo;
 
+import static org.lucasr.twowayview.widget.Lanes.calculateLaneSize;
+
 public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     private static final String LOGTAG = "BaseLayoutManager";
 
     protected static class ItemEntry implements Parcelable {
-        public final int startLane;
-        public final int anchorLane;
+        public int startLane;
+        public int anchorLane;
 
         private int[] spanMargins;
 
@@ -80,6 +80,17 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             }
         }
 
+        void setLane(LaneInfo laneInfo) {
+            startLane = laneInfo.startLane;
+            anchorLane = laneInfo.anchorLane;
+        }
+
+        void invalidateLane() {
+            startLane = Lanes.NO_LANE;
+            anchorLane = Lanes.NO_LANE;
+            spanMargins = null;
+        }
+
         private boolean hasSpanMargins() {
             return (spanMargins != null);
         }
@@ -114,11 +125,18 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         };
     }
 
+    private enum UpdateOp {
+        ADD,
+        REMOVE,
+        UPDATE,
+        MOVE
+    }
+
     private Lanes mLanes;
     private Lanes mLanesToRestore;
 
-    private SparseArray<ItemEntry> mItemEntries;
-    private SparseArray<ItemEntry> mItemEntriesToRestore;
+    private ItemEntries mItemEntries;
+    private ItemEntries mItemEntriesToRestore;
 
     protected final Rect mChildFrame = new Rect();
     protected final Rect mTempRect = new Rect();
@@ -170,25 +188,6 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         }
     }
 
-    private SparseArray<ItemEntry> cloneItemEntries() {
-        if (mItemEntries == null) {
-            return null;
-        }
-
-        final SparseArray<ItemEntry> itemLanes;
-        if (Build.VERSION.SDK_INT >= 14) {
-            itemLanes = mItemEntries.clone();
-        } else {
-            itemLanes = new SparseArray<ItemEntry>();
-
-            for (int i = 0; i < mItemEntries.size(); i++) {
-                itemLanes.put(mItemEntries.keyAt(i), mItemEntries.valueAt(i));
-            }
-        }
-
-        return itemLanes;
-    }
-
     void getDecoratedChildFrame(View child, Rect childFrame) {
         childFrame.left = getDecoratedLeft(child);
         childFrame.top = getDecoratedTop(child);
@@ -200,29 +199,54 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         return (getOrientation() == Orientation.VERTICAL);
     }
 
-    void forceCreateLanes() {
-        mLanes = null;
-        ensureLayoutState();
-    }
-
     Lanes getLanes() {
         return mLanes;
     }
 
     void setItemEntryForPosition(int position, ItemEntry entry) {
         if (mItemEntries != null) {
-            mItemEntries.put(position, entry);
+            mItemEntries.putItemEntry(position, entry);
         }
     }
 
     ItemEntry getItemEntryForPosition(int position) {
-        return (mItemEntries != null ? mItemEntries.get(position, null) : null);
+        return (mItemEntries != null ? mItemEntries.getItemEntry(position) : null);
     }
 
-    void clearItemEntries(){
+    void clearItemEntries() {
         if (mItemEntries != null) {
             mItemEntries.clear();
         }
+    }
+
+    void invalidateItemLanesAfter(int position) {
+        if (mItemEntries != null) {
+            mItemEntries.invalidateItemLanesAfter(position);
+        }
+    }
+
+    void offsetForAddition(int positionStart, int itemCount) {
+        if (mItemEntries != null) {
+            mItemEntries.offsetForAddition(positionStart, itemCount);
+        }
+    }
+
+    void offsetForRemoval(int positionStart, int itemCount) {
+        if (mItemEntries != null) {
+            mItemEntries.offsetForRemoval(positionStart, itemCount);
+        }
+    }
+
+    private void requestMoveLayout() {
+        if (getPendingScrollPosition() != RecyclerView.NO_POSITION) {
+            return;
+        }
+
+        final int position = getFirstVisiblePosition();
+        final View firstChild = findViewByPosition(position);
+        final int offset = (firstChild != null ? getChildStart(firstChild) : 0);
+
+        setPendingScrollPositionWithOffset(position, offset);
     }
 
     private boolean canUseLanes(Lanes lanes) {
@@ -230,53 +254,64 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             return false;
         }
 
-        if (lanes.getOrientation() != getOrientation()) {
+        final int laneCount = getLaneCount();
+        final int laneSize = calculateLaneSize(this, laneCount);
+
+        return (lanes.getOrientation() == getOrientation() &&
+                 lanes.getCount() == laneCount &&
+                 lanes.getLaneSize() == laneSize);
+    }
+
+    private boolean ensureLayoutState() {
+        final int laneCount = getLaneCount();
+        if (laneCount == 0 || getWidth() == 0 || getHeight() == 0 || canUseLanes(mLanes)) {
             return false;
         }
 
-        if (mLanes != null && lanes.getLaneSize() != mLanes.getLaneSize()) {
-            return false;
+        final Lanes oldLanes = mLanes;
+        mLanes = new Lanes(this, laneCount);
+
+        requestMoveLayout();
+
+        if (mItemEntries == null) {
+            mItemEntries = new ItemEntries();
         }
 
-        if (mLanes != null && lanes.getCount() != mLanes.getCount()) {
-            return false;
+        if (oldLanes != null && oldLanes.getOrientation() == mLanes.getOrientation() &&
+                oldLanes.getLaneSize() == mLanes.getLaneSize()) {
+            invalidateItemLanesAfter(0);
+        } else {
+            mItemEntries.clear();
         }
 
         return true;
     }
 
-    void handleAdapterChange() {
-        // Adapter changes is very likely to affect chain of layout
-        // decisions the layout manager has made regarding where to
-        // place items e.g. the lane is dynamically decided in
-        // some of the built-in layouts. Clear state so that the
-        // next layout pass doesn't run with bogus layout assumptions.
-        clearItemEntries();
-    }
+    private void handleUpdate(int positionStart, int itemCountOrToPosition, UpdateOp cmd) {
+        invalidateItemLanesAfter(positionStart);
 
-    private void ensureLayoutState() {
-        final int laneCount = getLaneCount();
-        if (laneCount == 0 || getWidth() == 0 || getHeight() == 0) {
+        switch (cmd) {
+            case ADD:
+                offsetForAddition(positionStart, itemCountOrToPosition);
+                break;
+
+            case REMOVE:
+                offsetForRemoval(positionStart, itemCountOrToPosition);
+                break;
+
+            case MOVE:
+                offsetForRemoval(positionStart, 1);
+                offsetForAddition(itemCountOrToPosition, 1);
+                break;
+        }
+
+        if (positionStart + itemCountOrToPosition <= getFirstVisiblePosition()) {
             return;
         }
 
-        if (mLanes != null && mLanes.getCount() == laneCount) {
-            return;
+        if (positionStart <= getLastVisiblePosition()) {
+            requestLayout();
         }
-
-        mLanes = new Lanes(this, getLaneCount());
-
-        if (mItemEntries == null) {
-            mItemEntries = new SparseArray<ItemEntry>(10);
-        } else {
-            mItemEntries.clear();
-        }
-    }
-
-    @Override
-    public void onAdapterChanged(Adapter oldAdapter, Adapter newAdapter) {
-        super.onAdapterChanged(oldAdapter, newAdapter);
-        forceCreateLanes();
     }
 
     @Override
@@ -299,7 +334,16 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     @Override
     public void onLayoutChildren(Recycler recycler, State state) {
-        ensureLayoutState();
+        final boolean restoringLanes = (mLanesToRestore != null);
+        if (restoringLanes) {
+            mLanes = mLanesToRestore;
+            mItemEntries = mItemEntriesToRestore;
+
+            mLanesToRestore = null;
+            mItemEntriesToRestore = null;
+        }
+
+        final boolean refreshingLanes = ensureLayoutState();
 
         // Still not able to create lanes, nothing we can do here,
         // just bail for now.
@@ -307,19 +351,18 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             return;
         }
 
-        if (canUseLanes(mLanesToRestore)) {
-            mLanes = mLanesToRestore;
-            mItemEntries = mItemEntriesToRestore;
-        } else {
-            final int pendingPosition = getPendingScrollPosition();
-            if (pendingPosition != RecyclerView.NO_POSITION &&
-                    pendingPosition >= 0 && pendingPosition < state.getItemCount()) {
-                moveLayoutToPosition(pendingPosition, getPendingScrollOffset(), recycler, state);
-            }
+        final int itemCount = state.getItemCount();
+
+        if (mItemEntries != null) {
+            mItemEntries.setAdapterSize(itemCount);
         }
 
-        mLanesToRestore = null;
-        mItemEntriesToRestore = null;
+        final int anchorItemPosition = getAnchorItemPosition(state);
+
+        // Only move layout if we're not restoring a layout state.
+        if (anchorItemPosition > 0 && (refreshingLanes || !restoringLanes)) {
+            moveLayoutToPosition(anchorItemPosition, getPendingScrollOffset(), recycler, state);
+        }
 
         mLanes.reset(Direction.START);
 
@@ -335,30 +378,32 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     @Override
     public void onItemsAdded(RecyclerView recyclerView, int positionStart, int itemCount) {
+        handleUpdate(positionStart, itemCount, UpdateOp.ADD);
         super.onItemsAdded(recyclerView, positionStart, itemCount);
-        handleAdapterChange();
     }
 
     @Override
     public void onItemsRemoved(RecyclerView recyclerView, int positionStart, int itemCount) {
+        handleUpdate(positionStart, itemCount, UpdateOp.REMOVE);
         super.onItemsRemoved(recyclerView, positionStart, itemCount);
-        handleAdapterChange();
+    }
+
+    @Override
+    public void onItemsUpdated(RecyclerView recyclerView, int positionStart, int itemCount) {
+        handleUpdate(positionStart, itemCount, UpdateOp.UPDATE);
+        super.onItemsUpdated(recyclerView, positionStart, itemCount);
+    }
+
+    @Override
+    public void onItemsMoved(RecyclerView recyclerView, int from, int to, int itemCount) {
+        handleUpdate(from, to, UpdateOp.MOVE);
+        super.onItemsMoved(recyclerView, from, to, itemCount);
     }
 
     @Override
     public void onItemsChanged(RecyclerView recyclerView) {
+        clearItemEntries();
         super.onItemsChanged(recyclerView);
-        handleAdapterChange();
-    }
-
-    @Override
-    public void setOrientation(Orientation orientation) {
-        final boolean changed = (getOrientation() != orientation);
-        super.setOrientation(orientation);
-
-        if (changed) {
-            forceCreateLanes();
-        }
     }
 
     @Override
@@ -376,7 +421,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
         state.orientation = getOrientation();
         state.laneSize = (mLanes != null ? mLanes.getLaneSize() : 0);
-        state.itemEntries = cloneItemEntries();
+        state.itemEntries = mItemEntries;
 
         return state;
     }
@@ -525,7 +570,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         private Orientation orientation;
         private Rect[] lanes;
         private int laneSize;
-        private SparseArray<ItemEntry> itemEntries;
+        private ItemEntries itemEntries;
 
         protected LanedSavedState(Parcelable superState) {
             super(superState);
@@ -549,11 +594,10 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
             final int itemEntriesCount = in.readInt();
             if (itemEntriesCount > 0) {
-                itemEntries = new SparseArray<ItemEntry>(itemEntriesCount);
+                itemEntries = new ItemEntries();
                 for (int i = 0; i < itemEntriesCount; i++) {
-                    final int key = in.readInt();
-                    final ItemEntry value = in.readParcelable(getClass().getClassLoader());
-                    itemEntries.put(key, value);
+                    final ItemEntry entry = in.readParcelable(getClass().getClassLoader());
+                    itemEntries.restoreItemEntry(i, entry);
                 }
             }
         }
@@ -576,8 +620,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             out.writeInt(itemEntriesCount);
 
             for (int i = 0; i < itemEntriesCount; i++) {
-                out.writeInt(itemEntries.keyAt(i));
-                out.writeParcelable(itemEntries.valueAt(i), flags);
+                out.writeParcelable(itemEntries.getItemEntry(i), flags);
             }
         }
 

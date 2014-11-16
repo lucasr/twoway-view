@@ -185,6 +185,14 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
             }
 
             mTempLaneInfo.set(entry.startLane, entry.anchorLane);
+
+            // The lanes might have been invalidated because an added or
+            // removed item. See BaseLayoutManager.invalidateItemLanes().
+            if (mTempLaneInfo.isUndefined()) {
+                lanes.findLane(mTempLaneInfo, getLaneSpanForPosition(i), Direction.END);
+                entry.setLane(mTempLaneInfo);
+            }
+
             lanes.getChildFrame(mTempRect, getChildWidth(entry.colSpan),
                     getChildHeight(entry.rowSpan), mTempLaneInfo, Direction.END);
 
@@ -203,15 +211,24 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
     ItemEntry cacheChildLaneAndSpan(View child, Direction direction) {
         final int position = getPosition(child);
 
+        mTempLaneInfo.setUndefined();
+
         SpannableItemEntry entry = (SpannableItemEntry) getItemEntryForPosition(position);
-        if (entry == null) {
+        if (entry != null) {
+            mTempLaneInfo.set(entry.startLane, entry.anchorLane);
+        }
+
+        if (mTempLaneInfo.isUndefined()) {
             getLaneForChild(mTempLaneInfo, child, direction);
+        }
 
+        if (entry == null) {
             final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-
             entry = new SpannableItemEntry(mTempLaneInfo.startLane, mTempLaneInfo.anchorLane,
                     lp.colSpan, lp.rowSpan);
             setItemEntryForPosition(position, entry);
+        } else {
+            entry.setLane(mTempLaneInfo);
         }
 
         return entry;
