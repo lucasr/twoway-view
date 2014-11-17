@@ -57,6 +57,10 @@ Gradle:
 compile 'org.lucasr.twowayview:twowayview:0.1.4'
 ```
 
+If you are using ProGuard add the following line to the rules:
+```groovy
+-keep class org.lucasr.twowayview.** { *; }
+```
 
 Want to help?
 =============
