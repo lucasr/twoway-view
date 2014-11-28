@@ -20,4 +20,5 @@ dependencies {
     compile project(':core')
     compile project(':layouts')
     compile 'com.android.support:appcompat-v7:21.0.0'
+    compile 'com.squareup.picasso:picasso:2.4.0'
 }
