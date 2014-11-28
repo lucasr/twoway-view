@@ -21,12 +21,15 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import org.lucasr.twowayview.TwoWayLayoutManager;
-import org.lucasr.twowayview.widget.TwoWayView;
 import org.lucasr.twowayview.widget.SpannableGridLayoutManager;
 import org.lucasr.twowayview.widget.StaggeredGridLayoutManager;
+import org.lucasr.twowayview.widget.TwoWayView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,11 +44,13 @@ public class LayoutAdapter extends RecyclerView.Adapter<LayoutAdapter.SimpleView
     private int mCurrentItemId = 0;
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder {
+        public final ImageView image;
         public final TextView title;
 
         public SimpleViewHolder(View view) {
             super(view);
             title = (TextView) view.findViewById(R.id.title);
+            image = (ImageView) view.findViewById(R.id.image);
         }
     }
 
@@ -80,6 +85,10 @@ public class LayoutAdapter extends RecyclerView.Adapter<LayoutAdapter.SimpleView
     @Override
     public void onBindViewHolder(SimpleViewHolder holder, int position) {
         holder.title.setText(mItems.get(position).toString());
+        Picasso.with(holder.image.getContext().getApplicationContext())
+                .load("http://lorempixel.com/400/400/animals/" + (1 + position % 10))
+                .skipMemoryCache()
+                .into(holder.image);
 
         boolean isVertical = (mRecyclerView.getOrientation() == TwoWayLayoutManager.Orientation.VERTICAL);
         final View itemView = holder.itemView;
