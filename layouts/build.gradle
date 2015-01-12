@@ -1,12 +1,12 @@
 apply plugin: 'com.android.library'
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 android {
     compileSdkVersion 21
-    buildToolsVersion '21.0.1'
+    buildToolsVersion '21.1.2'
     resourcePrefix 'twowayview_'
 
     defaultConfig {
@@ -17,7 +17,7 @@ android {
 
 dependencies {
     compile project(':core')
-    compile 'com.android.support:recyclerview-v7:21.0.0'
+    compile 'com.android.support:recyclerview-v7:21.0.3'
 }
 
 apply from: "${rootDir}/gradle/scripts/gradle-mvn-push.gradle"
