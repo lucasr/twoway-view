@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 android {
@@ -19,5 +19,5 @@ android {
 dependencies {
     compile project(':core')
     compile project(':layouts')
-    compile 'com.android.support:appcompat-v7:21.0.0'
+    compile 'com.android.support:appcompat-v7:21.0.3'
 }
