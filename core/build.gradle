@@ -10,7 +10,7 @@ dependencies {
 
 android {
     compileSdkVersion 21
-    buildToolsVersion '21.1.2'
+    buildToolsVersion '21.0.1'
     resourcePrefix 'twowayview_'
 
     defaultConfig {
