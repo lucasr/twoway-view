@@ -21,7 +21,6 @@ import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.RecyclerView.Recycler;
 import android.support.v7.widget.RecyclerView.State;
@@ -36,6 +35,7 @@ import org.lucasr.twowayview.widget.Lanes.LaneInfo;
 import static org.lucasr.twowayview.widget.Lanes.calculateLaneSize;
 
 public abstract class BaseLayoutManager extends TwoWayLayoutManager {
+
     private static final String LOGTAG = "BaseLayoutManager";
 
     protected static class ItemEntry implements Parcelable {
@@ -195,6 +195,11 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         childFrame.bottom = getDecoratedBottom(child);
     }
 
+    @Override
+    public void setScreenOrientation(int orientation) {
+        super.setScreenOrientation(orientation);
+    }
+
     boolean isVertical() {
         return (getOrientation() == Orientation.VERTICAL);
     }
@@ -217,6 +222,8 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         if (mItemEntries != null) {
             mItemEntries.clear();
         }
+        invalidateItemLanesAfter(0);
+        ensureLayoutState();
     }
 
     void invalidateItemLanesAfter(int position) {
@@ -334,8 +341,11 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     @Override
     public void onLayoutChildren(Recycler recycler, State state) {
+
         final boolean restoringLanes = (mLanesToRestore != null);
+
         if (restoringLanes) {
+
             mLanes = mLanesToRestore;
             mItemEntries = mItemEntriesToRestore;
 
@@ -352,10 +362,6 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         }
 
         final int itemCount = state.getItemCount();
-
-        if (mItemEntries != null) {
-            mItemEntries.setAdapterSize(itemCount);
-        }
 
         final int anchorItemPosition = getAnchorItemPosition(state);
 
@@ -419,6 +425,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             state.lanes[i] = laneRect;
         }
 
+        state.screenOrientation = getScreenOrientation();
         state.orientation = getOrientation();
         state.laneSize = (mLanes != null ? mLanes.getLaneSize() : 0);
         state.itemEntries = mItemEntries;
@@ -430,9 +437,14 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     public void onRestoreInstanceState(Parcelable state) {
         final LanedSavedState ss = (LanedSavedState) state;
 
-        if (ss.lanes != null && ss.laneSize > 0) {
+        if (ss.lanes != null && ss.laneSize > 0 && ss.screenOrientation == getScreenOrientation()) {
             mLanesToRestore = new Lanes(this, ss.orientation, ss.lanes, ss.laneSize);
             mItemEntriesToRestore = ss.itemEntries;
+        } else {
+            if(mItemEntries!=null) {
+                mItemEntries.clear();
+            }
+            invalidateItemLanesAfter(0);
         }
 
         super.onRestoreInstanceState(ss.getSuperState());
@@ -567,6 +579,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     abstract void moveLayoutToPosition(int position, int offset, Recycler recycler, State state);
 
     protected static class LanedSavedState extends SavedState {
+        private int screenOrientation;
         private Orientation orientation;
         private Rect[] lanes;
         private int laneSize;
@@ -579,6 +592,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         private LanedSavedState(Parcel in) {
             super(in);
 
+            screenOrientation = in.readInt();
             orientation = Orientation.values()[in.readInt()];
             laneSize = in.readInt();
 
@@ -606,6 +620,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
 
+            out.writeInt(screenOrientation);
             out.writeInt(orientation.ordinal());
             out.writeInt(laneSize);
 
@@ -637,4 +652,6 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             }
         };
     }
+
+
 }
