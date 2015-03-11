@@ -50,7 +50,7 @@ class ItemEntries {
     }
 
     public void invalidateItemLanesAfter(int position) {
-        if (mItemEntries == null || position >= mItemEntries.size()) {
+        if (mItemEntries == null || position >= mItemEntries.keyAt(mItemEntries.size()-1)) {
             return;
         }
 
