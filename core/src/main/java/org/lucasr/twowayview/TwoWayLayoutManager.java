@@ -49,6 +49,8 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         END
     }
 
+    private int mScreenOrientation;
+
     private RecyclerView mRecyclerView;
 
     private boolean mIsVertical = true;
@@ -63,9 +65,13 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     public TwoWayLayoutManager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
+        this.mScreenOrientation = context.getResources().getConfiguration().orientation;
     }
 
     public TwoWayLayoutManager(Context context, AttributeSet attrs, int defStyle) {
+
+        this.mScreenOrientation = context.getResources().getConfiguration().orientation;
+
         final TypedArray a =
                 context.obtainStyledAttributes(attrs, R.styleable.twowayview_TwoWayLayoutManager, defStyle, 0);
 
@@ -86,6 +92,14 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
 
     public TwoWayLayoutManager(Orientation orientation) {
         mIsVertical = (orientation == Orientation.VERTICAL);
+    }
+
+    public void setScreenOrientation(int orientation) {
+        this.mScreenOrientation = orientation;
+    }
+
+    public int getScreenOrientation() {
+        return mScreenOrientation;
     }
 
     private int getTotalSpace() {
