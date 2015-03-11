@@ -44,6 +44,15 @@ class ItemEntries {
         putItemEntry(position, entry);
     }
 
+
+    /**
+     * From android.util.SparseArray:
+     *
+     * The keys corresponding to indices in ascending order are guaranteed to be in ascending
+     * order, e.g., keyAt(0) will return the smallest key and keyAt(size()-1) will return the
+     * largest key.
+     */
+
     public int size() {
         return (mItemEntries != null ? mItemEntries.keyAt(mItemEntries.size()-1) :
                 0);
