@@ -54,12 +54,11 @@ class ItemEntries {
      */
 
     public int size() {
-        return (mItemEntries != null ? mItemEntries.keyAt(mItemEntries.size()-1) :
-                0);
+        return (mItemEntries.size()==0 ? 0 : mItemEntries.keyAt(mItemEntries.size()-1));
     }
 
     public void invalidateItemLanesAfter(int position) {
-        if (mItemEntries == null || position > mItemEntries.keyAt(mItemEntries.size()-1)) {
+        if (mItemEntries.size()==0 || position > mItemEntries.keyAt(mItemEntries.size()-1)) {
             return;
         }
 
