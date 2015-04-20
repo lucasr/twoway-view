@@ -273,7 +273,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
     }
 
     private void fillSpecific(int position, Recycler recycler, State state) {
-        if (state.getItemCount() == 0) {
+        if (state.getItemCount() <= 0) {
             return;
         }
 
