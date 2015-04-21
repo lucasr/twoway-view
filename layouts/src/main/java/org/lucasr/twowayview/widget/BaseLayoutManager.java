@@ -360,7 +360,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         final int anchorItemPosition = getAnchorItemPosition(state);
 
         // Only move layout if we're not restoring a layout state.
-        if (anchorItemPosition > 0 && (refreshingLanes || !restoringLanes)) {
+        if (anchorItemPosition > 0 && refreshingLanes && !restoringLanes) {
             moveLayoutToPosition(anchorItemPosition, getPendingScrollOffset(), recycler, state);
         }
 
