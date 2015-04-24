@@ -475,51 +475,52 @@ public class ItemSelectionSupport {
 
         @Override
         boolean performItemClick(RecyclerView parent, View view, int position, long id) {
-            final Adapter adapter = mRecyclerView.getAdapter();
-            boolean checkedStateChanged = false;
-
-            if (mChoiceMode == ChoiceMode.MULTIPLE) {
-                boolean checked = !mCheckedStates.get(position, false);
-                mCheckedStates.put(position, checked);
-
-                if (mCheckedIdStates != null && adapter.hasStableIds()) {
-                    if (checked) {
-                        mCheckedIdStates.put(adapter.getItemId(position), position);
-                    } else {
-                        mCheckedIdStates.delete(adapter.getItemId(position));
-                    }
-                }
-
-                if (checked) {
-                    mCheckedCount++;
-                } else {
-                    mCheckedCount--;
-                }
-
-                checkedStateChanged = true;
-            } else if (mChoiceMode == ChoiceMode.SINGLE) {
-                boolean checked = !mCheckedStates.get(position, false);
-                if (checked) {
-                    mCheckedStates.clear();
-                    mCheckedStates.put(position, true);
-
+            if (view.isClickable() && view.isEnabled()) {
+                final Adapter adapter = mRecyclerView.getAdapter();
+                boolean checkedStateChanged = false;
+    
+                if (mChoiceMode == ChoiceMode.MULTIPLE) {
+                    boolean checked = !mCheckedStates.get(position, false);
+                    mCheckedStates.put(position, checked);
+    
                     if (mCheckedIdStates != null && adapter.hasStableIds()) {
-                        mCheckedIdStates.clear();
-                        mCheckedIdStates.put(adapter.getItemId(position), position);
+                        if (checked) {
+                            mCheckedIdStates.put(adapter.getItemId(position), position);
+                        } else {
+                            mCheckedIdStates.delete(adapter.getItemId(position));
+                        }
                     }
-
-                    mCheckedCount = 1;
-                } else if (mCheckedStates.size() == 0 || !mCheckedStates.valueAt(0)) {
-                    mCheckedCount = 0;
+    
+                    if (checked) {
+                        mCheckedCount++;
+                    } else {
+                        mCheckedCount--;
+                    }
+    
+                    checkedStateChanged = true;
+                } else if (mChoiceMode == ChoiceMode.SINGLE) {
+                    boolean checked = !mCheckedStates.get(position, false);
+                    if (checked) {
+                        mCheckedStates.clear();
+                        mCheckedStates.put(position, true);
+    
+                        if (mCheckedIdStates != null && adapter.hasStableIds()) {
+                            mCheckedIdStates.clear();
+                            mCheckedIdStates.put(adapter.getItemId(position), position);
+                        }
+    
+                        mCheckedCount = 1;
+                    } else if (mCheckedStates.size() == 0 || !mCheckedStates.valueAt(0)) {
+                        mCheckedCount = 0;
+                    }
+    
+                    checkedStateChanged = true;
                 }
-
-                checkedStateChanged = true;
+    
+                if (checkedStateChanged) {
+                    updateOnScreenCheckedViews();
+                }
             }
-
-            if (checkedStateChanged) {
-                updateOnScreenCheckedViews();
-            }
-
             return false;
         }
 
