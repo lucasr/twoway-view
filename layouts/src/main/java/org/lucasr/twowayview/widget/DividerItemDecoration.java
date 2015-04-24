@@ -5,6 +5,8 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.Shape;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.ItemDecoration;
 import android.util.AttributeSet;
@@ -40,6 +42,23 @@ public class DividerItemDecoration extends ItemDecoration {
 
         a.recycle();
 
+        mItemSpacing = createSpacing(mVerticalDivider, mHorizontalDivider);
+    }
+
+    public DividerItemDecoration(Shape shape, int color, int size) {
+        this(shape, color, size, shape, color, size);
+    }
+
+    public DividerItemDecoration(Shape verticalShape, int verticalColor, int verticalSize,
+                                 Shape horizontalShape, int horizontalColor, int horizontalSize) {
+        ShapeDrawable verticalDivider = new ShapeDrawable(verticalShape);
+        verticalDivider.getPaint().setColor(verticalColor);
+        verticalDivider.setIntrinsicHeight(verticalSize);
+        ShapeDrawable horizontalDivider = new ShapeDrawable(horizontalShape);
+        horizontalDivider.getPaint().setColor(horizontalColor);
+        horizontalDivider.setIntrinsicHeight(horizontalSize);
+        mVerticalDivider = verticalDivider;
+        mHorizontalDivider = horizontalDivider;
         mItemSpacing = createSpacing(mVerticalDivider, mHorizontalDivider);
     }
 
