@@ -276,6 +276,9 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         if (state.getItemCount() <= 0) {
             return;
         }
+        if (position >= state.getItemCount()) {
+            return;
+        }
 
         makeAndAddView(position, Direction.END, recycler);
 
