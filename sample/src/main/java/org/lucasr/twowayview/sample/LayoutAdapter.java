@@ -22,16 +22,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import org.lucasr.twowayview.TwoWayLayoutManager;
-import org.lucasr.twowayview.widget.TwoWayView;
+import org.lucasr.twowayview.widget.ReorderableAdapter;
 import org.lucasr.twowayview.widget.SpannableGridLayoutManager;
 import org.lucasr.twowayview.widget.StaggeredGridLayoutManager;
+import org.lucasr.twowayview.widget.TwoWayView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LayoutAdapter extends RecyclerView.Adapter<LayoutAdapter.SimpleViewHolder> {
+public class LayoutAdapter extends RecyclerView.Adapter<LayoutAdapter.SimpleViewHolder> implements ReorderableAdapter {
     private static final int COUNT = 100;
 
     private final Context mContext;
@@ -39,6 +39,12 @@ public class LayoutAdapter extends RecyclerView.Adapter<LayoutAdapter.SimpleView
     private final List<Integer> mItems;
     private final int mLayoutId;
     private int mCurrentItemId = 0;
+
+    @Override
+    public void onItemDropped(int from, int to) {
+        Integer i = mItems.remove(from);
+        mItems.add(to, i);
+    }
 
     public static class SimpleViewHolder extends RecyclerView.ViewHolder {
         public final TextView title;

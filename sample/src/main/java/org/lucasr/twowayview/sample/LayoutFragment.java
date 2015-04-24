@@ -27,16 +27,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
-import static android.support.v7.widget.RecyclerView.SCROLL_STATE_DRAGGING;
-import static android.support.v7.widget.RecyclerView.SCROLL_STATE_SETTLING;
-
 import org.lucasr.twowayview.ItemClickSupport;
 import org.lucasr.twowayview.ItemClickSupport.OnItemClickListener;
 import org.lucasr.twowayview.ItemClickSupport.OnItemLongClickListener;
 import org.lucasr.twowayview.widget.DividerItemDecoration;
 import org.lucasr.twowayview.widget.TwoWayView;
+
+import static android.support.v7.widget.RecyclerView.SCROLL_STATE_DRAGGING;
+import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
+import static android.support.v7.widget.RecyclerView.SCROLL_STATE_SETTLING;
 
 public class LayoutFragment extends Fragment {
     private static final String ARG_LAYOUT_ID = "layout_id";
@@ -103,8 +102,7 @@ public class LayoutFragment extends Fragment {
         itemClick.setOnItemLongClickListener(new OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(RecyclerView parent, View child, int position, long id) {
-                mToast.setText("Item long pressed: " + position);
-                mToast.show();
+                mRecyclerView.startReorder(position);
                 return true;
             }
         });
@@ -125,7 +123,7 @@ public class LayoutFragment extends Fragment {
         final Drawable divider = getResources().getDrawable(R.drawable.divider);
         mRecyclerView.addItemDecoration(new DividerItemDecoration(divider));
 
-        mRecyclerView.setAdapter(new LayoutAdapter(activity, mRecyclerView, mLayoutId));
+        mRecyclerView.setReorderableAdapter(new LayoutAdapter(activity, mRecyclerView, mLayoutId));
     }
 
     private void updateState(int scrollState) {
