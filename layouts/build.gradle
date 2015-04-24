@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply from: 'https://raw.github.com/hotchemi/gradle-apklib-plugin/master/gradle-apklib.gradle'
 
 repositories {
     mavenCentral()
