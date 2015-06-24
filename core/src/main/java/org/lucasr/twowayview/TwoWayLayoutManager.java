@@ -479,7 +479,7 @@ public abstract class TwoWayLayoutManager extends LayoutManager {
         return child;
     }
 
-    private void handleUpdate() {
+    protected void handleUpdate() {
         // Refresh state by requesting layout without changing the
         // first visible position. This will ensure the layout will
         // sync with the adapter changes.
