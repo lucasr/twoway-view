@@ -41,6 +41,11 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
         mGestureDetector.onTouchEvent(event);
         return false;
     }
+    
+    @Override 
+    public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
+    }
 
     @Override
     public void onTouchEvent(RecyclerView recyclerView, MotionEvent event) {
