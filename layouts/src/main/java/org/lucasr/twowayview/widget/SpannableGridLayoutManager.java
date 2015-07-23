@@ -92,11 +92,11 @@ public class SpannableGridLayoutManager extends GridLayoutManager {
     }
 
     private int getChildWidth(int colSpan) {
-        return getLanes().getLaneSize() * colSpan;
+        return getLanes().getLaneWidth() * colSpan;
     }
 
     private int getChildHeight(int rowSpan) {
-        return getLanes().getLaneSize() * rowSpan;
+        return getLanes().getLaneHeight() * rowSpan;
     }
 
     private static int getLaneSpan(LayoutParams lp, boolean isVertical) {
