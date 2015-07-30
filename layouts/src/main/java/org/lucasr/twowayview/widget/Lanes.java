@@ -36,6 +36,20 @@ class Lanes {
     private Integer mInnerStart;
     private Integer mInnerEnd;
 
+    private final int mSecondaryDimension;
+    
+    public int getLaneWidth() {
+        return mIsVertical || mSecondaryDimension == 0 ? mLaneSize : mSecondaryDimension;
+    }
+    
+    public int getLaneHeight() {
+        return !mIsVertical || mSecondaryDimension == 0 ? mLaneSize : mSecondaryDimension;
+    }
+    
+    public int getSecondaryDimension() {
+        return mSecondaryDimension;
+    }
+    
     public static class LaneInfo {
         public int startLane;
         public int anchorLane;
@@ -56,10 +70,17 @@ class Lanes {
     }
 
     public Lanes(BaseLayoutManager layout, Orientation orientation, Rect[] lanes, int laneSize) {
+        this(layout, orientation, lanes, laneSize, 0);
+    }
+    
+    public Lanes(BaseLayoutManager layout, Orientation orientation, Rect[] lanes, int laneSize,
+        int secondaryDimension
+    ) {
         mLayout = layout;
         mIsVertical = (orientation == Orientation.VERTICAL);
         mLanes = lanes;
         mLaneSize = laneSize;
+        mSecondaryDimension = secondaryDimension;
 
         mSavedLanes = new Rect[mLanes.length];
         for (int i = 0; i < mLanes.length; i++) {
@@ -68,6 +89,12 @@ class Lanes {
     }
 
     public Lanes(BaseLayoutManager layout, int laneCount) {
+        this(layout, laneCount, 0);
+    }
+    
+    public Lanes(BaseLayoutManager layout, int laneCount,
+        int secondaryDimension
+    ) {
         mLayout = layout;
         mIsVertical = layout.isVertical();
 
@@ -79,6 +106,7 @@ class Lanes {
         }
 
         mLaneSize = calculateLaneSize(layout, laneCount);
+        mSecondaryDimension = secondaryDimension;
 
         final int paddingLeft = layout.getPaddingLeft();
         final int paddingTop = layout.getPaddingTop();

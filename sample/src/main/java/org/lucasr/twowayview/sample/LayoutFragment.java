@@ -17,6 +17,7 @@
 package org.lucasr.twowayview.sample;
 
 import android.app.Activity;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -35,6 +36,7 @@ import static android.support.v7.widget.RecyclerView.SCROLL_STATE_SETTLING;
 import org.lucasr.twowayview.ItemClickSupport;
 import org.lucasr.twowayview.ItemClickSupport.OnItemClickListener;
 import org.lucasr.twowayview.ItemClickSupport.OnItemLongClickListener;
+import org.lucasr.twowayview.widget.BaseLayoutManager;
 import org.lucasr.twowayview.widget.DividerItemDecoration;
 import org.lucasr.twowayview.widget.TwoWayView;
 
@@ -84,6 +86,14 @@ public class LayoutFragment extends Fragment {
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLongClickable(true);
 
+        RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
+        Resources res = getResources();
+        if (layoutManager instanceof BaseLayoutManager) {
+            BaseLayoutManager manager = (BaseLayoutManager) layoutManager;
+            manager.setCustomWidth((int) res.getDimension(R.dimen.abc_text_size_display_2_material));
+            manager.setCustomHeight((int) res.getDimension(R.dimen.abc_text_size_display_1_material));
+        };
+
         mPositionText = (TextView) view.getRootView().findViewById(R.id.position);
         mCountText = (TextView) view.getRootView().findViewById(R.id.count);
 
@@ -122,7 +132,7 @@ public class LayoutFragment extends Fragment {
             }
         });
 
-        final Drawable divider = getResources().getDrawable(R.drawable.divider);
+        final Drawable divider = res.getDrawable(R.drawable.divider);
         mRecyclerView.addItemDecoration(new DividerItemDecoration(divider));
 
         mRecyclerView.setAdapter(new LayoutAdapter(activity, mRecyclerView, mLayoutId));

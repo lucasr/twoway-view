@@ -134,6 +134,9 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     private Lanes mLanes;
     private Lanes mLanesToRestore;
+    // external attributes
+    private int mCustomWidth;
+    private int mCustomHeight;
 
     private ItemEntries mItemEntries;
     private ItemEntries mItemEntriesToRestore;
@@ -148,6 +151,8 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
     public BaseLayoutManager(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        // TODO setCustomWidth()
+        // TODO setCustomHeight()
     }
 
     public BaseLayoutManager(Orientation orientation) {
@@ -259,6 +264,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
         return (lanes.getOrientation() == getOrientation() &&
                  lanes.getCount() == laneCount &&
+                 lanes.getSecondaryDimension() == getSecondaryDimension() &&
                  lanes.getLaneSize() == laneSize);
     }
 
@@ -269,7 +275,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         }
 
         final Lanes oldLanes = mLanes;
-        mLanes = new Lanes(this, laneCount);
+        mLanes = new Lanes(this, laneCount, getSecondaryDimension());
 
         requestMoveLayout();
 
@@ -421,6 +427,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
         state.orientation = getOrientation();
         state.laneSize = (mLanes != null ? mLanes.getLaneSize() : 0);
+        state.secondaryDimension = (mLanes != null ? mLanes.getSecondaryDimension() : 0);
         state.itemEntries = mItemEntries;
 
         return state;
@@ -431,7 +438,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
         final LanedSavedState ss = (LanedSavedState) state;
 
         if (ss.lanes != null && ss.laneSize > 0) {
-            mLanesToRestore = new Lanes(this, ss.orientation, ss.lanes, ss.laneSize);
+            mLanesToRestore = new Lanes(this, ss.orientation, ss.lanes, ss.laneSize, ss.secondaryDimension);
             mItemEntriesToRestore = ss.itemEntries;
         }
 
@@ -452,7 +459,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             return 0;
         }
 
-        final int size = getLanes().getLaneSize() * getLaneSpanForChild(child);
+        final int size = getLanes().getLaneWidth() * getLaneSpanForChild(child);
         return getWidth() - getPaddingLeft() - getPaddingRight() - size;
     }
 
@@ -461,7 +468,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
             return 0;
         }
 
-        final int size = getLanes().getLaneSize() * getLaneSpanForChild(child);
+        final int size = getLanes().getLaneHeight() * getLaneSpanForChild(child);
         return getHeight() - getPaddingTop() - getPaddingBottom() - size;
     }
 
@@ -566,10 +573,32 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
     abstract void getLaneForPosition(LaneInfo outInfo, int position, Direction direction);
     abstract void moveLayoutToPosition(int position, int offset, Recycler recycler, State state);
 
+    
+    public void setCustomWidth(int mCustomWidth) {
+        this.mCustomWidth = mCustomWidth;
+    }
+    
+    public void setCustomHeight(int mCustomHeight) {
+        this.mCustomHeight = mCustomHeight;
+    }
+    
+    
+    public int getSecondaryDimension() {
+        switch (getOrientation()){
+            case HORIZONTAL:
+                return mCustomHeight;
+            case VERTICAL:
+                return mCustomWidth;
+            default:
+                return 0; // not use at all
+        }
+    }
+    
     protected static class LanedSavedState extends SavedState {
         private Orientation orientation;
         private Rect[] lanes;
         private int laneSize;
+        private int secondaryDimension;
         private ItemEntries itemEntries;
 
         protected LanedSavedState(Parcelable superState) {
@@ -581,6 +610,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
             orientation = Orientation.values()[in.readInt()];
             laneSize = in.readInt();
+            secondaryDimension = in.readInt();
 
             final int laneCount = in.readInt();
             if (laneCount > 0) {
@@ -608,6 +638,7 @@ public abstract class BaseLayoutManager extends TwoWayLayoutManager {
 
             out.writeInt(orientation.ordinal());
             out.writeInt(laneSize);
+            out.writeInt(secondaryDimension);
 
             final int laneCount = (lanes != null ? lanes.length : 0);
             out.writeInt(laneCount);
