@@ -17,10 +17,16 @@
 package org.lucasr.twowayview.sample;
 
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private final String ARG_SELECTED_LAYOUT_ID = "selectedLayoutId";
@@ -29,29 +35,45 @@ public class MainActivity extends AppCompatActivity {
 
     private int mSelectedLayoutId;
 
+    private TabLayout mTabLayout;
+    private ViewPager mViewPager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.tabs_layout);
 
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setDisplayShowHomeEnabled(false);
+        mTabLayout = (TabLayout) findViewById(R.id.tabs);
+        mViewPager = (ViewPager) findViewById(R.id.pagers);
 
         mSelectedLayoutId = DEFAULT_LAYOUT;
         if (savedInstanceState != null) {
             mSelectedLayoutId = savedInstanceState.getInt(ARG_SELECTED_LAYOUT_ID);
         }
 
-        addLayoutTab(
+        CustomeFragmentAdapter adapter = new CustomeFragmentAdapter(getSupportFragmentManager());
+        adapter.addFragment(LayoutFragment.newInstance(R.layout.layout_list), "list");
+        adapter.addFragment(LayoutFragment.newInstance(R.layout.layout_grid), "grid");
+        adapter.addFragment(LayoutFragment.newInstance(R.layout.layout_staggered_grid), "staggered");
+        adapter.addFragment(LayoutFragment.newInstance(R.layout.layout_spannable_grid), "spannable");
+
+        mViewPager.setAdapter(adapter);
+        mTabLayout.setupWithViewPager(mViewPager);
+
+        /*addLayoutTab(
                 actionBar, R.layout.layout_list, R.drawable.ic_list, "list");
         addLayoutTab(
                 actionBar, R.layout.layout_grid, R.drawable.ic_grid, "grid");
         addLayoutTab(
                 actionBar, R.layout.layout_staggered_grid, R.drawable.ic_staggered, "staggered");
         addLayoutTab(
-                actionBar, R.layout.layout_spannable_grid, R.drawable.ic_spannable, "spannable");
+                actionBar, R.layout.layout_spannable_grid, R.drawable.ic_spannable, "spannable");*/
+
+        int count = mTabLayout.getTabCount();
+
+        for (int i = 0; i < count; i++) {
+            //mTabLayout.getTabAt(i).setCustomView(null);
+        }
     }
 
     @Override
@@ -60,46 +82,33 @@ public class MainActivity extends AppCompatActivity {
         outState.putInt(ARG_SELECTED_LAYOUT_ID, mSelectedLayoutId);
     }
 
-    private void addLayoutTab(ActionBar actionBar, int layoutId, int iconId, String tag) {
-        ActionBar.Tab tab = actionBar.newTab()
-                .setText("")
-                .setIcon(iconId)
-                .setTabListener(new TabListener(layoutId, tag));
-        actionBar.addTab(tab, layoutId == mSelectedLayoutId);
-    }
+    public class CustomeFragmentAdapter extends FragmentPagerAdapter {
 
-    public class TabListener implements ActionBar.TabListener {
-        private LayoutFragment mFragment;
-        private final int mLayoutId;
-        private final String mTag;
+        private final List<Fragment> mFragments = new ArrayList<>();
+        private final List<String> mFragmentTitles = new ArrayList<>();
 
-        public TabListener(int layoutId, String tag) {
-            mLayoutId = layoutId;
-            mTag = tag;
+        public CustomeFragmentAdapter(android.support.v4.app.FragmentManager fm) {
+            super(fm);
+        }
+
+        public void addFragment(Fragment fragment, String title) {
+            mFragments.add(fragment);
+            mFragmentTitles.add(title);
         }
 
         @Override
-        public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-            mFragment = (LayoutFragment) getSupportFragmentManager().findFragmentByTag(mTag);
-            if (mFragment == null) {
-                mFragment = (LayoutFragment) LayoutFragment.newInstance(mLayoutId);
-                ft.add(R.id.content, mFragment, mTag);
-            } else {
-                ft.attach(mFragment);
-            }
-
-            mSelectedLayoutId = mFragment.getLayoutId();
+        public Fragment getItem(int position) {
+            return mFragments.get(position);
         }
 
         @Override
-        public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
-            if (mFragment != null) {
-                ft.detach(mFragment);
-            }
+        public int getCount() {
+            return mFragments.size();
         }
 
         @Override
-        public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
+        public CharSequence getPageTitle(int position) {
+            return mFragmentTitles.get(position);
         }
     }
 }
