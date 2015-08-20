@@ -38,6 +38,13 @@ public class MainActivity extends AppCompatActivity {
     private TabLayout mTabLayout;
     private ViewPager mViewPager;
 
+    private int[] mIconArray = {
+            R.drawable.ic_list,
+            R.drawable.ic_grid,
+            R.drawable.ic_staggered,
+            R.drawable.ic_spannable
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,21 +65,14 @@ public class MainActivity extends AppCompatActivity {
         adapter.addFragment(LayoutFragment.newInstance(R.layout.layout_spannable_grid), "spannable");
 
         mViewPager.setAdapter(adapter);
-        mTabLayout.setupWithViewPager(mViewPager);
 
-        /*addLayoutTab(
-                actionBar, R.layout.layout_list, R.drawable.ic_list, "list");
-        addLayoutTab(
-                actionBar, R.layout.layout_grid, R.drawable.ic_grid, "grid");
-        addLayoutTab(
-                actionBar, R.layout.layout_staggered_grid, R.drawable.ic_staggered, "staggered");
-        addLayoutTab(
-                actionBar, R.layout.layout_spannable_grid, R.drawable.ic_spannable, "spannable");*/
+        mTabLayout.setupWithViewPager(mViewPager);
 
         int count = mTabLayout.getTabCount();
 
         for (int i = 0; i < count; i++) {
-            //mTabLayout.getTabAt(i).setCustomView(null);
+            mTabLayout.getTabAt(i).setText(null);
+            mTabLayout.getTabAt(i).setIcon(mIconArray[i]);
         }
     }
 
