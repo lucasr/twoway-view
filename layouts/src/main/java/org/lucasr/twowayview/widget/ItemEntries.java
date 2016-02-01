@@ -34,28 +34,13 @@ class ItemEntries {
     private int mAdapterSize;
     private boolean mRestoringItem;
 
-    private int sizeForPosition(int position) {
-        int len = mItemEntries.length;
-        while (len <= position) {
-            len *= 2;
-        }
-
-        // We don't apply any constraints while restoring
-        // item entries.
-        if (!mRestoringItem && len > mAdapterSize) {
-            len = mAdapterSize;
-        }
-
-        return len;
-    }
-
     private void ensureSize(int position) {
         if (mItemEntries == null) {
             mItemEntries = new ItemEntry[Math.max(position, MIN_SIZE) + 1];
             Arrays.fill(mItemEntries, null);
         } else if (position >= mItemEntries.length) {
             ItemEntry[] oldItemEntries = mItemEntries;
-            mItemEntries = new ItemEntry[sizeForPosition(position)];
+            mItemEntries = new ItemEntry[position + 1];
             System.arraycopy(oldItemEntries, 0, mItemEntries, 0, oldItemEntries.length);
             Arrays.fill(mItemEntries, oldItemEntries.length, mItemEntries.length, null);
         }
