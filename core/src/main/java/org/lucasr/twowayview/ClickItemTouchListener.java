@@ -16,7 +16,7 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
     private final GestureDetectorCompat mGestureDetector;
 
     ClickItemTouchListener(RecyclerView hostView) {
-        mGestureDetector = new ItemClickGestureDetector(hostView.getContext(),
+        mGestureDetector = new GestureDetectorCompat(hostView.getContext(),
                 new ItemClickGestureListener(hostView));
     }
 
@@ -51,7 +51,7 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
     abstract boolean performItemClick(RecyclerView parent, View view, int position, long id);
     abstract boolean performItemLongClick(RecyclerView parent, View view, int position, long id);
 
-    private class ItemClickGestureDetector extends GestureDetectorCompat {
+    /*private class ItemClickGestureDetector extends GestureDetectorCompat {
         private final ItemClickGestureListener mGestureListener;
 
         public ItemClickGestureDetector(Context context, ItemClickGestureListener listener) {
@@ -70,7 +70,7 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
 
             return handled;
         }
-    }
+    }*/
 
     private class ItemClickGestureListener extends SimpleOnGestureListener {
         private final RecyclerView mHostView;
