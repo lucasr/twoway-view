@@ -19,6 +19,10 @@
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
     </style>
 
+    <style name="NoActionBarTheme" parent="Theme.AppCompat.NoActionBar">
+
+    </style>
+
     <style name="TwoWayViewBase">
         <item name="android:background">#999999</item>
     </style>

@@ -1,0 +1,56 @@
+<!--
+  ~ Copyright (C) 2014 Lucas Rocha
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <android.support.design.widget.TabLayout
+            android:id="@+id/tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/black"
+        />
+
+    <android.support.v4.view.ViewPager
+            android:id="@+id/pagers"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/tabs"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="bottom"
+            android:layout_gravity="bottom|center"
+            android:layout_alignBottom="@id/pagers">
+
+        <TextView
+                android:id="@+id/position"
+                style="@style/StateText"/>
+
+        <TextView
+                android:id="@+id/count"
+                style="@style/StateText"/>
+
+        <TextView
+                android:id="@+id/state"
+                style="@style/StateText"/>
+
+    </LinearLayout>
+
+</RelativeLayout>
