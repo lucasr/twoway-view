@@ -162,35 +162,5 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
                 mTargetChild = null;
             }
         }
-
-        @Override
-        public boolean onContextClick(MotionEvent e) {
-            Log.d(TAG, "onContextClick: ");
-            return super.onContextClick(e);
-        }
-
-        @Override
-        public boolean onDoubleTap(MotionEvent e) {
-            Log.d(TAG, "onDoubleTap: ");
-            return super.onDoubleTap(e);
-        }
-
-        @Override
-        public boolean onDoubleTapEvent(MotionEvent e) {
-            Log.d(TAG, "onDoubleTapEvent: ");
-            return super.onDoubleTapEvent(e);
-        }
-
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            Log.d(TAG, "onFling: ");
-            return super.onFling(e1, e2, velocityX, velocityY);
-        }
-
-        @Override
-        public boolean onSingleTapConfirmed(MotionEvent e) {
-            Log.d(TAG, "onSingleTapConfirmed: ");
-            return super.onSingleTapConfirmed(e);
-        }
     }
 }
