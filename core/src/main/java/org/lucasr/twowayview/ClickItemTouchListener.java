@@ -6,14 +6,16 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.OnItemTouchListener;
+import android.util.Log;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 
 abstract class ClickItemTouchListener implements OnItemTouchListener {
-    private static final String LOGTAG = "ClickItemTouchListener";
+    private static final String TAG = "ClickItemTouchListener";
 
     private final GestureDetectorCompat mGestureDetector;
+    private boolean disallowIntercept = false;
 
     ClickItemTouchListener(RecyclerView hostView) {
         mGestureDetector = new ItemClickGestureDetector(hostView.getContext(),
@@ -38,7 +40,10 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
             return false;
         }
 
-        mGestureDetector.onTouchEvent(event);
+        if(!disallowIntercept){
+            mGestureDetector.onTouchEvent(event);
+            return false;
+        }
         return false;
     }
 
@@ -46,6 +51,11 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
     public void onTouchEvent(RecyclerView recyclerView, MotionEvent event) {
         // We can silently track tap and and long presses by silently
         // intercepting touch events in the host RecyclerView.
+    }
+
+    @Override
+    public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+        this.disallowIntercept = disallowIntercept;
     }
 
     abstract boolean performItemClick(RecyclerView parent, View view, int position, long id);
@@ -113,7 +123,8 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
             if (mTargetChild != null) {
                 mTargetChild.setPressed(false);
 
-                final int position = mHostView.getChildPosition(mTargetChild);
+                final int position = mHostView.getChildAdapterPosition(mTargetChild);
+                //If custom RecycleView.Adapter doesn't override method getItemId , id will be NO_ID which means -1.
                 final long id = mHostView.getAdapter().getItemId(position);
                 handled = performItemClick(mHostView, mTargetChild, position, id);
 
@@ -141,7 +152,8 @@ abstract class ClickItemTouchListener implements OnItemTouchListener {
                 return;
             }
 
-            final int position = mHostView.getChildPosition(mTargetChild);
+            final int position = mHostView.getChildAdapterPosition(mTargetChild);
+            //If custom RecycleView.Adapter doesn't override method getItemId , id will be NO_ID which means -1.
             final long id = mHostView.getAdapter().getItemId(position);
             final boolean handled = performItemLongClick(mHostView, mTargetChild, position, id);
 

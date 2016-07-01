@@ -75,6 +75,12 @@ public class DividerItemDecoration extends ItemDecoration {
         return spacing;
     }
 
+
+    @Override
+    public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        onDraw(c,parent);
+    }
+
     @Override
     public void onDrawOver(Canvas c, RecyclerView parent) {
         final BaseLayoutManager lm = (BaseLayoutManager) parent.getLayoutManager();
@@ -115,6 +121,11 @@ public class DividerItemDecoration extends ItemDecoration {
                 mVerticalDivider.draw(c);
             }
         }
+    }
+
+    @Override
+    public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+        getItemOffsets(outRect, parent.getChildPosition(view), parent);
     }
 
     @Override

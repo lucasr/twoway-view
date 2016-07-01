@@ -1,11 +1,13 @@
 package org.lucasr.twowayview;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.SoundEffectConstants;
 import android.view.View;
 
 public class ItemClickSupport {
+    private static final String TAG = "ItemClickSupport";
     /**
      * Interface definition for a callback to be invoked when an item in the
      * RecyclerView has been clicked.
@@ -79,13 +81,17 @@ public class ItemClickSupport {
         mItemLongClickListener = listener;
     }
 
+    public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+        mTouchListener.onRequestDisallowInterceptTouchEvent(disallowIntercept);
+    }
+
     public static ItemClickSupport addTo(RecyclerView recyclerView) {
         ItemClickSupport itemClickSupport = from(recyclerView);
         if (itemClickSupport == null) {
             itemClickSupport = new ItemClickSupport(recyclerView);
             recyclerView.setTag(R.id.twowayview_item_click_support, itemClickSupport);
         } else {
-            // TODO: Log warning
+            Log.w(TAG,"RecyclerView already binds another ItemClickSupport instance!!!");
         }
 
         return itemClickSupport;
@@ -94,7 +100,7 @@ public class ItemClickSupport {
     public static void removeFrom(RecyclerView recyclerView) {
         final ItemClickSupport itemClickSupport = from(recyclerView);
         if (itemClickSupport == null) {
-            // TODO: Log warning
+            Log.w(TAG,"Not found any ItemClickSupport instance which is bound by recyclerView!!!");
             return;
         }
 
