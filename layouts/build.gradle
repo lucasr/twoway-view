@@ -6,7 +6,7 @@ repositories {
 
 android {
     compileSdkVersion 21
-    buildToolsVersion "21.1.2"
+    buildToolsVersion "25.0.2"
     resourcePrefix 'twowayview_'
 
     defaultConfig {
@@ -20,4 +20,3 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:21.0.0'
 }
 
-apply from: "${rootDir}/gradle/scripts/gradle-mvn-push.gradle"
